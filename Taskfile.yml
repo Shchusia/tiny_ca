@@ -21,13 +21,13 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - coverage run -m pytest tests -s --cov=my_utilities --cov-branch --cov-report=term-missing -o log_cli=true
+      - coverage run -m pytest tests -s --cov=tiny_ca  --cov-branch --cov-report=term-missing -o log_cli=true
     silent: true
 
   publishtest:
     desc: Run tests and publish results to https://coveralls.io/
     cmds:
-      - pytest tests -s --cov=my_utilities --cov-report=term-missing
+      - pytest tests -s --cov=tiny_ca  --cov-report=term-missing
       - coverage xml
       - coveralls
 
@@ -35,10 +35,7 @@ tasks:
   lint:
     desc: Check code by linters
     cmds:
-      - uv run black ./tiny_ca  --config=pyproject.toml
-      - uv run ruff  check ./tiny_ca --fix  --config=pyproject.toml
-      - uv run mypy ./tiny_ca --no-strict-optional --ignore-missing-imports --config-file=pyproject.toml
-
+      - pre-commit run --all-files
   sync:
     desc: Update libs
     cmds:
@@ -66,8 +63,8 @@ tasks:
     dir: ./docs
     cmds:
       - rm -rf docs/build docs/source/modules
-      - uv run sphinx-apidoc -f -o source/modules ../my_utilities
-      - mv -f source/modules/my_utilities.rst source/modules/modules.rst
+      - uv run sphinx-apidoc -f -o source/modules ../tiny_ca
+      - mv -f source/modules/tiny_ca .rst source/modules/modules.rst
       - uv run make html
       - cp -r -f build/html/* ./
       - rm -rf ./build

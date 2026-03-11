@@ -50,10 +50,14 @@ repos:
     rev: 1.7.9
     hooks:
         - id: bandit
+          name: bandit scan
           args:
             - -q
             - -r
             - tiny_ca
+            - -x tests
+#            - tests
+          pass_filenames: false
 
   - repo: https://github.com/pypa/pip-audit
     rev: v2.7.3

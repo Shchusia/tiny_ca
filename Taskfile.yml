@@ -1,0 +1,78 @@
+# https://taskfile.dev
+
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  default:
+    cmds:
+      - task help
+  help:
+    desc: Show available tasks and their description
+    silent: true
+    cmds:
+      - 'echo ""'
+      - 'echo "Usage: task [task-name] [options]"'
+      - 'echo ""'
+      - 'echo "Available tasks:"'
+      - task --list
+
+  test:
+    desc: Run tests
+    cmds:
+      - coverage run -m pytest tests -s --cov=my_utilities --cov-branch --cov-report=term-missing -o log_cli=true
+    silent: true
+
+  publishtest:
+    desc: Run tests and publish results to https://coveralls.io/
+    cmds:
+      - pytest tests -s --cov=my_utilities --cov-report=term-missing
+      - coverage xml
+      - coveralls
+
+
+  lint:
+    desc: Check code by linters
+    cmds:
+      - uv run black ./tiny_ca  --config=pyproject.toml
+      - uv run ruff  check ./tiny_ca --fix  --config=pyproject.toml
+      - uv run mypy ./tiny_ca --no-strict-optional --ignore-missing-imports --config-file=pyproject.toml
+
+  sync:
+    desc: Update libs
+    cmds:
+      - uv sync -U --group lint --group tests --group docs
+
+  build:
+    desc: Build library
+    cmds:
+      - rm -rf dist
+      - uv build
+
+  publish:
+    desc: Publish the compiled library
+    cmds:
+      - uv publish
+  init_docs:
+    desc: init docs
+    cmds:
+      - mkdir docs
+      - cd docs
+      - sphinx-quickstart
+      - echo 'change `./docs/conf.py`'
+  docs:
+    desc: Generate documentation
+    dir: ./docs
+    cmds:
+      - rm -rf docs/build docs/source/modules
+      - uv run sphinx-apidoc -f -o source/modules ../my_utilities
+      - mv -f source/modules/my_utilities.rst source/modules/modules.rst
+      - uv run make html
+      - cp -r -f build/html/* ./
+      - rm -rf ./build
+
+  docspub:
+    desc: publish docs in git (use after commit changes)
+    cmds:
+      - git subtree push --prefix _build/html origin gh-pages

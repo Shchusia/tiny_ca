@@ -17,6 +17,20 @@ lint = [
     "pre-commit>=4.5.1",
     "ruff>=0.15.5",
 ]
+tests = [
+    "coverage>=7.13.4",
+    "coveralls>=4.1.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+]
+docs = [
+    "autodoc-pydantic>=2.2.0",
+    "furo>=2025.9.25",
+    "sphinx>=8.2.3",
+    "sphinx-autobuild>=2025.8.25",
+    "sphinx-autodoc-typehints>=3.5.2",
+    "sphinx-rtd-theme>=3.0.2",
+]
 
 [tool.black]
 line-length = 88
@@ -79,6 +93,7 @@ no_strict_optional = true
 warn_unused_ignores = true
 disallow_subclassing_any = false
 disallow_untyped_defs = true
+warn_redundant_casts=true
 
 [[tool.mypy.overrides]]
 module = "*"

@@ -56,7 +56,6 @@ repos:
             - -r
             - tiny_ca
             - -x tests
-#            - tests
           pass_filenames: false
 
   - repo: https://github.com/pypa/pip-audit

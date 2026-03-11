@@ -57,7 +57,7 @@ class CertSerialParser:
         >>> serial = CertSerialParser.raw(my_cert)
         >>> record = db.get_by_serial(serial)
         """
-        return cast(int, cert.serial_number)
+        return int(cert.serial_number)
 
     @staticmethod
     def typed(cert: x509.Certificate) -> tuple[CertType | None, str]:

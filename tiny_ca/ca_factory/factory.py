@@ -28,6 +28,7 @@ import datetime
 import ipaddress
 from logging import Logger
 import os
+from typing import Any, cast
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -368,7 +369,7 @@ class CertificateFactory:
             revoked = (
                 x509.RevokedCertificateBuilder()
                 .serial_number(int(record.serial_number))
-                .revocation_date(record.revocation_date)
+                .revocation_date(record.revocation_date)  # type: ignore
                 .build()
             )
             builder = builder.add_revoked_certificate(revoked)
@@ -424,10 +425,10 @@ class CertificateFactory:
             )
 
         try:
-            self._ca.ca_cert.public_key().verify(
+            self._ca.ca_cert.public_key().verify(  # type: ignore
                 cert.signature,
                 cert.tbs_certificate_bytes,
-                padding.PKCS1v15(),
+                padding.PKCS1v15(),  # type: ignore
                 cert.signature_hash_algorithm,
             )
         except Exception as exc:
@@ -464,7 +465,7 @@ class CertificateFactory:
         x509.Name
             Fully constructed Subject name ready for use in a certificate builder.
         """
-        attrs: list[x509.NameAttribute] = []
+        attrs: list[x509.NameAttribute[Any]] = []
         info = self._ca.base_info
 
         if info.country:
@@ -595,7 +596,9 @@ class CertificateFactory:
         if is_server_cert:
             try:
                 cn = csr.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-                san.append(x509.DNSName(cn))
+                san.append(
+                    x509.DNSName(cn if isinstance(cn, str) else cn.decode("utf-8"))
+                )
             except IndexError:
                 pass
         if san_dns:

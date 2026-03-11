@@ -258,6 +258,8 @@ class CAFileLoader:
             raise ErrorLoadCert(path_to_file=self._ca_key_path, exc=str(exc)) from exc
 
         self._logger.info("CA loaded successfully from %s", self._ca_cert_path)
+        if not isinstance(ca_key, rsa.RSAPrivateKey):
+            raise TypeError("CA key must be RSA")
         return ca_cert, ca_key
 
     def _extract_info(self) -> CertificateInfo:

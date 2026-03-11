@@ -252,9 +252,14 @@ class SyncDBHandler(BaseDB):
         """
         session = self._db.session()
         try:
-            common_name: str = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
+            common_name = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
                 0
             ].value
+            common_name = (
+                common_name
+                if isinstance(common_name, str)
+                else common_name.decode("utf-8")
+            )
 
             record = CertificateRecord(
                 serial_number=str(cert.serial_number),
@@ -317,7 +322,7 @@ class SyncDBHandler(BaseDB):
             )
             result = session.execute(stmt)
             session.commit()
-            deleted = bool(result.rowcount > 0)
+            deleted = result.rowcount > 0 if hasattr(result, "rowcount") else False
             self._logger.info(
                 "delete_certificate_by_serial(%d) → deleted=%s", serial, deleted
             )
@@ -383,8 +388,8 @@ class SyncDBHandler(BaseDB):
                 return False, RevokeStatus.NOT_FOUND
 
             cert.status = CertificateStatus.REVOKED
-            cert.revocation_reason = reason.value if hasattr(reason, "value") else 0
-            cert.revocation_date = datetime.datetime.now(datetime.UTC)
+            cert.revocation_reason = reason.value if hasattr(reason, "value") else 0  # type: ignore
+            cert.revocation_date = datetime.datetime.now(datetime.UTC)  # type: ignore
 
             session.commit()
             self._logger.info(
@@ -445,9 +450,8 @@ class SyncDBHandler(BaseDB):
                 CertificateRecord.not_valid_after > now,
                 CertificateRecord.revocation_date > cutoff,
             )
-            rows = session.execute(stmt).all()
-            self._logger.debug("get_revoked_certificates → %d rows", len(rows))
-            yield from rows
+            rows = session.execute(stmt)
+            yield from rows  # type: ignore
         except Exception as exc:
             self._logger.error(
                 "get_revoked_certificates failed: %s", exc, exc_info=True

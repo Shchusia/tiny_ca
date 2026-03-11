@@ -120,7 +120,7 @@ class _CertSerializer:
 
         if isinstance(
             cert,
-            cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest,
+            cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest,  # type: ignore
         ):
             return cert.public_bytes(encoding=encoding), ".csr"
 

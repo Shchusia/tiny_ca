@@ -99,7 +99,7 @@ class CertLifetime:
             ``cert.not_valid_after_utc`` with ``tzinfo`` explicitly set to
             ``timezone.utc``.
         """
-        return cast(datetime, cert.not_valid_after_utc).replace(tzinfo=UTC)
+        return cert.not_valid_after_utc.replace(tzinfo=UTC)
 
     @staticmethod
     def valid_from(cert: x509.Certificate) -> datetime:
@@ -121,4 +121,4 @@ class CertLifetime:
             ``cert.not_valid_before_utc`` with ``tzinfo`` explicitly set to
             ``timezone.utc``.
         """
-        return cast(datetime, cert.not_valid_after_utc).replace(tzinfo=UTC)
+        return cert.not_valid_after_utc.replace(tzinfo=UTC)

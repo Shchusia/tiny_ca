@@ -33,7 +33,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 CryptoObject = (
     x509.Certificate
     | x509.CertificateRevocationList
-    | cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest
+    | cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest  # type: ignore
     | rsa.RSAPrivateKey
     | rsa.RSAPublicKey
 )

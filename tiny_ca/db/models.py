@@ -27,7 +27,7 @@ Design notes
 from __future__ import annotations
 
 from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import Mapped, declarative_base
 
 from tiny_ca.const import CertType
 
@@ -101,7 +101,7 @@ class CertificateRecord(Base):  # type: ignore
         nullable=False,
         comment="CN extracted from the certificate Subject at issuance time.",
     )
-    status = Column(
+    status: Mapped[str] = Column(  # type: ignore
         String,
         default=CertificateStatus.VALID,
         comment="Lifecycle state: valid | revoked | expired | unknown.",
@@ -132,8 +132,8 @@ class CertificateRecord(Base):  # type: ignore
         nullable=True,
         comment="UTC timestamp of revocation. NULL for non-revoked certificates.",
     )
-    revocation_reason = Column(
-        Integer,
+    revocation_reason: Mapped[str] = Column(  # type: ignore
+        String,
         nullable=True,
         comment="RFC 5280 §5.3.1 reason code integer. NULL for non-revoked certificates.",
     )

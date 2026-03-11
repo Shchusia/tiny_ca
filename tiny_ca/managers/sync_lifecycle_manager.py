@@ -661,7 +661,7 @@ class CertLifecycleManager:
                 reason=x509.ReasonFlags.key_compromise,
             )
             self._storage.delete_certificate_folder(
-                uuid_str=existing.uuid, cert_path=cert_path
+                uuid_str=str(existing.uuid), cert_path=cert_path
             )
 
         self._db.register_cert_in_db(

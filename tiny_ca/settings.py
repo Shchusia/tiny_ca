@@ -1,6 +1,6 @@
 from logging import DEBUG, Formatter, StreamHandler, getLogger
 
-DEFAULT_LOGGER = getLogger("rag_llm")
+DEFAULT_LOGGER = getLogger("TinyCA")
 DEFAULT_LOGGER.setLevel(DEBUG)
 _console_handler = StreamHandler()
 _formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")

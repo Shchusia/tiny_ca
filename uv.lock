@@ -796,6 +796,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/46/2c/9664130905f03db57961b8980b05cab624afd114bf2be2576628a9f22da4/sqlalchemy-2.0.48-py3-none-any.whl", hash = "sha256:a66fe406437dd65cacd96a72689a3aaaecaebbcd62d81c5ac1c0fdbeac835096", size = 1940202, upload-time = "2026-03-02T15:52:43.285Z" },
 ]
 
+[package.optional-dependencies]
+mypy = [
+    { name = "mypy" },
+]
+
 [[package]]
 name = "tiny-ca"
 version = "0.1.0"
@@ -803,7 +808,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "cryptography" },
     { name = "pydantic", extra = ["email"] },
-    { name = "sqlalchemy" },
+    { name = "sqlalchemy", extra = ["mypy"] },
 ]
 
 [package.dev-dependencies]
@@ -818,7 +823,7 @@ lint = [
 requires-dist = [
     { name = "cryptography", specifier = ">=46.0.5" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.12.5" },
-    { name = "sqlalchemy", specifier = ">=2.0.48" },
+    { name = "sqlalchemy", extras = ["mypy"], specifier = ">=2.0.48" },
 ]
 
 [package.metadata.requires-dev]

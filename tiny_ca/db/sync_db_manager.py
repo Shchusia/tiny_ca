@@ -39,8 +39,8 @@ from tiny_ca.const import CertType
 from tiny_ca.settings import DEFAULT_LOGGER
 
 from .base_db import BaseDB
-from .const import RevokeStatus
-from .models import Base, CertificateRecord, CertificateStatus
+from .const import CertificateStatus, RevokeStatus
+from .models import Base, CertificateRecord
 
 # ---------------------------------------------------------------------------
 # SRP: engine and session-factory management

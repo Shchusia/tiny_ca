@@ -36,7 +36,7 @@ from cryptography import x509
 from tiny_ca.ca_factory import CertificateFactory
 from tiny_ca.const import CertType
 from tiny_ca.db.base_db import BaseDB
-from tiny_ca.db.models import CertificateStatus
+from tiny_ca.db.const import CertificateStatus
 from tiny_ca.exc import (
     CertNotFound,
     DBNotInitedError,

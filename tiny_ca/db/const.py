@@ -11,7 +11,7 @@ models, and the concrete handler implementations.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 
 
 class RevokeStatus(Enum):
@@ -57,3 +57,36 @@ class RevokeStatus(Enum):
         "Please review the service logs."
     )
     OK = "success"
+
+
+class CertificateStatus(StrEnum):
+    """
+    Lifecycle state of a certificate record in the registry.
+
+    Stored as a lowercase string in the ``status`` column of
+    ``CertificateRecord`` so the value is human-readable in raw SQL output.
+
+    Members
+    -------
+    VALID :
+        The certificate was issued successfully and has not been revoked or
+        expired.  Active certificates used for authentication or encryption
+        are expected to be in this state.
+    REVOKED :
+        The certificate was explicitly revoked before its natural expiry.
+        The ``revocation_date`` and ``revocation_reason`` columns on the
+        corresponding ``CertificateRecord`` row must be non-null.
+    EXPIRED :
+        The certificate's ``not_valid_after`` date has passed.  This status
+        may be set by a background job; alternatively, callers can detect
+        expiry by comparing ``not_valid_after`` to the current time.
+    UNKNOWN :
+        The status could not be determined, typically because no record was
+        found for the requested serial number.  Used as a safe sentinel value
+        by ``CertLifecycleManager.get_certificate_status``.
+    """
+
+    VALID = "valid"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+    UNKNOWN = "unknown"

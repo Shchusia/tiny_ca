@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "cryptography>=46.0.5",
+    "pydantic[email]>=2.12.5",
+    "sqlalchemy>=2.0.48",
+]
 
 [dependency-groups]
 lint = [

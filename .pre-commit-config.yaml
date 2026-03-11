@@ -45,3 +45,19 @@ repos:
         entry: uv run mypy ./tiny_ca --config-file=pyproject.toml
         language: system
         pass_filenames: false
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+        - id: bandit
+          args:
+            - -q
+            - -r
+            - tiny_ca
+
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.3
+    hooks:
+      - id: pip-audit
+        args:
+          - --progress-spinner=off

@@ -1,0 +1,75 @@
+[project]
+name = "tiny-ca"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+lint = [
+    "black>=26.3.0",
+    "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
+    "ruff>=0.15.5",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py311", "py312"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+exclude = [
+  ".git",
+  ".venv",
+  "__pycache__",
+  "build",
+  "dist",
+  "migrations",
+]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+  "E501",
+  "B008",
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["your_package"]
+force-sort-within-sections = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "PLR2004"]
+"test_*.py"     = ["S101", "PLR2004"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+
+# ──────────────────────────────────────────────
+# Mypy
+# ──────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+warn_unreachable = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+
+ignore_missing_imports = false

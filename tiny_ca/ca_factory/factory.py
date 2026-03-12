@@ -378,6 +378,8 @@ class CertificateFactory:
         self._logger.debug("CRL signed successfully")
         return crl
 
+    async abuild_ccrl
+
     def validate_cert(self, cert: x509.Certificate) -> None:
         """
         Verify that *cert* was issued by this CA, is within its validity window,

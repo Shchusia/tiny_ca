@@ -1,50 +1,19 @@
-"""
-Synchronous SQLAlchemy-backed implementation of the certificate registry.
-
-Module-level contents
----------------------
-``DatabaseManager``  — owns the SQLAlchemy engine and session factory.
-                       No domain logic; connection lifecycle only.
-``SyncDBHandler``    — implements ``BaseDB``; all certificate registry
-                       operations with explicit, atomic transaction management.
-
-SOLID notes
------------
-SRP : ``DatabaseManager`` handles engine creation and session provisioning.
-      ``SyncDBHandler`` handles domain operations on ``CertificateRecord`` rows.
-      Neither class knows about the other's internal details.
-OCP : Additional query methods are added to ``SyncDBHandler`` without touching
-      ``DatabaseManager`` or ``BaseDB``.
-LSP : ``SyncDBHandler`` satisfies the full ``BaseDB`` contract and is
-      transparently substitutable in any consumer that depends on ``BaseDB``.
-ISP : ``BaseDB`` is declared in ``db/base_db.py``; this module imports and
-      extends it without adding unrelated methods visible to callers.
-DIP : ``CertLifecycleManager`` depends on ``BaseDB``, never on
-      ``SyncDBHandler`` directly.
-"""
-
-from __future__ import annotations
-
-from collections.abc import Generator
-import datetime
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime, timedelta
 from logging import Logger
 
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import serialization
-from sqlalchemy import create_engine, delete, select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from tiny_ca.const import CertType
-from tiny_ca.settings import DEFAULT_LOGGER
 
+from ..settings import DEFAULT_LOGGER
 from .base_db import BaseDB
 from .const import CertificateStatus, RevokeStatus
 from .models import Base, CertificateRecord
-
-# ---------------------------------------------------------------------------
-# SRP: engine and session-factory management
-# ---------------------------------------------------------------------------
 
 
 class DatabaseManager:
@@ -69,50 +38,23 @@ class DatabaseManager:
         manages the schema independently.
     """
 
-    def __init__(
-        self,
-        db_url: str = "sqlite:///ca_repository.db",
-        create_all: bool = True,
-    ) -> None:
-        self._engine = create_engine(db_url)
-        if create_all:
-            Base.metadata.create_all(self._engine)
-        self._Session: sessionmaker[Session] = sessionmaker(bind=self._engine)
+    def __init__(self, db_url: str = "sqlite+aiosqlite:///ca_repository.db"):
+        self.engine = create_async_engine(db_url, echo=False)
+        self.async_session = async_sessionmaker(
+            self.engine, expire_on_commit=False, class_=AsyncSession
+        )
 
-    def session(self) -> Session:
-        """
-        Provision a new SQLAlchemy ``Session`` bound to the managed engine.
+    async def init_db(self) -> None:
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-        The caller is fully responsible for the session lifecycle: committing
-        successful transactions, rolling back on errors, and closing the
-        session in a ``finally`` block.  Example::
-
-            session = db_manager.session()
-            try:
-                session.add(record)
-                session.commit()
-            except Exception:
-                session.rollback()
-                raise
-            finally:
-                session.close()
-
-        Returns
-        -------
-        Session
-            A new, uncommitted SQLAlchemy ORM session.
-        """
-        return self._Session()
+    def get_session(self) -> AsyncSession:
+        return self.async_session()
 
 
-# ---------------------------------------------------------------------------
-# SRP: domain operations on CertificateRecord rows
-# ---------------------------------------------------------------------------
-
-
-class SyncDBHandler(BaseDB):
+class AsyncDBHandler(BaseDB):
     """
-    Synchronous, SQLAlchemy-backed certificate registry.
+    Asynchronous, SQLAlchemy-backed certificate registry.
 
     Implements the full ``BaseDB`` contract with explicit, atomic transaction
     management.  Every public method follows the same pattern:
@@ -138,11 +80,7 @@ class SyncDBHandler(BaseDB):
         self._logger = logger or DEFAULT_LOGGER
         self._db = DatabaseManager(db_url=db_url)
 
-    # ------------------------------------------------------------------
-    # BaseDB interface
-    # ------------------------------------------------------------------
-
-    def get_by_serial(self, serial: int) -> CertificateRecord | None:
+    async def get_by_serial(self, serial: int) -> CertificateRecord | None:  # type: ignore
         """
         Fetch a single certificate record by its X.509 serial number.
 
@@ -160,23 +98,25 @@ class SyncDBHandler(BaseDB):
             The matching ORM record, or ``None`` if no record exists for
             *serial* or if a database error occurs.
         """
-        session = self._db.session()
-        try:
-            stmt = select(CertificateRecord).where(
-                CertificateRecord.serial_number == str(serial)
-            )
-            cert: CertificateRecord | None = session.execute(stmt).scalar_one_or_none()
-            self._logger.debug("get_by_serial(%d) → %s", serial, cert)
-            return cert
-        except Exception as exc:
-            self._logger.error(
-                "get_by_serial(%d) failed: %s", serial, exc, exc_info=True
-            )
-            return None
-        finally:
-            session.close()
 
-    def get_by_name(self, common_name: str) -> CertificateRecord | None:
+        async with self._db.get_session() as session:
+            try:
+                stmt = select(CertificateRecord).where(
+                    CertificateRecord.serial_number == str(serial)
+                )
+
+                result = await session.execute(stmt)
+                cert: CertificateRecord | None = result.scalar_one_or_none()
+                self._logger.debug("get_by_serial(%d) → %s", serial, cert)
+
+                return cert
+            except Exception as exc:
+                self._logger.error(
+                    "get_by_serial(%d) failed: %s", serial, exc, exc_info=True
+                )
+                return None
+
+    async def get_by_name(self, common_name: str) -> CertificateRecord | None:  # type: ignore[override]
         """
         Fetch the active VALID certificate record for the given Common Name.
 
@@ -195,24 +135,27 @@ class SyncDBHandler(BaseDB):
         CertificateRecord | None
             The matching VALID record, or ``None`` if absent or on DB error.
         """
-        session = self._db.session()
-        try:
-            stmt = select(CertificateRecord).where(
-                CertificateRecord.common_name == common_name,
-                CertificateRecord.status == CertificateStatus.VALID,
-            )
-            cert: CertificateRecord | None = session.execute(stmt).scalar_one_or_none()
-            self._logger.debug("get_by_name(%r) → %s", common_name, cert)
-            return cert
-        except Exception as exc:
-            self._logger.error(
-                "get_by_name(%r) failed: %s", common_name, exc, exc_info=True
-            )
-            return None
-        finally:
-            session.close()
 
-    def register_cert_in_db(
+        async with self._db.get_session() as session:
+            try:
+                stmt = select(CertificateRecord).where(
+                    CertificateRecord.common_name == common_name,
+                    CertificateRecord.status == CertificateStatus.VALID,
+                )
+
+                result = await session.execute(stmt)
+                print(result)
+                cert: CertificateRecord | None = result.scalar_one_or_none()
+                self._logger.debug("get_by_name(%r) → %s", common_name, cert)
+                print(cert)
+                return cert
+            except Exception as exc:
+                self._logger.error(
+                    "get_by_name(%r) failed: %s", common_name, exc, exc_info=True
+                )
+            return None
+
+    async def register_cert_in_db(  # type: ignore[override]
         self,
         cert: x509.Certificate,
         uuid: str,
@@ -250,51 +193,49 @@ class SyncDBHandler(BaseDB):
             Re-raised if the certificate contains no CN attribute, indicating
             a malformed certificate that should not be stored.
         """
-        session = self._db.session()
-        try:
-            common_name = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
-                0
-            ].value
-            common_name = (
-                common_name
-                if isinstance(common_name, str)
-                else common_name.decode("utf-8")
-            )
 
-            record = CertificateRecord(
-                serial_number=str(cert.serial_number),
-                common_name=common_name,
-                not_valid_before=cert.not_valid_before_utc,
-                not_valid_after=cert.not_valid_after_utc,
-                certificate_pem=cert.public_bytes(serialization.Encoding.PEM).decode(
-                    "utf-8"
-                ),
-                status=CertificateStatus.VALID,
-                key_type=key_type.value,
-                uuid=uuid,
-            )
-            session.add(record)
-            session.commit()
-            self._logger.info(
-                "Certificate registered: CN=%r, serial=%s, uuid=%s",
-                common_name,
-                cert.serial_number,
-                uuid,
-            )
-            return True
-        except Exception as exc:
-            session.rollback()
-            self._logger.error(
-                "register_cert_in_db failed (serial=%s): %s",
-                cert.serial_number,
-                exc,
-                exc_info=True,
-            )
-            return False
-        finally:
-            session.close()
+        async with self._db.get_session() as session:
+            try:
+                common_name = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
+                    0
+                ].value
+                common_name = (
+                    common_name
+                    if isinstance(common_name, str)
+                    else common_name.decode("utf-8")
+                )
+                new_cert = CertificateRecord(
+                    serial_number=str(cert.serial_number),
+                    common_name=common_name,
+                    not_valid_before=cert.not_valid_before_utc,
+                    not_valid_after=cert.not_valid_after_utc,
+                    certificate_pem=cert.public_bytes(
+                        serialization.Encoding.PEM
+                    ).decode("utf-8"),
+                    status=CertificateStatus.VALID,
+                    key_type=key_type.value,
+                    uuid=uuid,
+                )
+                session.add(new_cert)
+                await session.commit()
+                self._logger.info(
+                    "Certificate registered: CN=%r, serial=%s, uuid=%s",
+                    common_name,
+                    cert.serial_number,
+                    uuid,
+                )
+                return True
+            except Exception as exc:
+                await session.rollback()
+                self._logger.error(
+                    "register_cert_in_db failed (serial=%s): %s",
+                    cert.serial_number,
+                    exc,
+                    exc_info=True,
+                )
+                return False
 
-    def revoke_certificate(
+    async def revoke_certificate(  # type: ignore[override]
         self,
         serial_number: int,
         reason: x509.ReasonFlags = x509.ReasonFlags.unspecified,
@@ -327,41 +268,47 @@ class SyncDBHandler(BaseDB):
             ``(False, RevokeStatus.NOT_FOUND)``     — no VALID cert with that serial.
             ``(False, RevokeStatus.UNKNOWN_ERROR)`` — unexpected internal error.
         """
-        session = self._db.session()
-        try:
-            stmt = select(CertificateRecord).where(
-                CertificateRecord.serial_number == str(serial_number),
-                CertificateRecord.status == CertificateStatus.VALID,
-            )
-            cert: CertificateRecord | None = session.execute(stmt).scalar_one_or_none()
 
-            if cert is None:
-                self._logger.warning(
-                    "revoke_certificate: no VALID record found for serial=%d",
-                    serial_number,
+        async with self._db.get_session() as session:
+            try:
+                stmt = select(CertificateRecord).where(
+                    CertificateRecord.serial_number == str(serial_number),
+                    CertificateRecord.status == CertificateStatus.VALID,
                 )
-                return False, RevokeStatus.NOT_FOUND
 
-            cert.status = CertificateStatus.REVOKED
-            cert.revocation_reason = reason.value if hasattr(reason, "value") else 0  # type: ignore
-            cert.revocation_date = datetime.datetime.now(datetime.UTC)  # type: ignore
+                result = await session.execute(stmt)
+                cert: CertificateRecord | None = result.scalar_one_or_none()
+                self._logger.debug("get_by_serial(%d) → %s", serial_number, cert)
 
-            session.commit()
-            self._logger.info(
-                "Certificate revoked: serial=%d, reason=%s", serial_number, reason
-            )
-            return True, RevokeStatus.OK
+                if cert is None:
+                    self._logger.warning(
+                        "revoke_certificate: no VALID record found for serial=%d",
+                        serial_number,
+                    )
+                    return False, RevokeStatus.NOT_FOUND
+                cert.status = CertificateStatus.REVOKED
+                cert.revocation_reason = reason.value if hasattr(reason, "value") else 0  # type: ignore
+                cert.revocation_date = datetime.now(UTC)  # type: ignore
 
-        except Exception as exc:
-            session.rollback()
-            self._logger.error(
-                "revoke_certificate(%d) failed: %s", serial_number, exc, exc_info=True
-            )
-            return False, RevokeStatus.UNKNOWN_ERROR
-        finally:
-            session.close()
+                await session.commit()
+                self._logger.info(
+                    "Certificate revoked: serial=%d, reason=%s", serial_number, reason
+                )
+                return True, RevokeStatus.OK
 
-    def get_revoked_certificates(self) -> Generator[CertificateRecord, None, None]:
+            except Exception as exc:
+                await session.rollback()
+                self._logger.error(
+                    "revoke_certificate(%d) failed: %s",
+                    serial_number,
+                    exc,
+                    exc_info=True,
+                )
+                return False, RevokeStatus.UNKNOWN_ERROR
+
+    async def get_revoked_certificates(  # type:ignore
+        self,
+    ) -> AsyncGenerator[CertificateRecord, None]: #type:ignore
         """
         Yield revoked certificate rows relevant for the current CRL window.
 
@@ -391,11 +338,11 @@ class SyncDBHandler(BaseDB):
         session is closed in the ``finally`` block; do not use the yielded
         rows after the generator has been exhausted or abandoned.
         """
-        now = datetime.datetime.now(datetime.UTC)
-        cutoff = now - datetime.timedelta(days=365)
 
-        session = self._db.session()
-        try:
+        now = datetime.now(UTC)
+        cutoff = now - timedelta(days=365)
+
+        async with self._db.get_session() as session:
             stmt = select(
                 CertificateRecord.serial_number,
                 CertificateRecord.revocation_date,
@@ -405,11 +352,7 @@ class SyncDBHandler(BaseDB):
                 CertificateRecord.not_valid_after > now,
                 CertificateRecord.revocation_date > cutoff,
             )
-            rows = session.execute(stmt)
-            yield from rows  # type: ignore
-        except Exception as exc:
-            self._logger.error(
-                "get_revoked_certificates failed: %s", exc, exc_info=True
-            )
-        finally:
-            session.close()
+            result = await session.stream(stmt)
+
+            async for row in result:
+                yield row

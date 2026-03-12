@@ -121,28 +121,6 @@ class BaseDB(ABC):
         """
 
     @abstractmethod
-    def delete_certificate_by_serial(self, serial: int) -> bool:
-        """
-        Permanently remove the certificate record identified by *serial*.
-
-        .. warning::
-            This is a hard delete that cannot be undone.  For audit-compliant
-            workflows use :meth:`revoke_certificate` instead, which retains
-            the record with a ``REVOKED`` status.
-
-        Parameters
-        ----------
-        serial : int
-            Serial number of the record to delete.
-
-        Returns
-        -------
-        bool
-            ``True`` if at least one row was deleted (i.e. *serial* existed).
-            ``False`` if no matching record was found or the operation failed.
-        """
-
-    @abstractmethod
     def revoke_certificate(
         self,
         serial_number: int,

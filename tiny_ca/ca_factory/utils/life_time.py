@@ -9,6 +9,7 @@ instantiation.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
@@ -122,3 +123,77 @@ class CertLifetime:
             ``timezone.utc``.
         """
         return cert.not_valid_after_utc.replace(tzinfo=UTC)
+
+    @staticmethod
+    async def compute_async(
+        valid_from: datetime | None = None,
+        days_valid: int = 365,
+    ) -> tuple[datetime, datetime]:
+        """
+        Async-версія :meth:`compute`.
+
+        Виконує обчислення в пулі потоків, щоб не блокувати event loop.
+
+        Parameters
+        ----------
+        valid_from : datetime | None
+            Початок вікна дійсності (UTC). ``None`` → поточний UTC-час.
+        days_valid : int
+            Тривалість у календарних днях. За замовчуванням: ``365``.
+
+        Returns
+        -------
+        tuple[datetime, datetime]
+            ``(not_before, not_after)`` в UTC.
+
+        Raises
+        ------
+        InvalidRangeTimeCertificate
+            Якщо обчислена дата закінчення вже в минулому.
+
+        Examples
+        --------
+        #>>> start, end = await CertLifetime.compute_async(days_valid=90)
+        #>>> assert (end - start).days == 90
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: CertLifetime.compute(valid_from, days_valid),
+        )
+
+    @staticmethod
+    async def valid_to_async(cert: x509.Certificate) -> datetime:
+        """
+        Async-версія :meth:`valid_to`.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            Сертифікат, дату закінчення якого потрібно прочитати.
+
+        Returns
+        -------
+        datetime
+            ``cert.not_valid_after_utc`` з ``tzinfo=UTC``.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, CertLifetime.valid_to, cert)
+
+    @staticmethod
+    async def valid_from_async(cert: x509.Certificate) -> datetime:
+        """
+        Async-версія :meth:`valid_from`.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            Сертифікат, дату початку дії якого потрібно прочитати.
+
+        Returns
+        -------
+        datetime
+            ``cert.not_valid_before_utc`` з ``tzinfo=UTC``.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, CertLifetime.valid_from, cert)

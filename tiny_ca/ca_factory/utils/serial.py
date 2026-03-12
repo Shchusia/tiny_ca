@@ -10,6 +10,7 @@ that have already been issued.
 
 from __future__ import annotations
 
+import asyncio
 from typing import cast
 
 from cryptography import x509
@@ -97,3 +98,54 @@ class CertSerialParser:
         >>> assert name.startswith("nginx")
         """
         return SerialWithEncoding.parse(cert.serial_number)
+
+    @staticmethod
+    async def raw_async(cert: x509.Certificate) -> int:
+        """
+        Async-версія :meth:`raw`.
+
+        Виконує читання в пулі потоків, щоб не блокувати event loop.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            Сертифікат, серійний номер якого потрібно прочитати.
+
+        Returns
+        -------
+        int
+            Серійний номер як ``int``.
+
+        Examples
+        --------
+        #>>> serial = await CertSerialParser.raw_async(my_cert)
+        #>>> record = await db.get_by_serial(serial)
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, CertSerialParser.raw, cert)
+
+    @staticmethod
+    async def typed_async(cert: x509.Certificate) -> tuple[CertType | None, str]:
+        """
+        Async-версія :meth:`typed`.
+
+        Декодує серійний номер сертифіката у вбудовані тип та ім'я,
+        не блокуючи event loop.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            Сертифікат для декодування.
+
+        Returns
+        -------
+        tuple[CertType | None, str]
+            ``(cert_type, name_prefix)``
+
+        Examples
+        --------
+        #>>> cert_type, name = await CertSerialParser.typed_async(my_cert)
+        >>> assert name.startswith("nginx")
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, CertSerialParser.typed, cert)

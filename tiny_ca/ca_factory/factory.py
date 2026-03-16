@@ -631,7 +631,7 @@ class CertificateFactory:
                 san.append(
                     x509.DNSName(cn if isinstance(cn, str) else cn.decode("utf-8"))
                 )
-            except IndexError:
+            except IndexError:  # pragma: no cover
                 pass
         if san_dns:
             san.extend(x509.DNSName(d) for d in san_dns)

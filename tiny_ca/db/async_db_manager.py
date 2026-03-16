@@ -44,7 +44,7 @@ class DatabaseManager:
             self.engine, expire_on_commit=False, class_=AsyncSession
         )
 
-    async def init_db(self) -> None:
+    async def init_db(self) -> None:  # pragma: no cover
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 

@@ -52,15 +52,6 @@ class ErrorLoadCert(CryptoException):
         self.message = message
 
 
-class NotUniqueSerial(CryptoException):
-    def __init__(
-        self,
-    ) -> None:
-        message = "Not unique serial. Use other name or, use is_overwrite=True"
-        super().__init__(message)
-        self.message = message
-
-
 class InvalidRangeTimeCertificate(CryptoException):
     def __init__(self, valid_from: datetime, valid_to: datetime, now: datetime) -> None:
         message = f"""The data provided for certificate generation is not valid.

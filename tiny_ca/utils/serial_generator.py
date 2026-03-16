@@ -528,21 +528,3 @@ class SerialWithEncoding:
             Integer with the lower :attr:`NAME_BITS` set to 1.
         """
         return (1 << cls.NAME_BITS) - 1
-
-
-if __name__ == "__main__":
-    # SerialWithEncoding round-trip
-    serial = SerialWithEncoding.generate("nginx", CertType.DEVICE)
-    s_type, recovered_name = SerialWithEncoding.parse(serial)
-    print(f"serial  : {serial}")
-    print(f"hex     : {hex(serial)}")
-    print(f"type    : {s_type}")
-    print(f"name    : {recovered_name}")  # expected: "ngin" (first 4 chars)
-
-    # SerialGenerator round-trip
-    gen = SerialGenerator()
-    s1 = gen.generate("my-service", CertType.SERVICE)
-    s2 = gen.generate(42, CertType.USER)
-    print("\nSerialGenerator:")
-    print(f"  string serial → {gen.parse(s1)}")
-    print(f"  int serial    → {gen.parse(s2)}")

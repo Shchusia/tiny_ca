@@ -1,5 +1,11 @@
 # tiny_ca
 
+[![Coverage Status](https://img.shields.io/badge/%20Python%20Versions-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
+[![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
+
+[![Coverage Status](https://img.shields.io/badge/Version-0.1.0-informational)](https://pypi.org/project/tiny_ca/)
+[![Coverage Status](https://img.shields.io/badge/Docs-passed-green)](https://shchusia.github.io/tiny_ca/)
+
 A lightweight Python library for managing the full lifecycle of X.509 certificates — from bootstrapping a self-signed root CA to issuing, revoking, and rotating end-entity certificates, generating CRLs, and persisting all artefacts to local storage backed by a relational database.
 
 ---
@@ -211,7 +217,7 @@ async def main():
 
     # Issue
     cert, key, csr = await mgr.issue_certificate(
-        ClientConfig(common_name="api.internal", serial_type=CertType.SERVICE,
+        ClientConfig(common_name="modules.internal", serial_type=CertType.SERVICE,
                      key_size=2048, days_valid=365, is_server_cert=True)
     )
     print("Issued:", cert.serial_number)

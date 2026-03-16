@@ -1,0 +1,570 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
+
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>tiny_ca.ca_factory.factory module - tiny_ca 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+
+
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+
+      }
+    }
+  }
+</style></head>
+  <body>
+
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+
+  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/modules/tiny_ca.ca_factory.factory.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-tiny_ca.ca_factory.factory">
+<span id="tiny-ca-ca-factory-factory-module"></span><h1>tiny_ca.ca_factory.factory module<a class="headerlink" href="#module-tiny_ca.ca_factory.factory" title="Link to this heading">¶</a></h1>
+<p>factory.py</p>
+<p>X.509 certificate factory: issues end-entity certificates, builds self-signed
+CA certificates, generates CRLs, and validates certificate chains.</p>
+<p>This module contains a single public class, <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code>, whose only
+responsibility is cryptographic construction.  It never touches the filesystem,
+the database, or any business-logic layer.</p>
+<section id="solid-notes">
+<h2>SOLID notes<a class="headerlink" href="#solid-notes" title="Link to this heading">¶</a></h2>
+<dl>
+<dt>SRP<span class="classifier"><code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> handles cryptographic generation only.</span></dt><dd><p>File persistence → <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code>.  DB registration → <code class="docutils literal notranslate"><span class="pre">BaseDB</span></code>.</p>
+</dd>
+<dt>OCP<span class="classifier">New X.509 extension types are added in <code class="docutils literal notranslate"><span class="pre">_build_extensions</span></code> without</span></dt><dd><p>modifying any other method.</p>
+</dd>
+</dl>
+<p>LSP : Any <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> implementation can be swapped in transparently.
+ISP : <code class="docutils literal notranslate"><span class="pre">SerialWithEncoding</span></code> and <code class="docutils literal notranslate"><span class="pre">CertLifetime</span></code> are separate utility modules;</p>
+<blockquote>
+<div><p>only the symbols needed here are imported.</p>
+</div></blockquote>
+<dl>
+<dt>DIP<span class="classifier">CA material is provided through the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol injected at</span></dt><dd><p>construction time; the factory never instantiates a loader itself.</p>
+</dd>
+</dl>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.factory.</span></span><span class="sig-name descname"><span class="pre">CertificateFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Cryptographic factory for X.509 certificates, CSRs, and CRLs.</p>
+<p><code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> is the single source of all certificate-generation
+logic in the library.  It accepts an <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> at construction time and
+uses the CA certificate and key it provides to sign all issued artefacts.</p>
+<section id="responsibilities">
+<h2>Responsibilities<a class="headerlink" href="#responsibilities" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Generate self-signed root CA certificates (<code class="docutils literal notranslate"><span class="pre">build_self_signed_ca</span></code>).</p></li>
+<li><p>Issue end-entity certificates signed by the loaded CA (<code class="docutils literal notranslate"><span class="pre">issue_certificate</span></code>).</p></li>
+<li><p>Build and sign Certificate Revocation Lists (<code class="docutils literal notranslate"><span class="pre">build_crl</span></code>).</p></li>
+<li><p>Validate an existing certificate against the loaded CA (<code class="docutils literal notranslate"><span class="pre">validate_cert</span></code>).</p></li>
+</ul>
+</section>
+<section id="out-of-scope">
+<h2>Out of scope<a class="headerlink" href="#out-of-scope" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Writing any files to disk.</p></li>
+<li><p>Recording certificates in a database.</p></li>
+<li><p>Business-level rules (duplicate CN detection, rotation policies, etc.).</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">type ca_loader<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.ICALoader" title="tiny_ca.ca_factory.utils.file_loader.ICALoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">ICALoader</span></code></a></span></p>
+</dd>
+<dt class="field-even">param ca_loader<span class="colon">:</span></dt>
+<dd class="field-even"><p>Provider of the CA certificate, private key, and base Subject info.
+Must satisfy the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol (see <code class="docutils literal notranslate"><span class="pre">file_loader.py</span></code>).</p>
+</dd>
+<dt class="field-odd">type ca_loader<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ICALoader</p>
+</dd>
+<dt class="field-even">type logger<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-odd">param logger<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Logger for operational messages.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>
+when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">type logger<span class="colon">:</span></dt>
+<dd class="field-even"><p>Logger | None</p>
+</dd>
+<dt class="field-odd">raises TypeError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <em>ca_loader</em> does not implement the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ca_loader</strong> (<a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.ICALoader" title="tiny_ca.ca_factory.utils.file_loader.ICALoader"><em>ICALoader</em></a>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">abuild_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">revoked_certs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.abuild_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRevocationList</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>revoked_certs</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.AsyncGenerator" title="(in Python v3.14)"><em>AsyncGenerator</em></a><em>[</em><a class="reference external" href="https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Row" title="(in SQLAlchemy v2.0)"><em>Row</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.build_crl">
+<span class="sig-name descname"><span class="pre">build_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">revoked_certs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.build_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_crl" title="Link to this definition">¶</a></dt>
+<dd><p>Build and sign a Certificate Revocation List from the provided records.</p>
+<p>Iterates over <em>revoked_certs</em>, adds each entry to the CRL builder, then
+signs the list with the CA private key.  The resulting CRL is valid from
+the current UTC time until <code class="docutils literal notranslate"><span class="pre">now</span> <span class="pre">+</span> <span class="pre">days_valid</span></code> days.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>revoked_certs</strong> (<em>Generator</em><em>[</em><a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><em>CertificateRecord</em></a><em>, </em><em>None</em><em>, </em><em>None</em><em>]</em>) – Iterable of revoked certificate records as returned by
+<code class="docutils literal notranslate"><span class="pre">BaseDB.get_revoked_certificates</span></code>.  Each record must expose
+<code class="docutils literal notranslate"><span class="pre">serial_number</span></code> (castable to <code class="docutils literal notranslate"><span class="pre">int</span></code>) and <code class="docutils literal notranslate"><span class="pre">revocation_date</span></code>
+(a <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object).</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL expires and must be regenerated.
+Typical values are <code class="docutils literal notranslate"><span class="pre">1</span></code> (daily rotation) to <code class="docutils literal notranslate"><span class="pre">7</span></code> (weekly).
+Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The signed CRL object.  The caller is responsible for persisting it
+to storage via <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>x509.CertificateRevocationList</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">build_self_signed_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Internal</span> <span class="pre">CA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'My</span> <span class="pre">Company'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3650</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.build_self_signed_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a self-signed root CA certificate and its private key.</p>
+<p>This is a <code class="docutils literal notranslate"><span class="pre">&#64;staticmethod</span></code> — it requires no loaded CA because the
+resulting certificate is its own issuer.  It is typically called once
+during bootstrap to establish the trust anchor for the PKI.</p>
+<p>The generated certificate includes:
+- <code class="docutils literal notranslate"><span class="pre">BasicConstraints(ca=True)</span></code> — marks it as a CA certificate.
+- <code class="docutils literal notranslate"><span class="pre">KeyUsage</span></code> with <code class="docutils literal notranslate"><span class="pre">key_cert_sign</span></code> and <code class="docutils literal notranslate"><span class="pre">crl_sign</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+- <code class="docutils literal notranslate"><span class="pre">SubjectKeyIdentifier</span></code> derived from the public key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Common Name (CN) for the CA Subject / Issuer fields.
+Default: <code class="docutils literal notranslate"><span class="pre">&quot;Internal</span> <span class="pre">CA&quot;</span></code>.</p></li>
+<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Organization (O) field.  Default: <code class="docutils literal notranslate"><span class="pre">&quot;My</span> <span class="pre">Company&quot;</span></code>.</p></li>
+<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Two-letter ISO 3166-1 alpha-2 country code (C field).
+Default: <code class="docutils literal notranslate"><span class="pre">&quot;UA&quot;</span></code>.</p></li>
+<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – RSA key length in bits.  Use <code class="docutils literal notranslate"><span class="pre">2048</span></code> for standard security or
+<code class="docutils literal notranslate"><span class="pre">4096</span></code> for long-lived roots.  Default: <code class="docutils literal notranslate"><span class="pre">2048</span></code>.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">3650</span></code> (≈10 years).</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity period.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
+<li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>) – Optional logger.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key)</span></code> — both must be persisted by the caller.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[x509.Certificate, rsa.RSAPrivateKey]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry date is already in the past.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate">
+<span class="sig-name descname"><span class="pre">issue_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CertType.SERVICE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_server_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_client_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_dns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.issue_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Issue a signed end-entity certificate for the given subject parameters.</p>
+<p>Workflow:
+1. Generate a fresh RSA key pair.
+2. Build the Subject <code class="docutils literal notranslate"><span class="pre">x509.Name</span></code> from CA base info + <em>common_name</em> / <em>email</em>.
+3. Create a CSR signed with the new private key.
+4. Assemble X.509 extensions (KeyUsage, EKU, SAN, SKI, AKI).
+5. Sign the certificate with the CA key from <code class="docutils literal notranslate"><span class="pre">self._ca</span></code>.</p>
+<p>The Subject inherits <em>country</em> and <em>organization</em> from the CA’s own
+certificate so that all issued certificates share a consistent issuer
+hierarchy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Common Name (CN) for the new certificate’s Subject.</p></li>
+<li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category used when encoding the serial number.
+Default: <code class="docutils literal notranslate"><span class="pre">CertType.SERVICE</span></code>.</p></li>
+<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – RSA key length in bits.  Default: <code class="docutils literal notranslate"><span class="pre">2048</span></code>.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">365</span></code>.</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity period.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
+<li><p><strong>email</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Optional email address added as an <code class="docutils literal notranslate"><span class="pre">emailAddress</span></code> Subject attribute.</p></li>
+<li><p><strong>is_server_cert</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds <code class="docutils literal notranslate"><span class="pre">ServerAuth</span></code> to the Extended Key Usage
+extension and includes <em>common_name</em> as a DNS SAN (RFC 2818
+compliance).</p></li>
+<li><p><strong>is_client_cert</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds <code class="docutils literal notranslate"><span class="pre">ClientAuth</span></code> to the Extended Key Usage
+extension.</p></li>
+<li><p><strong>san_dns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Additional DNS names for the Subject Alternative Name extension.</p></li>
+<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – IP addresses (as strings) for the Subject Alternative Name extension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key,</span> <span class="pre">csr)</span></code> — the certificate and key must
+be persisted by the caller; the CSR is returned for audit purposes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry date is already in the past.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.validate_cert">
+<span class="sig-name descname"><span class="pre">validate_cert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.validate_cert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert" title="Link to this definition">¶</a></dt>
+<dd><p>Verify that <em>cert</em> was issued by this CA, is within its validity window,
+and carries a cryptographically correct signature.</p>
+<p>Three checks are performed in order:
+1. <strong>Issuer match</strong> — <code class="docutils literal notranslate"><span class="pre">cert.issuer</span></code> must equal the CA’s Subject.
+2. <strong>Validity window</strong> — current UTC time must be between</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">cert.not_valid_before_utc</span></code> and <code class="docutils literal notranslate"><span class="pre">cert.not_valid_after_utc</span></code>.</p>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p><strong>Signature</strong> — the CA public key is used to verify the certificate
+signature using PKCS#1 v1.5 with the algorithm declared in the cert.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to validate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns silently when all checks pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><strong>ValidationCertError</strong></a> – If any of the three checks fails.  The message describes which
+    check failed and includes the relevant values (timestamps, issuer).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ca_loader</strong> (<a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.ICALoader" title="tiny_ca.ca_factory.utils.file_loader.ICALoader"><em>ICALoader</em></a>)</p></li>
+<li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+
+        <div class="related-pages">
+
+
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Denis Shchutskyi
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+
+          </div>
+          <div class="right-details">
+
+          </div>
+        </div>
+
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+
+
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">tiny_ca.ca_factory.factory module</a><ul>
+<li><a class="reference internal" href="#solid-notes">SOLID notes</a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory"><code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.__init__"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.abuild_crl()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_certificate()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+
+
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

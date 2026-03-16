@@ -1,5 +1,11 @@
 # tiny_ca
 
+[![Coverage Status](https://img.shields.io/badge/%20Python%20Versions-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
+[![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
+
+[![Coverage Status](https://img.shields.io/badge/Version-0.1.0-informational)](https://pypi.org/project/tiny_ca/)
+[![Coverage Status](https://img.shields.io/badge/Docs-passed-green)](https://shchusia.github.io/tiny_ca/)
+
 Легка Python-бібліотека для керування повним циклом X.509-сертифікатів — від bootstrap самопідписаного кореневого CA до видачі, відкликання та ротації сертифікатів кінцевих сутностей, генерації CRL та збереження всіх артефактів у локальному сховищі з підтримкою реляційної бази даних.
 
 ---
@@ -213,7 +219,7 @@ async def main():
 
     # Видати сертифікат
     cert, key, csr = await mgr.issue_certificate(
-        ClientConfig(common_name="api.internal", serial_type=CertType.SERVICE,
+        ClientConfig(common_name="modules.internal", serial_type=CertType.SERVICE,
                      key_size=2048, days_valid=365, is_server_cert=True)
     )
     print("Видано:", cert.serial_number)

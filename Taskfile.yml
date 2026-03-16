@@ -2,7 +2,7 @@
 
 version: '3'
 
-dotenv: ['.env']
+dotenv: [ '.env' ]
 
 tasks:
   default:
@@ -27,7 +27,7 @@ tasks:
   publishtest:
     desc: Run tests and publish results to https://coveralls.io/
     cmds:
-      - pytest tests -s --cov=tiny_ca  --cov-report=term-missing
+      - uv run pytest tests --cov=tiny_ca --cov-branch --cov-report=term-missing --cov-report=xml -o log_cli=true
       - coverage xml
       - coveralls
 
@@ -69,7 +69,30 @@ tasks:
       - cp -r -f build/html/* ./
       - rm -rf ./build
 
-  docspub:
-    desc: publish docs in git (use after commit changes)
+    # ─────────────────────────────────────────────────────────────────────────
+    # NEW: regenerate docs after code changes without full re-scaffold
+    # ─────────────────────────────────────────────────────────────────────────
+  docs-regen:
+    desc: Regenerate API docs and HTML after source code changes
     cmds:
-      - git subtree push --prefix _build/html origin gh-pages
+      # 1. Re-scan tiny_ca and update/create .rst stubs in source/modules/
+      #    -f  — overwrite existing stubs
+      #    -e  — one file per module (easier to read)
+      #    -M  — put module docs before submodule docs
+      - uv run sphinx-apidoc -f -e -M -o docs/source/modules tiny_ca
+      # 2. Rebuild HTML from updated stubs
+      - uv run sphinx-build -b html docs/source docs/build/html
+      # 3. Copy result to docs/ root so gh-pages / static hosting works
+      - cp -rf docs/build/html/* docs/
+      # 4. Clean up intermediate build artefacts
+      - rm -rf docs/build
+    sources:
+      # Task re-runs only when these files have changed
+      - tiny_ca/**/*.py
+      - docs/source/**/*.rst
+      - docs/source/conf.py
+
+  docspub:
+    desc: Publish docs to gh-pages branch (run after committing changes)
+    cmds:
+      - git subtree push --prefix docs origin gh-pages

@@ -5,7 +5,7 @@ from logging import Logger
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import serialization
-from sqlalchemy import delete, select
+from sqlalchemy import Row, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from tiny_ca.const import CertType
@@ -306,9 +306,9 @@ class AsyncDBHandler(BaseDB):
                 )
                 return False, RevokeStatus.UNKNOWN_ERROR
 
-    async def get_revoked_certificates(  # type:ignore
+    async def get_revoked_certificates(  # type: ignore
         self,
-    ) -> AsyncGenerator[CertificateRecord, None]: #type:ignore
+    ) -> AsyncGenerator[Row[tuple[str, datetime, str]], None]:  # type: ignore
         """
         Yield revoked certificate rows relevant for the current CRL window.
 

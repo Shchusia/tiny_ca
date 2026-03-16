@@ -23,7 +23,7 @@ DIP : CA material is provided through the ``ICALoader`` Protocol injected at
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 import datetime
 import ipaddress
 from logging import Logger
@@ -35,6 +35,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+from sqlalchemy import Row
 
 from ..const import CertType
 from ..db.models import CertificateRecord
@@ -378,7 +379,36 @@ class CertificateFactory:
         self._logger.debug("CRL signed successfully")
         return crl
 
-    async abuild_ccrl
+    async def abuild_crl(
+        self,
+        revoked_certs: AsyncGenerator[Row[tuple[str, datetime.datetime, str]], None],
+        days_valid: int = 1,
+    ) -> x509.CertificateRevocationList:
+
+        now = datetime.datetime.now(datetime.UTC)
+        self._logger.info(
+            "Building CRL: valid until %s",
+            (now + datetime.timedelta(days=days_valid)).isoformat(),
+        )
+
+        builder = (
+            x509.CertificateRevocationListBuilder()
+            .issuer_name(self._ca.ca_cert.subject)
+            .last_update(now)
+            .next_update(now + datetime.timedelta(days=days_valid))
+        )
+
+        async for record in revoked_certs:
+            revoked = (
+                x509.RevokedCertificateBuilder()
+                .serial_number(int(record[0]))
+                .revocation_date(record[1])  # type: ignore
+                .build()
+            )
+            builder = builder.add_revoked_certificate(revoked)
+        crl = builder.sign(self._ca.ca_key, hashes.SHA256(), default_backend())
+        self._logger.debug("CRL signed successfully")
+        return crl
 
     def validate_cert(self, cert: x509.Certificate) -> None:
         """

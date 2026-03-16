@@ -440,16 +440,19 @@ class AsyncCertLifecycleManager:
 
         self._logger.info("Generating CRL: days_valid=%d", days_valid)
 
-        revoked_rows = [
-            row
-            async for row in self._db.get_revoked_certificates()  # type: ignore[union-attr]
-        ]
+        revoked_rows = self._db.get_revoked_certificates()
+        print(type(revoked_rows))
+        crl = await self.factory.abuild_crl(revoked_rows)
+        # revoked_rows = [
+        #     row
+        #     async for row in self._db.get_revoked_certificates()  # type: ignore[union-attr]
+        # ]
 
-        crl = await asyncio.to_thread(
-            self._factory.build_crl,  # type: ignore[union-attr]
-            revoked_certs=iter(revoked_rows),
-            days_valid=days_valid,
-        )
+        # crl = await asyncio.to_thread(
+        #     self._factory.build_crl,  # type: ignore[union-attr]
+        #     revoked_certs=iter(revoked_rows),
+        #     days_valid=days_valid,
+        # )
         path, _ = await self._storage.save_certificate(
             cert=crl, file_name="crl", is_overwrite=True, is_add_uuid=False
         )

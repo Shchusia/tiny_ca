@@ -3,7 +3,7 @@
 [![Coverage Status](https://img.shields.io/badge/%20Python%20Versions-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
 [![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
 
-[![Coverage Status](https://img.shields.io/badge/Version-0.1.0-informational)](https://pypi.org/project/tiny_ca/)
+[![Coverage Status](https://img.shields.io/badge/Version-0.1.1-informational)](https://pypi.org/project/tiny-ca/)
 [![Coverage Status](https://img.shields.io/badge/Docs-passed-green)](https://shchusia.github.io/tiny_ca/)
 
 A lightweight Python library for managing the full lifecycle of X.509 certificates — from bootstrapping a self-signed root CA to issuing, revoking, and rotating end-entity certificates, generating CRLs, and persisting all artefacts to local storage backed by a relational database.

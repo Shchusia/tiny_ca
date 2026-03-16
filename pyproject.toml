@@ -1,7 +1,7 @@
 [project]
 name = "tiny-ca"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.1"
+description = "A lightweight Python library for managing the full lifecycle of X.509 certificates"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

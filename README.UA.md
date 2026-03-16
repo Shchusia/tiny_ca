@@ -3,7 +3,7 @@
 [![Coverage Status](https://img.shields.io/badge/%20Python%20Versions-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
 [![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
 
-[![Coverage Status](https://img.shields.io/badge/Version-0.1.0-informational)](https://pypi.org/project/tiny_ca/)
+[![Coverage Status](https://img.shields.io/badge/Version-0.1.1-informational)](https://pypi.org/project/tiny-ca/)
 [![Coverage Status](https://img.shields.io/badge/Docs-passed-green)](https://shchusia.github.io/tiny_ca/)
 
 Легка Python-бібліотека для керування повним циклом X.509-сертифікатів — від bootstrap самопідписаного кореневого CA до видачі, відкликання та ротації сертифікатів кінцевих сутностей, генерації CRL та збереження всіх артефактів у локальному сховищі з підтримкою реляційної бази даних.

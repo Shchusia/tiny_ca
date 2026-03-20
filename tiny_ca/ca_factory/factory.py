@@ -40,6 +40,7 @@ from sqlalchemy import Row
 from ..const import CertType
 from ..db.models import CertificateRecord
 from ..exc import ValidationCertError
+from ..models.certtificate import CertificateDetails
 from ..settings import DEFAULT_LOGGER
 from ..utils.serial_generator import SerialWithEncoding
 from .utils import CertLifetime, ICALoader
@@ -656,3 +657,291 @@ class CertificateFactory:
         )
 
         return result
+
+    @staticmethod
+    def inspect_certificate(cert: x509.Certificate) -> CertificateDetails:
+        """
+        Extract and return a structured, human-readable summary of *cert*.
+
+        Parses every commonly-used X.509 v3 extension and Subject attribute
+        into plain Python values wrapped in a :class:`CertificateDetails`
+        dataclass.  The method never performs cryptographic verification —
+        use :meth:`validate_cert` for that.  It is therefore safe to call on
+        certificates from *any* issuer.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The certificate to inspect.  May have been issued by this CA or
+            by a completely different PKI.
+
+        Returns
+        -------
+        CertificateDetails
+            A frozen dataclass with the following fields populated:
+
+            - ``serial_number`` — raw integer serial.
+            - ``common_name`` / ``organization`` / ``country`` — first
+              matching Subject attribute, or ``None`` when absent.
+            - ``issuer_cn`` — CN from the Issuer field, or ``None``.
+            - ``not_valid_before`` / ``not_valid_after`` — UTC datetimes.
+            - ``is_ca`` — ``True`` when ``BasicConstraints.ca`` is ``True``.
+            - ``san_dns`` / ``san_ip`` — lists from the SAN extension.
+            - ``key_usage`` — list of enabled ``KeyUsage`` bit names.
+            - ``extended_key_usage`` — list of EKU OID dotted strings.
+            - ``fingerprint_sha256`` — colon-separated uppercase hex.
+            - ``subject_key_identifier`` — hex string or ``None``.
+            - ``public_key_size`` — RSA key bits or ``None``.
+
+        Examples
+        --------
+        >>> details = CertificateFactory.inspect_certificate(cert)
+        >>> print(details.common_name)
+        'nginx.internal'
+        >>> print(details.is_ca)
+        False
+        >>> print(details.fingerprint_sha256[:8])
+        'AB:CD:EF'
+        """
+
+        def _attr(name: x509.Name, oid: x509.ObjectIdentifier) -> str | None:
+            attrs = name.get_attributes_for_oid(oid)
+            return cast(str, attrs[0].value) if attrs else None
+
+        # ── Subject / Issuer ──────────────────────────────────────────
+        common_name = _attr(cert.subject, NameOID.COMMON_NAME)
+        organization = _attr(cert.subject, NameOID.ORGANIZATION_NAME)
+        country = _attr(cert.subject, NameOID.COUNTRY_NAME)
+        issuer_cn = _attr(cert.issuer, NameOID.COMMON_NAME)
+
+        # ── BasicConstraints ─────────────────────────────────────────
+        is_ca = False
+        try:
+            bc = cert.extensions.get_extension_for_class(x509.BasicConstraints)
+            is_ca = bc.value.ca
+        except x509.ExtensionNotFound:
+            pass
+
+        # ── SubjectAlternativeName ────────────────────────────────────
+        san_dns: list[str] = []
+        san_ip: list[str] = []
+        try:
+            san_ext = cert.extensions.get_extension_for_class(
+                x509.SubjectAlternativeName
+            )
+            san_dns = san_ext.value.get_values_for_type(x509.DNSName)
+            san_ip = [
+                str(ip) for ip in san_ext.value.get_values_for_type(x509.IPAddress)
+            ]
+        except x509.ExtensionNotFound:
+            pass
+
+        # ── KeyUsage ─────────────────────────────────────────────────
+        _KU_BITS = (
+            "digital_signature",
+            "content_commitment",
+            "key_encipherment",
+            "data_encipherment",
+            "key_agreement",
+            "key_cert_sign",
+            "crl_sign",
+        )
+        key_usage: list[str] = []
+        try:
+            ku = cert.extensions.get_extension_for_class(x509.KeyUsage).value
+            for bit in _KU_BITS:
+                try:
+                    if getattr(ku, bit):
+                        key_usage.append(bit)
+                except x509.exceptions.UnsupportedGeneralNameType:  # pragma: no cover
+                    pass
+        except x509.ExtensionNotFound:
+            pass
+
+        # ── ExtendedKeyUsage ─────────────────────────────────────────
+        extended_key_usage: list[str] = []
+        try:
+            eku = cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
+            extended_key_usage = [oid.dotted_string for oid in eku]
+        except x509.ExtensionNotFound:
+            pass
+
+        # ── Fingerprint ───────────────────────────────────────────────
+        raw_fp = cert.fingerprint(hashes.SHA256())
+        fingerprint_sha256 = ":".join(f"{b:02X}" for b in raw_fp)
+
+        # ── SubjectKeyIdentifier ──────────────────────────────────────
+        subject_key_identifier: str | None = None
+        try:
+            ski = cert.extensions.get_extension_for_class(
+                x509.SubjectKeyIdentifier
+            ).value
+            subject_key_identifier = ski.digest.hex()
+        except x509.ExtensionNotFound:
+            pass
+
+        # ── Public key size ───────────────────────────────────────────
+        public_key_size: int | None = None
+        pub = cert.public_key()
+        if isinstance(pub, rsa.RSAPublicKey):
+            public_key_size = pub.key_size
+
+        return CertificateDetails(
+            serial_number=cert.serial_number,
+            common_name=common_name,
+            organization=organization,
+            country=country,
+            issuer_cn=issuer_cn,
+            not_valid_before=cert.not_valid_before_utc,
+            not_valid_after=cert.not_valid_after_utc,
+            is_ca=is_ca,
+            san_dns=san_dns,
+            san_ip=san_ip,
+            key_usage=key_usage,
+            extended_key_usage=extended_key_usage,
+            fingerprint_sha256=fingerprint_sha256,
+            subject_key_identifier=subject_key_identifier,
+            public_key_size=public_key_size,
+        )
+
+    # ------------------------------------------------------------------
+    # Certificate co-signing
+    # ------------------------------------------------------------------
+
+    def cosign_certificate(
+        self,
+        cert: x509.Certificate,
+        days_valid: int | None = None,
+        valid_from: datetime.datetime | None = None,
+    ) -> x509.Certificate:
+        """
+        Re-sign an existing certificate with this CA's key and certificate.
+
+        Creates a new ``x509.Certificate`` that preserves the original
+        Subject, public key, and all v3 extensions, but replaces:
+
+        - **Issuer** — set to this CA's Subject.
+        - **AuthorityKeyIdentifier** — updated to reflect this CA's SKI.
+        - **Serial number** — a fresh serial is generated so the co-signed
+          certificate is distinguishable from the original in CRLs and logs.
+        - **Validity window** — optionally overridden via *days_valid* and
+          *valid_from*; when both are ``None`` the original window is
+          preserved exactly.
+
+        The certificate is signed with SHA-256 using ``self._ca.ca_key``.
+
+        .. note::
+            This operation does **not** verify that the original certificate
+            was valid or trusted before co-signing.  Call
+            :meth:`validate_cert` first if pre-validation is required.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The source certificate whose Subject, public key, and extensions
+            are copied into the co-signed output.
+        days_valid : int | None
+            Override the validity duration in calendar days, counted from
+            *valid_from* (or ``now`` when *valid_from* is also ``None``).
+            ``None`` preserves the original ``not_valid_before`` /
+            ``not_valid_after`` window unchanged.
+        valid_from : datetime.datetime | None
+            Override the start of the validity window.  Ignored when
+            *days_valid* is ``None``.  ``None`` + *days_valid* set →
+            uses the current UTC time as the start.
+
+        Returns
+        -------
+        x509.Certificate
+            A new certificate object identical in content to *cert* except
+            for the issuer, AKI, serial number, and (optionally) validity
+            window.  Must be persisted by the caller.
+
+        Raises
+        ------
+        InvalidRangeTimeCertificate
+            If *days_valid* is provided and the computed expiry is already
+            in the past.
+
+        Examples
+        --------
+        >>> cosigned = factory.cosign_certificate(third_party_cert, days_valid=365)
+        >>> assert cosigned.issuer == factory._ca.ca_cert.subject
+        >>> assert cosigned.subject == third_party_cert.subject
+        """
+        self._logger.info(
+            "Co-signing certificate: CN=%s, original_serial=%s",
+            (
+                cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+                if cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+                else "<no CN>"
+            ),
+            cert.serial_number,
+        )
+
+        # ── Validity window ───────────────────────────────────────────
+        if days_valid is not None:
+            not_before, not_after = CertLifetime.compute(valid_from, days_valid)
+        else:
+            not_before = cert.not_valid_before_utc
+            not_after = cert.not_valid_after_utc
+
+        # ── Fresh serial number ───────────────────────────────────────
+        cn_attrs = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        cn_raw = cast(str, cn_attrs[0].value) if cn_attrs else "cosigned"
+        cn_safe = cn_raw.lower().replace(os.sep, "_")
+        new_serial = SerialWithEncoding.generate(
+            name=cn_safe,
+            serial_type=CertType.SERVICE,
+        )
+
+        # ── Rebuild extensions: copy originals, replace AKI ──────────
+        builder = (
+            x509.CertificateBuilder()
+            .subject_name(cert.subject)
+            .issuer_name(self._ca.ca_cert.subject)
+            .public_key(cert.public_key())
+            .serial_number(new_serial)
+            .not_valid_before(not_before)
+            .not_valid_after(not_after)
+        )
+
+        # Copy every extension from the original certificate, but replace
+        # AuthorityKeyIdentifier with one derived from *this* CA.
+        _skip = {x509.AuthorityKeyIdentifier.oid}
+        for ext in cert.extensions:
+            if ext.oid in _skip:
+                continue
+            builder = builder.add_extension(ext.value, critical=ext.critical)
+
+        # Always add a fresh AKI pointing at this CA.
+        try:
+            ca_ski = self._ca.ca_cert.extensions.get_extension_for_class(
+                x509.SubjectKeyIdentifier
+            ).value
+            builder = builder.add_extension(
+                x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ca_ski),
+                critical=False,
+            )
+        except x509.ExtensionNotFound:
+            # CA has no SKI — fall back to issuer name + serial form.
+            builder = builder.add_extension(
+                x509.AuthorityKeyIdentifier(
+                    key_identifier=None,
+                    authority_cert_issuer=[
+                        x509.DirectoryName(self._ca.ca_cert.subject)
+                    ],
+                    authority_cert_serial_number=self._ca.ca_cert.serial_number,
+                ),
+                critical=False,
+            )
+
+        cosigned = builder.sign(self._ca.ca_key, hashes.SHA256(), default_backend())
+
+        self._logger.info(
+            "Certificate co-signed: new_serial=%s, issuer=%s, valid_until=%s",
+            cosigned.serial_number,
+            self._ca.ca_cert.subject.rfc4514_string(),
+            not_after.isoformat(),
+        )
+        return cosigned

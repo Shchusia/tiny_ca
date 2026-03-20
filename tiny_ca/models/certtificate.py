@@ -298,3 +298,77 @@ class CertificateInfo(BaseModel):
         default=None,
         description="Locality / City (L) extracted from the CA certificate Subject.",
     )
+
+
+class CertificateDetails(BaseModel):
+    """
+    Structured read-only snapshot of an ``x509.Certificate``.
+
+    All fields are extracted from the certificate at creation time and stored
+    as plain Python values — no ``cryptography`` objects leak out — so the
+    model is trivially serialisable (JSON, msgpack, etc.).
+    """
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        arbitrary_types_allowed=True,
+    )
+
+    serial_number: int = Field(
+        description="Raw integer serial number as stored in the certificate."
+    )
+
+    common_name: str | None = Field(
+        default=None, description="First commonName (CN) from the Subject."
+    )
+
+    organization: str | None = Field(
+        default=None, description="First organizationName (O) from the Subject."
+    )
+
+    country: str | None = Field(
+        default=None, description="First countryName (C) from the Subject."
+    )
+
+    issuer_cn: str | None = Field(
+        default=None, description="Common Name extracted from the Issuer."
+    )
+
+    not_valid_before: datetime = Field(
+        description="Start of the validity window (UTC)."
+    )
+
+    not_valid_after: datetime = Field(description="End of the validity window (UTC).")
+
+    is_ca: bool = Field(
+        description="True if BasicConstraints marks this certificate as CA."
+    )
+
+    san_dns: list[str] = Field(
+        default_factory=list, description="DNS names from SubjectAlternativeName."
+    )
+
+    san_ip: list[str] = Field(
+        default_factory=list, description="IP addresses from SubjectAlternativeName."
+    )
+
+    key_usage: list[str] = Field(
+        default_factory=list, description="Enabled KeyUsage flags."
+    )
+
+    extended_key_usage: list[str] = Field(
+        default_factory=list, description="OID strings from ExtendedKeyUsage."
+    )
+
+    fingerprint_sha256: str = Field(
+        description="SHA256 fingerprint of the certificate."
+    )
+
+    subject_key_identifier: str | None = Field(
+        default=None, description="SubjectKeyIdentifier hex digest."
+    )
+
+    public_key_size: int | None = Field(
+        default=None, description="RSA key size in bits (None for non-RSA keys)."
+    )

@@ -349,7 +349,7 @@ class AsyncCertLifecycleManager:
             path_to_key,
             path_to_csr,
         )
-        return certificate, private_key, csr
+        return path_to_cert, path_to_key, path_to_csr
 
     # ------------------------------------------------------------------
     # Revocation
@@ -407,7 +407,9 @@ class AsyncCertLifecycleManager:
     # CRL generation
     # ------------------------------------------------------------------
 
-    async def generate_crl(self, days_valid: int = 1) -> x509.CertificateRevocationList:
+    async def generate_crl(
+        self, cert_path: str | None = None, days_valid: int = 1
+    ) -> x509.CertificateRevocationList:
         """
         Build, sign, and persist a fresh Certificate Revocation List.
 
@@ -454,10 +456,14 @@ class AsyncCertLifecycleManager:
         #     days_valid=days_valid,
         # )
         path, _ = await self._storage.save_certificate(
-            cert=crl, file_name="crl", is_overwrite=True, is_add_uuid=False
+            cert_path=cert_path,
+            cert=crl,
+            file_name="crl",
+            is_overwrite=True,
+            is_add_uuid=False,
         )
         self._logger.info("CRL saved to %s", path)
-        return crl
+        return path
 
     # ------------------------------------------------------------------
     # Status and verification
@@ -560,6 +566,7 @@ class AsyncCertLifecycleManager:
         self,
         serial: int,
         config: ClientConfig,
+        cert_path: str | None = None,
     ) -> tuple[x509.Certificate, object, x509.CertificateSigningRequest]:
         """
         Revoke an existing certificate and issue a replacement in a single operation.
@@ -605,7 +612,9 @@ class AsyncCertLifecycleManager:
 
         await self.revoke_certificate(serial=serial, reason=x509.ReasonFlags.superseded)
 
-        new_cert, new_key, new_csr = await self.issue_certificate(config)
+        new_cert, new_key, new_csr = await self.issue_certificate(
+            config, cert_path=cert_path
+        )
         self._logger.info(
             "Rotation complete: old serial=%d replaced by serial=%s",
             serial,
@@ -657,9 +666,7 @@ class AsyncCertLifecycleManager:
         """
 
         existing = await self._db.get_by_name(common_name=common_name)  # type: ignore[union-attr]
-        print("exis", existing)
         if existing:
-            print("exiss")
             if not is_overwrite:
                 self._logger.warning(
                     "Duplicate CN detected: CN=%s is already registered", common_name

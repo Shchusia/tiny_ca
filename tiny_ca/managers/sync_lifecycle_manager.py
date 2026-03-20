@@ -396,7 +396,9 @@ class CertLifecycleManager:
     # CRL generation
     # ------------------------------------------------------------------
 
-    def generate_crl(self, days_valid: int = 1) -> x509.CertificateRevocationList:
+    def generate_crl(
+        self, cert_path: str | None = None, days_valid: int = 1
+    ) -> x509.CertificateRevocationList:
         """
         Build, sign, and persist a fresh Certificate Revocation List.
 
@@ -434,6 +436,7 @@ class CertLifecycleManager:
         )
         path, _ = self._storage.save_certificate(
             cert=crl,
+            cert_path=cert_path,
             file_name="crl",
             is_overwrite=True,
             is_add_uuid=False,

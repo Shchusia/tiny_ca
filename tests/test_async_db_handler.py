@@ -650,9 +650,6 @@ class TestAsyncDBHandlerRegisterCertEdgeCases:
         assert result is True
 
 
-# В файле tests/test_async_db_handler.py, исправьте класс TestAsyncDBHandlerRevokeCertificateEdgeCases:
-
-
 class TestAsyncDBHandlerRevokeCertificateEdgeCases:
     """Test edge cases in revoke_certificate."""
 

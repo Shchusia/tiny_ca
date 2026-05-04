@@ -102,24 +102,24 @@ class CertSerialParser:
     @staticmethod
     async def raw_async(cert: x509.Certificate) -> int:
         """
-        Async-версія :meth:`raw`.
+        Async version of :meth:`raw`.
 
-        Виконує читання в пулі потоків, щоб не блокувати event loop.
+        Contains reading in the thread pool so as not to block the event loop.
 
         Parameters
         ----------
         cert : x509.Certificate
-            Сертифікат, серійний номер якого потрібно прочитати.
+        Certificate, serial number must be read.
 
         Returns
         -------
         int
-            Серійний номер як ``int``.
+        The serial number is ``int``.
 
         Examples
         --------
-        #>>> serial = await CertSerialParser.raw_async(my_cert)
-        #>>> record = await db.get_by_serial(serial)
+        >>> serial = await CertSerialParser.raw_async(my_cert)
+        >>> record = await db.get_by_serial(serial)
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, CertSerialParser.raw, cert)
@@ -127,24 +127,24 @@ class CertSerialParser:
     @staticmethod
     async def typed_async(cert: x509.Certificate) -> tuple[CertType | None, str]:
         """
-        Async-версія :meth:`typed`.
+        Async version of :meth:`typed`.
 
-        Декодує серійний номер сертифіката у вбудовані тип та ім'я,
-        не блокуючи event loop.
+        Decodes the serial number of the certificate for the type of name that is installed,
+        non-blocking event loop.
 
         Parameters
         ----------
         cert : x509.Certificate
-            Сертифікат для декодування.
+        Certificate for decoding.
 
         Returns
         -------
         tuple[CertType | None, str]
-            ``(cert_type, name_prefix)``
+        ``(cert_type, name_prefix)``
 
         Examples
         --------
-        #>>> cert_type, name = await CertSerialParser.typed_async(my_cert)
+        >>> cert_type, name = await CertSerialParser.typed_async(my_cert)
         >>> assert name.startswith("nginx")
         """
         loop = asyncio.get_event_loop()

@@ -255,7 +255,7 @@
 <h2>Design notes<a class="headerlink" href="#design-notes" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">CertificateStatus</span></code> uses <code class="docutils literal notranslate"><span class="pre">StrEnum</span></code> so that values are stored as plain
-strings in the database, making the column human-readable and compatible
+strings in the database, making the Column human-readable and compatible
 with non-Python tooling that queries the database directly.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CertificateRecord</span></code> stores the full PEM-encoded public certificate so the
 certificate can be reconstructed independently of the filesystem artefacts.</p></li>
@@ -292,7 +292,7 @@ generations (e.g. after rotation).</p>
 Defaults to <code class="docutils literal notranslate"><span class="pre">CertificateStatus.VALID</span></code> on insertion.</p>
 </dd>
 <dt>not_valid_before<span class="classifier">datetime</span></dt><dd><p>Start of the certificate’s validity period (UTC, naive datetime as
-stored by SQLAlchemy’s <code class="docutils literal notranslate"><span class="pre">DateTime</span></code> column type).</p>
+stored by SQLAlchemy’s <code class="docutils literal notranslate"><span class="pre">DateTime</span></code> Column type).</p>
 </dd>
 <dt>not_valid_after<span class="classifier">datetime</span></dt><dd><p>End of the certificate’s validity period (UTC, naive datetime).
 Indexed to allow efficient queries for expired certificates.</p>
@@ -335,37 +335,37 @@ for example, any mapped columns or relationships.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.certificate_pem">
-<span class="sig-name descname"><span class="pre">certificate_pem</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.certificate_pem" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">certificate_pem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.certificate_pem" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.common_name">
-<span class="sig-name descname"><span class="pre">common_name</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.common_name" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">common_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.common_name" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.id">
-<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.id" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.id" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.key_type">
-<span class="sig-name descname"><span class="pre">key_type</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.key_type" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">key_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.key_type" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.not_valid_after">
-<span class="sig-name descname"><span class="pre">not_valid_after</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.not_valid_after" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">not_valid_after</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.not_valid_after" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.not_valid_before">
-<span class="sig-name descname"><span class="pre">not_valid_before</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.not_valid_before" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">not_valid_before</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.not_valid_before" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.revocation_date">
-<span class="sig-name descname"><span class="pre">revocation_date</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.revocation_date" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">revocation_date</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><span class="pre">datetime</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.revocation_date" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -375,7 +375,7 @@ for example, any mapped columns or relationships.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.serial_number">
-<span class="sig-name descname"><span class="pre">serial_number</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.serial_number" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">serial_number</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.serial_number" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -385,7 +385,7 @@ for example, any mapped columns or relationships.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.db.models.CertificateRecord.uuid">
-<span class="sig-name descname"><span class="pre">uuid</span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.uuid" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">uuid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/internals.html#sqlalchemy.orm.Mapped" title="(in SQLAlchemy v2.0)"><span class="pre">Mapped</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.db.models.CertificateRecord.uuid" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>

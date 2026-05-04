@@ -4,11 +4,24 @@ version = "0.1.2"
 description = "A lightweight, asynchronous Certificate Authority (CA) for managing SSL/TLS certificates, IoT device telemetry, and automated certificate issuance."
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Denis Shchutskyi", email = "denisshchutskyi@gmail.com" }
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+[project.urls]
+Repository = "https://github.com/Shchusia/tiny_ca"
+
 dependencies = [
     "aiofiles>=25.1.0",
     "aiosqlite>=0.22.1",
     "cryptography>=46.0.5",
-    "pre-commit>=4.5.1",
     "pydantic[email]>=2.12.5",
     "sqlalchemy[mypy]>=2.0.48",
     "types-aiofiles>=25.1.0.20251011",
@@ -39,6 +52,12 @@ docs = [
     "sphinx-autodoc-typehints>=3.5.2",
     "sphinx-rtd-theme>=3.0.2",
 ]
+example = [
+    "psutil>=7.2.2",
+]
+
+[tool.uv.build-backend]
+source-include = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 exclude = ["certs*", "tests*", "examples*"]
@@ -70,7 +89,7 @@ fixable = ["ALL"]
 unfixable = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["your_package"]
+known-first-party = ["tiny_ca"]
 force-sort-within-sections = true
 
 [tool.ruff.lint.per-file-ignores]

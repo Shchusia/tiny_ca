@@ -320,6 +320,41 @@
         <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span></div>
 
 
+<div class="viewcode-block" id="CertLifetime.normalize_dt">
+<a class="viewcode-back" href="../../../../modules/tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.normalize_dt">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize_dt</span><span class="p">(</span><span class="n">dt</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ensure *dt* is a timezone-aware UTC ``datetime``.</span>
+
+<span class="sd">        SQLAlchemy&#39;s ``DateTime`` column stores naive datetimes (no ``tzinfo``).</span>
+<span class="sd">        This helper centralises the normalisation so that lifecycle managers</span>
+<span class="sd">        never duplicate the ``if dt.tzinfo is None`` guard inline.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dt : datetime</span>
+<span class="sd">            Any ``datetime`` object, aware or naive.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        datetime</span>
+<span class="sd">            The same instant expressed as a UTC-aware ``datetime``.</span>
+<span class="sd">            If *dt* already carries ``tzinfo``, it is returned unchanged.</span>
+<span class="sd">            If *dt* is naive it is assumed to represent UTC and ``tzinfo``</span>
+<span class="sd">            is attached via ``.replace(tzinfo=UTC)``.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; naive = datetime(2025, 1, 1, 12, 0, 0)</span>
+<span class="sd">        &gt;&gt;&gt; CertLifetime.normalize_dt(naive).tzinfo is UTC</span>
+<span class="sd">        True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">UTC</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dt</span></div>
+
+
 <div class="viewcode-block" id="CertLifetime.valid_to">
 <a class="viewcode-back" href="../../../../modules/tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.valid_to">[docs]</a>
     <span class="nd">@staticmethod</span>
@@ -377,32 +412,33 @@
         <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">365</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Async-версія :meth:`compute`.</span>
 
-<span class="sd">        Виконує обчислення в пулі потоків, щоб не блокувати event loop.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Async version of :meth:`compute`.</span>
+
+<span class="sd">        Configures the calculations in the thread pool so as not to block the event loop.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        valid_from : datetime | None</span>
-<span class="sd">            Початок вікна дійсності (UTC). ``None`` → поточний UTC-час.</span>
+<span class="sd">        The beginning of the window of action (UTC). ``None`` → exact UTC hour.</span>
 <span class="sd">        days_valid : int</span>
-<span class="sd">            Тривалість у календарних днях. За замовчуванням: ``365``.</span>
+<span class="sd">        Calendar days are trivial. For instructions: ``365``.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        tuple[datetime, datetime]</span>
-<span class="sd">            ``(not_before, not_after)`` в UTC.</span>
+<span class="sd">        ``(not_before, not_after)`` in UTC.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        InvalidRangeTimeCertificate</span>
-<span class="sd">            Якщо обчислена дата закінчення вже в минулому.</span>
+<span class="sd">        The date of completion was calculated as already in the past.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        #&gt;&gt;&gt; start, end = await CertLifetime.compute_async(days_valid=90)</span>
-<span class="sd">        #&gt;&gt;&gt; assert (end - start).days == 90</span>
+<span class="sd">        &gt;&gt;&gt; start, end = await CertLifetime.compute_async(days_valid=90)</span>
+<span class="sd">        &gt;&gt;&gt; assert (end - start).days == 90</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span>
@@ -416,17 +452,17 @@
     <span class="nd">@staticmethod</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">valid_to_async</span><span class="p">(</span><span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Async-версія :meth:`valid_to`.</span>
+<span class="sd">        Async version :meth:`valid_to`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        cert : x509.Certificate</span>
-<span class="sd">            Сертифікат, дату закінчення якого потрібно прочитати.</span>
+<span class="sd">        The certificate and the date of completion must be read.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        datetime</span>
-<span class="sd">            ``cert.not_valid_after_utc`` з ``tzinfo=UTC``.</span>
+<span class="sd">        ``cert.not_valid_after_utc`` with ``tzinfo=UTC``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">valid_to</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span></div>
@@ -437,17 +473,17 @@
     <span class="nd">@staticmethod</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">valid_from_async</span><span class="p">(</span><span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Async-версія :meth:`valid_from`.</span>
+<span class="sd">        Async version :meth:`valid_from`.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        cert : x509.Certificate</span>
-<span class="sd">            Сертифікат, дату початку дії якого потрібно прочитати.</span>
+<span class="sd">        The certificate, the date of the beginning of each one needs to be read.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        datetime</span>
-<span class="sd">            ``cert.not_valid_before_utc`` з ``tzinfo=UTC``.</span>
+<span class="sd">        ``cert.not_valid_before_utc`` with ``tzinfo=UTC``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">valid_from</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span></div>

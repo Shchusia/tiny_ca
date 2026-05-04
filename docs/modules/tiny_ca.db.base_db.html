@@ -274,6 +274,27 @@ provide the actual SQL queries and transaction management.</p>
 Exceptions are reserved for genuine infrastructure failures (connection
 errors, constraint violations, etc.).</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.db.base_db.BaseDB.delete_by_uuid">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">delete_by_uuid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uuid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/base_db.html#BaseDB.delete_by_uuid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.base_db.BaseDB.delete_by_uuid" title="Link to this definition">¶</a></dt>
+<dd><p>Permanently delete the certificate record identified by <em>uuid</em>.</p>
+<p>This is a hard delete — the row is removed from the database.  The
+caller is responsible for also removing the corresponding filesystem
+artefacts via <code class="docutils literal notranslate"><span class="pre">BaseStorage.delete_certificate_folder</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>uuid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The storage folder UUID that uniquely identifies the certificate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if a row was found and deleted; <code class="docutils literal notranslate"><span class="pre">False</span></code> if no matching
+record existed or if a database error occurred.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.db.base_db.BaseDB.get_by_name">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/base_db.html#BaseDB.get_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.base_db.BaseDB.get_by_name" title="Link to this definition">¶</a></dt>
 <dd><p>Retrieve the currently active certificate record for a given Common Name.</p>
@@ -315,6 +336,26 @@ REVOKED, EXPIRED), or <code class="docutils literal notranslate"><span class="pr
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.db.base_db.BaseDB.get_expiring">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_expiring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/base_db.html#BaseDB.get_expiring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.base_db.BaseDB.get_expiring" title="Link to this definition">¶</a></dt>
+<dd><p>Return VALID certificates that expire within <em>within_days</em> calendar days.</p>
+<p>Only records with <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">==</span> <span class="pre">VALID</span></code> are considered — already-revoked
+or expired records are excluded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>within_days</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Look-ahead window in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">30</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Records ordered by <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> ascending (soonest first).
+Returns an empty list on error.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.db.base_db.BaseDB.get_revoked_certificates">
 <span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_revoked_certificates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/base_db.html#BaseDB.get_revoked_certificates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.base_db.BaseDB.get_revoked_certificates" title="Link to this definition">¶</a></dt>
 <dd><p>Yield certificate records that should appear in the current CRL.</p>
@@ -333,6 +374,31 @@ falls within the implementation’s CRL inclusion window.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Generator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.db.base_db.BaseDB.list_all">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">list_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/base_db.html#BaseDB.list_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.base_db.BaseDB.list_all" title="Link to this definition">¶</a></dt>
+<dd><p>Return a paginated list of certificate records with optional filters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Filter by lifecycle state (<code class="docutils literal notranslate"><span class="pre">&quot;valid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;revoked&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;expired&quot;</span></code>).  <code class="docutils literal notranslate"><span class="pre">None</span></code> returns all statuses.</p></li>
+<li><p><strong>key_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Filter by certificate category (<code class="docutils literal notranslate"><span class="pre">&quot;ca&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;service&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;device&quot;</span></code>, etc.).  <code class="docutils literal notranslate"><span class="pre">None</span></code> returns all types.</p></li>
+<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of records to return.  Default: <code class="docutils literal notranslate"><span class="pre">100</span></code>.</p></li>
+<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of records to skip (for pagination).  Default: <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Matching records ordered by <code class="docutils literal notranslate"><span class="pre">id</span></code> descending (newest first).
+Returns an empty list on error.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -394,6 +460,26 @@ was not (reason encoded in <em>status_value</em>).</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.db.base_db.BaseDB.update_status_expired">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">update_status_expired</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/base_db.html#BaseDB.update_status_expired"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.base_db.BaseDB.update_status_expired" title="Link to this definition">¶</a></dt>
+<dd><p>Bulk-update all VALID certificates whose <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> has passed.</p>
+<p>Sets <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">=</span> <span class="pre">&quot;expired&quot;</span></code> for every record where:
+- <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">==</span> <span class="pre">&quot;valid&quot;</span></code>
+- <code class="docutils literal notranslate"><span class="pre">not_valid_after</span> <span class="pre">&lt;</span> <span class="pre">now</span> <span class="pre">(UTC)</span></code></p>
+<p>This method is intended to be called periodically by a background task
+(e.g. a cron job or an APScheduler job) so that status queries reflect
+reality without per-request date comparisons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of rows updated.  Returns <code class="docutils literal notranslate"><span class="pre">0</span></code> on error (after logging).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -438,11 +524,15 @@ was not (reason encoded in <em>status_value</em>).</p>
 <li><a class="reference internal" href="#">tiny_ca.db.base_db module</a><ul>
 <li><a class="reference internal" href="#solid-notes">SOLID notes</a></li>
 <li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB"><code class="docutils literal notranslate"><span class="pre">BaseDB</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.delete_by_uuid"><code class="docutils literal notranslate"><span class="pre">BaseDB.delete_by_uuid()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.get_by_name"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_by_name()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.get_by_serial"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_by_serial()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.get_expiring"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_expiring()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.get_revoked_certificates"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_revoked_certificates()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.list_all"><code class="docutils literal notranslate"><span class="pre">BaseDB.list_all()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.register_cert_in_db"><code class="docutils literal notranslate"><span class="pre">BaseDB.register_cert_in_db()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.revoke_certificate"><code class="docutils literal notranslate"><span class="pre">BaseDB.revoke_certificate()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.db.base_db.BaseDB.update_status_expired"><code class="docutils literal notranslate"><span class="pre">BaseDB.update_status_expired()</span></code></a></li>
 </ul>
 </li>
 </ul>

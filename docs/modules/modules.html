@@ -245,11 +245,15 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tiny_ca.html">tiny_ca package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB"><code class="docutils literal notranslate"><span class="pre">BaseDB</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.delete_by_uuid"><code class="docutils literal notranslate"><span class="pre">BaseDB.delete_by_uuid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.get_by_name"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_by_name()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.get_by_serial"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_by_serial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.get_expiring"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_expiring()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.get_revoked_certificates"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_revoked_certificates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.list_all"><code class="docutils literal notranslate"><span class="pre">BaseDB.list_all()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.register_cert_in_db"><code class="docutils literal notranslate"><span class="pre">BaseDB.register_cert_in_db()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.revoke_certificate"><code class="docutils literal notranslate"><span class="pre">BaseDB.revoke_certificate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.update_status_expired"><code class="docutils literal notranslate"><span class="pre">BaseDB.update_status_expired()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseStorage"><code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code></a><ul>
@@ -271,6 +275,7 @@
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime"><code class="docutils literal notranslate"><span class="pre">CertLifetime</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.compute"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.compute_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute_async()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.normalize_dt"><code class="docutils literal notranslate"><span class="pre">CertLifetime.normalize_dt()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.valid_from"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_from()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.valid_from_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_from_async()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.valid_to"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_to()</span></code></a></li>
@@ -291,9 +296,14 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.build_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.build_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.cosign_certificate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.export_pkcs12"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.export_pkcs12()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.get_cert_chain"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.get_cert_chain()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.inspect_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.inspect_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.issue_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_certificate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.issue_intermediate_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_intermediate_ca()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.renew_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.renew_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.validate_cert"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.verify_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.verify_crl()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateRecord"><code class="docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a><ul>
@@ -369,11 +379,15 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.__init__"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.delete_by_uuid"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.delete_by_uuid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.get_by_name"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.get_by_name()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.get_by_serial"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.get_by_serial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.get_expiring"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.get_expiring()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.get_revoked_certificates"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.get_revoked_certificates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.list_all"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.list_all()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.register_cert_in_db"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.register_cert_in_db()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.revoke_certificate"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.revoke_certificate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler.update_status_expired"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler.update_status_expired()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDatabaseManager"><code class="docutils literal notranslate"><span class="pre">SyncDatabaseManager</span></code></a></li>

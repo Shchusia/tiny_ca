@@ -293,7 +293,7 @@ cryptography library.  <code class="docutils literal notranslate"><span class="p
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CAFileLoader.base_info">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">base_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo" title="tiny_ca.models.certtificate.CertificateInfo"><span class="pre">CertificateInfo</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.CAFileLoader.base_info" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">base_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo" title="tiny_ca.models.certificate.CertificateInfo"><span class="pre">CertificateInfo</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.CAFileLoader.base_info" title="Link to this definition">¶</a></dt>
 <dd><p>Structured metadata extracted from the CA certificate Subject.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -301,7 +301,7 @@ cryptography library.  <code class="docutils literal notranslate"><span class="p
 <em>state</em>, and <em>locality</em> fields; any absent attribute is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo" title="tiny_ca.models.certtificate.CertificateInfo">CertificateInfo</a></p>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo" title="tiny_ca.models.certificate.CertificateInfo">CertificateInfo</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -390,28 +390,68 @@ Default: <code class="docutils literal notranslate"><span class="pre">365</span>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CertLifetime.compute_async">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">compute_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/life_time.html#CertLifetime.compute_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.CertLifetime.compute_async" title="Link to this definition">¶</a></dt>
-<dd><p>Async-версія <a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.compute" title="tiny_ca.ca_factory.utils.CertLifetime.compute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute()</span></code></a>.</p>
-<p>Виконує обчислення в пулі потоків, щоб не блокувати event loop.</p>
+<dd><p>Async version of <a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.compute" title="tiny_ca.ca_factory.utils.CertLifetime.compute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute()</span></code></a>.</p>
+<p>Configures the calculations in the thread pool so as not to block the event loop.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>) – Початок вікна дійсності (UTC). <code class="docutils literal notranslate"><span class="pre">None</span></code> → поточний UTC-час.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Тривалість у календарних днях. За замовчуванням: <code class="docutils literal notranslate"><span class="pre">365</span></code>.</p></li>
+<li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hour.</strong> (<em>The beginning</em><em> of </em><em>the window</em><em> of </em><em>action</em><em> (</em><em>UTC</em><em>)</em><em>. None → exact UTC</em>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>instructions</strong> (<em>Calendar days are trivial. For</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(not_before,</span> <span class="pre">not_after)</span></code> в UTC.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>]</span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[datetime, datetime]</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>tuple[datetime, datetime]</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(not_before,</span> <span class="pre">not_after)</span></code> in UTC.</p></li>
+</ul>
+</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – Якщо обчислена дата закінчення вже в минулому.</p>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – </p></li>
+<li><p><strong>The date</strong><strong> of </strong><strong>completion was calculated as already in the past.</strong> – </p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>#&gt;&gt;&gt; start, end = await CertLifetime.compute_async(days_valid=90)
-#&gt;&gt;&gt; assert (end - start).days == 90</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="k">await</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">compute_async</span><span class="p">(</span><span class="n">days_valid</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">==</span> <span class="mi">90</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CertLifetime.normalize_dt">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">normalize_dt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/life_time.html#CertLifetime.normalize_dt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.CertLifetime.normalize_dt" title="Link to this definition">¶</a></dt>
+<dd><p>Ensure <em>dt</em> is a timezone-aware UTC <code class="docutils literal notranslate"><span class="pre">datetime</span></code>.</p>
+<p>SQLAlchemy’s <code class="docutils literal notranslate"><span class="pre">DateTime</span></code> column stores naive datetimes (no <code class="docutils literal notranslate"><span class="pre">tzinfo</span></code>).
+This helper centralises the normalisation so that lifecycle managers
+never duplicate the <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">dt.tzinfo</span> <span class="pre">is</span> <span class="pre">None</span></code> guard inline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dt</strong> (<em>datetime</em>) – Any <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object, aware or naive.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The same instant expressed as a UTC-aware <code class="docutils literal notranslate"><span class="pre">datetime</span></code>.
+If <em>dt</em> already carries <code class="docutils literal notranslate"><span class="pre">tzinfo</span></code>, it is returned unchanged.
+If <em>dt</em> is naive it is assumed to represent UTC and <code class="docutils literal notranslate"><span class="pre">tzinfo</span></code>
+is attached via <code class="docutils literal notranslate"><span class="pre">.replace(tzinfo=UTC)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">naive</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">CertLifetime</span><span class="o">.</span><span class="n">normalize_dt</span><span class="p">(</span><span class="n">naive</span><span class="p">)</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="n">UTC</span>
+<span class="go">True</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -438,16 +478,24 @@ aware datetimes.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CertLifetime.valid_from_async">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">valid_from_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/life_time.html#CertLifetime.valid_from_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_from_async" title="Link to this definition">¶</a></dt>
-<dd><p>Async-версія <a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_from" title="tiny_ca.ca_factory.utils.CertLifetime.valid_from"><code class="xref py py-meth docutils literal notranslate"><span class="pre">valid_from()</span></code></a>.</p>
+<dd><p>Async version <a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_from" title="tiny_ca.ca_factory.utils.CertLifetime.valid_from"><code class="xref py py-meth docutils literal notranslate"><span class="pre">valid_from()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – Сертифікат, дату початку дії якого потрібно прочитати.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>)</p></li>
+<li><p><strong>certificate</strong> (<em>The</em>)</p></li>
+<li><p><strong>read.</strong> (<em>the date</em><em> of </em><em>the beginning</em><em> of </em><em>each one needs to be</em>)</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">cert.not_valid_before_utc</span></code> з <code class="docutils literal notranslate"><span class="pre">tzinfo=UTC</span></code>.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>datetime</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>datetime</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cert.not_valid_before_utc</span></code> with <code class="docutils literal notranslate"><span class="pre">tzinfo=UTC</span></code>.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -476,16 +524,23 @@ aware datetimes.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CertLifetime.valid_to_async">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">valid_to_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/life_time.html#CertLifetime.valid_to_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_to_async" title="Link to this definition">¶</a></dt>
-<dd><p>Async-версія <a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_to" title="tiny_ca.ca_factory.utils.CertLifetime.valid_to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">valid_to()</span></code></a>.</p>
+<dd><p>Async version <a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_to" title="tiny_ca.ca_factory.utils.CertLifetime.valid_to"><code class="xref py py-meth docutils literal notranslate"><span class="pre">valid_to()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – Сертифікат, дату закінчення якого потрібно прочитати.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>)</p></li>
+<li><p><strong>read.</strong> (<em>The certificate and the date</em><em> of </em><em>completion must be</em>)</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">cert.not_valid_after_utc</span></code> з <code class="docutils literal notranslate"><span class="pre">tzinfo=UTC</span></code>.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>datetime</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>datetime</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cert.not_valid_after_utc</span></code> with <code class="docutils literal notranslate"><span class="pre">tzinfo=UTC</span></code>.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -519,7 +574,7 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ICALoader.base_info">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">base_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo" title="tiny_ca.models.certtificate.CertificateInfo"><span class="pre">CertificateInfo</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ICALoader.base_info" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">base_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo" title="tiny_ca.models.certificate.CertificateInfo"><span class="pre">CertificateInfo</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ICALoader.base_info" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
@@ -690,6 +745,7 @@ string recovered from the encoded-name segment.
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime"><code class="docutils literal notranslate"><span class="pre">CertLifetime</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.compute"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.compute_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute_async()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.normalize_dt"><code class="docutils literal notranslate"><span class="pre">CertLifetime.normalize_dt()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.valid_from"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_from()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.valid_from_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_from_async()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html#tiny_ca.ca_factory.utils.life_time.CertLifetime.valid_to"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_to()</span></code></a></li>
@@ -761,6 +817,7 @@ string recovered from the encoded-name segment.
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime"><code class="docutils literal notranslate"><span class="pre">CertLifetime</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.compute"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.compute_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute_async()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.normalize_dt"><code class="docutils literal notranslate"><span class="pre">CertLifetime.normalize_dt()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_from"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_from()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_from_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_from_async()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.CertLifetime.valid_to"><code class="docutils literal notranslate"><span class="pre">CertLifetime.valid_to()</span></code></a></li>

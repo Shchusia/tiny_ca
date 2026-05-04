@@ -753,7 +753,9 @@ class CertificateFactory:
                 try:
                     if getattr(ku, bit):
                         key_usage.append(bit)
-                except x509.exceptions.UnsupportedGeneralNameType:  # pragma: no cover
+                except (
+                    x509.exceptions.UnsupportedGeneralNameType  # type: ignore[attr-defined]
+                ):  # pragma: no cover  # type: ignore[attr-defined]
                     pass
         except x509.ExtensionNotFound:
             pass

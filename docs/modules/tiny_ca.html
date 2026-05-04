@@ -525,7 +525,7 @@ validated to form a valid model.</p>
 <p><cite>self</cite> is explicitly positional-only to allow <cite>self</cite> as a field name.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.CAConfig.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict" title="(in Pydantic Validation v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.CAConfig.model_config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.CAConfig.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
@@ -625,7 +625,7 @@ cryptography library.  <code class="docutils literal notranslate"><span class="p
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.CAFileLoader.ca_key">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v47.0.0.dev1)"><span class="pre">RSAPrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.CAFileLoader.ca_key" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v48.0.0.dev1)"><span class="pre">RSAPrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.CAFileLoader.ca_key" title="Link to this definition">¶</a></dt>
 <dd><p>The deserialized CA private key.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -1013,6 +1013,111 @@ Default: <code class="docutils literal notranslate"><span class="pre">&quot;UA&q
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.CertificateFactory.cosign_certificate">
+<span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.CertificateFactory.cosign_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Re-sign an existing certificate with this CA’s key and certificate.</p>
+<p>Creates a new <code class="docutils literal notranslate"><span class="pre">x509.Certificate</span></code> that preserves the original
+Subject, public key, and all v3 extensions, but replaces:</p>
+<ul class="simple">
+<li><p><strong>Issuer</strong> — set to this CA’s Subject.</p></li>
+<li><p><strong>AuthorityKeyIdentifier</strong> — updated to reflect this CA’s SKI.</p></li>
+<li><p><strong>Serial number</strong> — a fresh serial is generated so the co-signed
+certificate is distinguishable from the original in CRLs and logs.</p></li>
+<li><p><strong>Validity window</strong> — optionally overridden via <em>days_valid</em> and
+<em>valid_from</em>; when both are <code class="docutils literal notranslate"><span class="pre">None</span></code> the original window is
+preserved exactly.</p></li>
+</ul>
+<p>The certificate is signed with SHA-256 using <code class="docutils literal notranslate"><span class="pre">self._ca.ca_key</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This operation does <strong>not</strong> verify that the original certificate
+was valid or trusted before co-signing.  Call
+<a class="reference internal" href="#tiny_ca.CertificateFactory.validate_cert" title="tiny_ca.CertificateFactory.validate_cert"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_cert()</span></code></a> first if pre-validation is required.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The source certificate whose Subject, public key, and extensions
+are copied into the co-signed output.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Override the validity duration in calendar days, counted from
+<em>valid_from</em> (or <code class="docutils literal notranslate"><span class="pre">now</span></code> when <em>valid_from</em> is also <code class="docutils literal notranslate"><span class="pre">None</span></code>).
+<code class="docutils literal notranslate"><span class="pre">None</span></code> preserves the original <code class="docutils literal notranslate"><span class="pre">not_valid_before</span></code> /
+<code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> window unchanged.</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Override the start of the validity window.  Ignored when
+<em>days_valid</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.  <code class="docutils literal notranslate"><span class="pre">None</span></code> + <em>days_valid</em> set →
+uses the current UTC time as the start.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new certificate object identical in content to <em>cert</em> except
+for the issuer, AKI, serial number, and (optionally) validity
+window.  Must be persisted by the caller.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>x509.Certificate</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If <em>days_valid</em> is provided and the computed expiry is already
+    in the past.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cosigned</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">cosign_certificate</span><span class="p">(</span><span class="n">third_party_cert</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="mi">365</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cosigned</span><span class="o">.</span><span class="n">issuer</span> <span class="o">==</span> <span class="n">factory</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cosigned</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="n">third_party_cert</span><span class="o">.</span><span class="n">subject</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.CertificateFactory.inspect_certificate">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">inspect_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.inspect_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.CertificateFactory.inspect_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Extract and return a structured, human-readable summary of <em>cert</em>.</p>
+<p>Parses every commonly-used X.509 v3 extension and Subject attribute
+into plain Python values wrapped in a <code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateDetails</span></code>
+dataclass.  The method never performs cryptographic verification —
+use <a class="reference internal" href="#tiny_ca.CertificateFactory.validate_cert" title="tiny_ca.CertificateFactory.validate_cert"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_cert()</span></code></a> for that.  It is therefore safe to call on
+certificates from <em>any</em> issuer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to inspect.  May have been issued by this CA or
+by a completely different PKI.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A frozen dataclass with the following fields populated:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">serial_number</span></code> — raw integer serial.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">common_name</span></code> / <code class="docutils literal notranslate"><span class="pre">organization</span></code> / <code class="docutils literal notranslate"><span class="pre">country</span></code> — first
+matching Subject attribute, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when absent.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">issuer_cn</span></code> — CN from the Issuer field, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">not_valid_before</span></code> / <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> — UTC datetimes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_ca</span></code> — <code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">BasicConstraints.ca</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">san_dns</span></code> / <code class="docutils literal notranslate"><span class="pre">san_ip</span></code> — lists from the SAN extension.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">key_usage</span></code> — list of enabled <code class="docutils literal notranslate"><span class="pre">KeyUsage</span></code> bit names.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extended_key_usage</span></code> — list of EKU OID dotted strings.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fingerprint_sha256</span></code> — colon-separated uppercase hex.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">subject_key_identifier</span></code> — hex string or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">public_key_size</span></code> — RSA key bits or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails" title="tiny_ca.models.certtificate.CertificateDetails">CertificateDetails</a></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">details</span> <span class="o">=</span> <span class="n">CertificateFactory</span><span class="o">.</span><span class="n">inspect_certificate</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">common_name</span><span class="p">)</span>
+<span class="go">&#39;nginx.internal&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">is_ca</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">fingerprint_sha256</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
+<span class="go">&#39;AB:CD:EF&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.CertificateFactory.issue_certificate">
 <span class="sig-name descname"><span class="pre">issue_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CertType.SERVICE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_server_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_client_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_dns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.issue_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.CertificateFactory.issue_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Issue a signed end-entity certificate for the given subject parameters.</p>
@@ -1292,8 +1397,8 @@ by <code class="docutils literal notranslate"><span class="pre">CertLifecycleMan
 <li><p><strong>is_client_cert</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
 <li><p><strong>is_server_cert</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
 <li><p><strong>san_dns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.pydantic.dev/latest/api/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic Validation v0.0.0)"><em>IPvAnyAddress</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>email</strong> (<a class="reference external" href="https://docs.pydantic.dev/latest/api/networks/#pydantic.networks.EmailStr" title="(in Pydantic Validation v0.0.0)"><em>EmailStr</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic v0.0.0)"><em>IPvAnyAddress</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>email</strong> (<a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.EmailStr" title="(in Pydantic v0.0.0)"><em>EmailStr</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -1437,7 +1542,7 @@ validated to form a valid model.</p>
 <p><cite>self</cite> is explicitly positional-only to allow <cite>self</cite> as a field name.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">email</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pydantic.dev/latest/api/networks/#pydantic.networks.EmailStr" title="(in Pydantic Validation v0.0.0)"><span class="pre">EmailStr</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">email</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.EmailStr" title="(in Pydantic v0.0.0)"><span class="pre">EmailStr</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1452,7 +1557,7 @@ validated to form a valid model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.ClientConfig.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict" title="(in Pydantic Validation v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.ClientConfig.model_config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.ClientConfig.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
@@ -1468,7 +1573,7 @@ validated to form a valid model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id6">
-<span class="sig-name descname"><span class="pre">san_ip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic Validation v0.0.0)"><span class="pre">IPvAnyAddress</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">san_ip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic v0.0.0)"><span class="pre">IPvAnyAddress</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1515,7 +1620,7 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.ICALoader.ca_key">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v47.0.0.dev1)"><span class="pre">RSAPrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.ICALoader.ca_key" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v48.0.0.dev1)"><span class="pre">RSAPrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.ICALoader.ca_key" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -1523,7 +1628,7 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.LocalStorage">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.</span></span><span class="sig-name descname"><span class="pre">LocalStorage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./certs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;Encoding.PEM:</span> <span class="pre">'PEM'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PrivateFormat.TraditionalOpenSSL:</span> <span class="pre">'TraditionalOpenSSL'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PublicFormat.SubjectPublicKeyInfo:</span> <span class="pre">'X.509</span> <span class="pre">subjectPublicKeyInfo</span> <span class="pre">with</span> <span class="pre">PKCS#1'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;cryptography.hazmat.primitives._serialization.NoEncryption</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.LocalStorage" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.</span></span><span class="sig-name descname"><span class="pre">LocalStorage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./certs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Encoding.PEM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PrivateFormat.TraditionalOpenSSL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PublicFormat.SubjectPublicKeyInfo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;cryptography.hazmat.primitives._serialization.NoEncryption</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.LocalStorage" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="tiny_ca.storage.base_storage.html#tiny_ca.storage.base_storage.BaseStorage" title="tiny_ca.storage.base_storage.BaseStorage"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseStorage</span></code></a></p>
 <p>Local filesystem storage backend for certificate artefacts.</p>
 <p>Writes serialised cryptographic objects to a configurable directory tree.
@@ -1554,7 +1659,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">&quot;./ce
 <dd class="field-odd"><p>str | Path</p>
 </dd>
 <dt class="field-even">type base_encoding<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v47.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Encoding</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v48.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Encoding</span></code></a></span></p>
 </dd>
 <dt class="field-odd">param base_encoding<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Default encoding for all serialised objects.
@@ -1564,7 +1669,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">Encoding.P
 <dd class="field-even"><p>serialization.Encoding</p>
 </dd>
 <dt class="field-odd">type base_private_format<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v47.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrivateFormat</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v48.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrivateFormat</span></code></a></span></p>
 </dd>
 <dt class="field-even">param base_private_format<span class="colon">:</span></dt>
 <dd class="field-even"><p>Default format for RSA private-key files.
@@ -1584,7 +1689,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">PublicForm
 <dd class="field-even"><p>serialization.PublicFormat</p>
 </dd>
 <dt class="field-odd">type base_encryption_algorithm<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v47.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeySerializationEncryption</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v48.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeySerializationEncryption</span></code></a></span></p>
 </dd>
 <dt class="field-even">param base_encryption_algorithm<span class="colon">:</span></dt>
 <dd class="field-even"><p>Default encryption applied to private-key files.
@@ -1605,15 +1710,15 @@ Default: <code class="docutils literal notranslate"><span class="pre">NoEncrypti
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.LocalStorage.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./certs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;Encoding.PEM:</span> <span class="pre">'PEM'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PrivateFormat.TraditionalOpenSSL:</span> <span class="pre">'TraditionalOpenSSL'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;PublicFormat.SubjectPublicKeyInfo:</span> <span class="pre">'X.509</span> <span class="pre">subjectPublicKeyInfo</span> <span class="pre">with</span> <span class="pre">PKCS#1'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;cryptography.hazmat.primitives._serialization.NoEncryption</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.LocalStorage.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./certs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Encoding.PEM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PrivateFormat.TraditionalOpenSSL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PublicFormat.SubjectPublicKeyInfo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;cryptography.hazmat.primitives._serialization.NoEncryption</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.LocalStorage.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>)</p></li>
-<li><p><strong>base_encoding</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v47.0.0.dev1)"><em>Encoding</em></a>)</p></li>
-<li><p><strong>base_private_format</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v47.0.0.dev1)"><em>PrivateFormat</em></a>)</p></li>
+<li><p><strong>base_encoding</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v48.0.0.dev1)"><em>Encoding</em></a>)</p></li>
+<li><p><strong>base_private_format</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v48.0.0.dev1)"><em>PrivateFormat</em></a>)</p></li>
 <li><p><strong>base_public_format</strong> (<em>PublicFormat</em>)</p></li>
-<li><p><strong>base_encryption_algorithm</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v47.0.0.dev1)"><em>KeySerializationEncryption</em></a>)</p></li>
+<li><p><strong>base_encryption_algorithm</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v48.0.0.dev1)"><em>KeySerializationEncryption</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -2104,6 +2209,8 @@ Default: <code class="docutils literal notranslate"><span class="pre">x509.Reaso
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.abuild_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.abuild_crl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.build_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.build_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.cosign_certificate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.inspect_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.inspect_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.issue_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.validate_cert"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert()</span></code></a></li>
 </ul>
@@ -2227,10 +2334,12 @@ Default: <code class="docutils literal notranslate"><span class="pre">x509.Reaso
 <li class="toctree-l1"><a class="reference internal" href="tiny_ca.managers.html">tiny_ca.managers package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.__init__"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.cosign_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.create_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.create_self_signed_ca()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.factory"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.factory</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.generate_crl"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.generate_crl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.get_certificate_status"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.get_certificate_status()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.inspect_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.inspect_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.issue_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.issue_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.revoke_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.revoke_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.managers.html#tiny_ca.managers.CertLifecycleManager.rotate_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.rotate_certificate()</span></code></a></li>
@@ -2284,6 +2393,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">x509.Reaso
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CAConfig"><code class="docutils literal notranslate"><span class="pre">CAConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails"><code class="docutils literal notranslate"><span class="pre">CertificateDetails</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo"><code class="docutils literal notranslate"><span class="pre">CertificateInfo</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig"><code class="docutils literal notranslate"><span class="pre">ClientConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CommonNameCertificate"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a></li>
@@ -2500,6 +2610,8 @@ Default: <code class="docutils literal notranslate"><span class="pre">x509.Reaso
 <li><a class="reference internal" href="#tiny_ca.CertificateFactory.abuild_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.abuild_crl()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.CertificateFactory.build_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.CertificateFactory.build_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.CertificateFactory.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.cosign_certificate()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.CertificateFactory.inspect_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.inspect_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.CertificateFactory.issue_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.CertificateFactory.validate_cert"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert()</span></code></a></li>
 </ul>

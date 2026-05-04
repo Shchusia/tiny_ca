@@ -567,3 +567,61 @@ class TestPersistCertToDB:
         )
         assert isinstance(cert, x509.Certificate)
         mock_db.revoke_certificate.assert_called()
+
+
+# ===========================================================================
+# inspect_certificate
+# ===========================================================================
+
+
+class TestInspectCertificate:
+    def test_raises_without_factory(self, storage, mock_db):
+        from tiny_ca.managers.sync_lifecycle_manager import CertLifecycleManager
+
+        mgr = CertLifecycleManager(storage=storage, db_handler=mock_db)
+        with pytest.raises(ValueError):
+            mgr.inspect_certificate(MagicMock(spec=x509.Certificate))
+
+    def test_returns_certificate_details(self, mgr):
+        from tiny_ca.models.certtificate import CertificateDetails
+
+        cert, _, _ = mgr.issue_certificate(_client_config())
+        details = mgr.inspect_certificate(cert)
+        assert isinstance(details, CertificateDetails)
+
+    def test_common_name_matches(self, mgr):
+        cert, _, _ = mgr.issue_certificate(
+            _client_config(common_name="inspect.sync.svc")
+        )
+        details = mgr.inspect_certificate(cert)
+        assert details.common_name == "inspect.sync.svc"
+
+
+# ===========================================================================
+# cosign_certificate
+# ===========================================================================
+
+
+class TestCosignCertificate:
+    def test_raises_without_factory(self, storage, mock_db):
+        from tiny_ca.managers.sync_lifecycle_manager import CertLifecycleManager
+
+        mgr = CertLifecycleManager(storage=storage, db_handler=mock_db)
+        with pytest.raises(ValueError):
+            mgr.cosign_certificate(MagicMock(spec=x509.Certificate))
+
+    def test_returns_certificate(self, mgr):
+        cert, _, _ = mgr.issue_certificate(_client_config())
+        cosigned = mgr.cosign_certificate(cert)
+        assert isinstance(cosigned, x509.Certificate)
+
+    def test_issuer_is_ca(self, mgr, factory):
+        cert, _, _ = mgr.issue_certificate(_client_config())
+        cosigned = mgr.cosign_certificate(cert)
+        assert cosigned.issuer == factory._ca.ca_cert.subject
+
+    def test_days_valid_override(self, mgr):
+        cert, _, _ = mgr.issue_certificate(_client_config())
+        cosigned = mgr.cosign_certificate(cert, days_valid=90)
+        delta = cosigned.not_valid_after_utc - cosigned.not_valid_before_utc
+        assert delta.days == 90

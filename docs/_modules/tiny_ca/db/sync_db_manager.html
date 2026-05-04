@@ -193,13 +193,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/ca_factory.html">ca_factory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/managers.html">Lifecycle Managers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/storage.html">Storage Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/db.html">Database Layer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/models.html">Configuration Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">Exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -283,7 +283,7 @@
 
 
 <div class="viewcode-block" id="DatabaseManager">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.DatabaseManager">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.DatabaseManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DatabaseManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manages the SQLAlchemy engine and ``sessionmaker`` factory.</span>
@@ -307,7 +307,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="DatabaseManager.__init__">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.DatabaseManager.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.DatabaseManager.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sqlite:///ca_repository.db&quot;</span><span class="p">,</span>
@@ -320,7 +320,7 @@
 
 
 <div class="viewcode-block" id="DatabaseManager.session">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.DatabaseManager.session">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.DatabaseManager.session">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Session</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Provision a new SQLAlchemy ``Session`` bound to the managed engine.</span>
@@ -355,7 +355,7 @@
 
 
 <div class="viewcode-block" id="SyncDBHandler">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SyncDBHandler</span><span class="p">(</span><span class="n">BaseDB</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Synchronous, SQLAlchemy-backed certificate registry.</span>
@@ -381,7 +381,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="SyncDBHandler.__init__">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">DEFAULT_LOGGER</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_db</span> <span class="o">=</span> <span class="n">DatabaseManager</span><span class="p">(</span><span class="n">db_url</span><span class="o">=</span><span class="n">db_url</span><span class="p">)</span></div>
@@ -392,7 +392,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="SyncDBHandler.get_by_serial">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_serial">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_serial">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_by_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fetch a single certificate record by its X.509 serial number.</span>
@@ -429,7 +429,7 @@
 
 
 <div class="viewcode-block" id="SyncDBHandler.get_by_name">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_name">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_name">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fetch the active VALID certificate record for the given Common Name.</span>
@@ -468,7 +468,7 @@
 
 
 <div class="viewcode-block" id="SyncDBHandler.register_cert_in_db">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler.register_cert_in_db">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler.register_cert_in_db">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">register_cert_in_db</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
@@ -553,7 +553,7 @@
 
 
 <div class="viewcode-block" id="SyncDBHandler.revoke_certificate">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler.revoke_certificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler.revoke_certificate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">revoke_certificate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">serial_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -623,7 +623,7 @@
 
 
 <div class="viewcode-block" id="SyncDBHandler.get_revoked_certificates">
-<a class="viewcode-back" href="../../../api/db.html#tiny_ca.db.sync_db_manager.SyncDBHandler.get_revoked_certificates">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.SyncDBHandler.get_revoked_certificates">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_revoked_certificates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Yield revoked certificate rows relevant for the current CRL window.</span>

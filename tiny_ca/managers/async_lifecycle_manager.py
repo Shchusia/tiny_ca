@@ -349,7 +349,7 @@ class AsyncCertLifecycleManager:
             path_to_key,
             path_to_csr,
         )
-        return path_to_cert, path_to_key, path_to_csr
+        return certificate, private_key, csr
 
     # ------------------------------------------------------------------
     # Revocation
@@ -442,19 +442,15 @@ class AsyncCertLifecycleManager:
 
         self._logger.info("Generating CRL: days_valid=%d", days_valid)
 
-        revoked_rows = self._db.get_revoked_certificates()
-        print(type(revoked_rows))
-        crl = await self.factory.abuild_crl(revoked_rows)
-        # revoked_rows = [
-        #     row
-        #     async for row in self._db.get_revoked_certificates()  # type: ignore[union-attr]
-        # ]
-
-        # crl = await asyncio.to_thread(
-        #     self._factory.build_crl,  # type: ignore[union-attr]
-        #     revoked_certs=iter(revoked_rows),
-        #     days_valid=days_valid,
-        # )
+        revoked_rows = [
+            row
+            async for row in self._db.get_revoked_certificates()  # type: ignore[union-attr]
+        ]
+        crl = await asyncio.to_thread(
+            self._factory.build_crl,  # type: ignore[union-attr]
+            revoked_certs=iter(revoked_rows),  # type: ignore[arg-type]
+            days_valid=days_valid,
+        )
         path, _ = await self._storage.save_certificate(
             cert_path=cert_path,
             cert=crl,
@@ -463,7 +459,7 @@ class AsyncCertLifecycleManager:
             is_add_uuid=False,
         )
         self._logger.info("CRL saved to %s", path)
-        return path
+        return crl
 
     # ------------------------------------------------------------------
     # Status and verification
@@ -621,6 +617,90 @@ class AsyncCertLifecycleManager:
             new_cert.serial_number,
         )
         return new_cert, new_key, new_csr
+
+    # ------------------------------------------------------------------
+    # Certificate inspection and co-signing
+    # ------------------------------------------------------------------
+
+    async def inspect_certificate(
+        self,
+        cert: x509.Certificate,
+    ) -> None:
+        """
+        Extract a structured, human-readable summary of *cert*.
+
+        Runs ``CertificateFactory.inspect_certificate`` in a thread pool so
+        the event loop is not blocked.  No cryptographic verification is
+        performed — use :meth:`verify_certificate` for that.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The certificate to inspect.  May have been issued by this CA or
+            by a completely different PKI.
+
+        Returns
+        -------
+        CertificateDetails
+            Frozen dataclass with serial, CN, SANs, key usage, fingerprint,
+            validity window, and other fields populated from *cert*.
+
+        Raises
+        ------
+        ValueError
+            If ``self.factory`` has not been initialised.
+        """
+        self._require_factory()
+        return await asyncio.to_thread(
+            self._factory.inspect_certificate,  # type: ignore[arg-type]
+            cert,
+        )
+
+    async def cosign_certificate(
+        self,
+        cert: x509.Certificate,
+        days_valid: int | None = None,
+        valid_from: datetime = None,
+    ) -> x509.Certificate:
+        """
+        Re-sign an existing certificate with this CA's key.
+
+        Runs ``CertificateFactory.cosign_certificate`` in a thread pool.
+        Preserves the original Subject, public key, and all v3 extensions but
+        replaces the Issuer, AuthorityKeyIdentifier, serial number, and
+        (optionally) the validity window.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The source certificate to co-sign.
+        days_valid : int | None
+            Override the validity duration in calendar days.  ``None`` keeps
+            the original ``not_valid_before`` / ``not_valid_after`` unchanged.
+        valid_from : datetime | None
+            Override the start of the validity window.  Ignored when
+            *days_valid* is ``None``.
+
+        Returns
+        -------
+        x509.Certificate
+            A new certificate signed by this CA.
+
+        Raises
+        ------
+        ValueError
+            If ``self.factory`` has not been initialised.
+        InvalidRangeTimeCertificate
+            If *days_valid* is provided and the computed expiry is already
+            in the past.
+        """
+        self._require_factory()
+        return await asyncio.to_thread(
+            self._factory.cosign_certificate,  # type: ignore[union-attr]
+            cert=cert,
+            days_valid=days_valid,
+            valid_from=valid_from,
+        )
 
     # ------------------------------------------------------------------
     # private helpers

@@ -43,7 +43,7 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certtificate import CAConfig, CertificateDetails, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
 
@@ -602,6 +602,86 @@ class CertLifecycleManager:
             new_cert.serial_number,
         )
         return new_cert, new_key, new_csr
+
+    # ------------------------------------------------------------------
+    # Certificate inspection and co-signing
+    # ------------------------------------------------------------------
+
+    def inspect_certificate(
+        self,
+        cert: x509.Certificate,
+    ) -> CertificateDetails:
+        """
+        Extract a structured, human-readable summary of *cert*.
+
+        Delegates to ``CertificateFactory.inspect_certificate`` which parses
+        every commonly-used X.509 v3 extension and Subject attribute into plain
+        Python values.  No cryptographic verification is performed — use
+        :meth:`verify_certificate` for that.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The certificate to inspect.  May have been issued by this CA or
+            by a completely different PKI.
+
+        Returns
+        -------
+        CertificateDetails
+            Frozen dataclass with serial, CN, SANs, key usage, fingerprint,
+            validity window, and other fields populated from *cert*.
+
+        Raises
+        ------
+        ValueError
+            If ``self.factory`` has not been initialised.
+        """
+        self._require_factory()
+        return self._factory.inspect_certificate(cert)  # type: ignore[union-attr]
+
+    def cosign_certificate(
+        self,
+        cert: x509.Certificate,
+        days_valid: int | None = None,
+        valid_from: datetime = None,
+    ) -> x509.Certificate:
+        """
+        Re-sign an existing certificate with this CA's key.
+
+        Preserves the original Subject, public key, and all v3 extensions but
+        replaces the Issuer, AuthorityKeyIdentifier, serial number, and
+        (optionally) the validity window.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The source certificate to co-sign.
+        days_valid : int | None
+            Override the validity duration in calendar days.  ``None`` keeps
+            the original ``not_valid_before`` / ``not_valid_after`` unchanged.
+        valid_from : datetime | None
+            Override the start of the validity window.  Ignored when
+            *days_valid* is ``None``.
+
+        Returns
+        -------
+        x509.Certificate
+            A new certificate signed by this CA.
+
+        Raises
+        ------
+        ValueError
+            If ``self.factory`` has not been initialised.
+        InvalidRangeTimeCertificate
+            If *days_valid* is provided and the computed expiry is already
+            in the past.
+        """
+        self._require_factory()
+        return self._factory.cosign_certificate(  # type: ignore[union-attr]
+            cert=cert,
+            days_valid=days_valid,
+            valid_from=valid_from,
+        )
 
     # ------------------------------------------------------------------
     # Private helpers

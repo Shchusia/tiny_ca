@@ -25,7 +25,7 @@ Class hierarchy
 
 from __future__ import annotations
 
-import datetime
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, IPvAnyAddress
 
@@ -121,7 +121,7 @@ class BaseCertificateConfig(BaseModel):
         default=3650,
         description="Certificate validity period in calendar days.",
     )
-    valid_from: datetime.datetime | None = Field(
+    valid_from: datetime | None = Field(
         default=None,
         description=(
             "Explicit validity start as a timezone-aware datetime. "

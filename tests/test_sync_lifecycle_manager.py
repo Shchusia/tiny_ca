@@ -11,6 +11,19 @@ Run with:
 from __future__ import annotations
 
 import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
+
+from tiny_ca.db.const import CertificateStatus
+from tiny_ca.exc import ValidationCertError
+
+import datetime
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -33,7 +46,7 @@ from tiny_ca.exc import (
     ValidationCertError,
 )
 from tiny_ca.managers.sync_lifecycle_manager import CertLifecycleManager
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage.base_storage import BaseStorage
 from tiny_ca.storage.local_storage import LocalStorage
@@ -103,7 +116,7 @@ def factory(ca_cert, ca_key):
 
         @property
         def base_info(self):
-            from tiny_ca.models.certtificate import CertificateInfo
+            from tiny_ca.models.certificate import CertificateInfo
 
             return CertificateInfo(
                 organization="Test Corp",
@@ -436,6 +449,15 @@ class TestGetCertificateStatus:
         mock_db.get_by_serial.return_value = rec
         assert mgr.get_certificate_status(1) == CertificateStatus.VALID
 
+    def test_returns_expired_when_not_valid_after_is_naive(self, mgr, mock_db):
+        """Covers line 489: naive datetime (tzinfo is None) is made UTC-aware."""
+        rec = MagicMock()
+        rec.revocation_date = None
+        # naive datetime — no tzinfo
+        rec.not_valid_after = datetime.datetime(2000, 1, 1)
+        mock_db.get_by_serial.return_value = rec
+        assert mgr.get_certificate_status(1) == CertificateStatus.EXPIRED
+
 
 # ===========================================================================
 # verify_certificate
@@ -583,7 +605,7 @@ class TestInspectCertificate:
             mgr.inspect_certificate(MagicMock(spec=x509.Certificate))
 
     def test_returns_certificate_details(self, mgr):
-        from tiny_ca.models.certtificate import CertificateDetails
+        from tiny_ca.models.certificate import CertificateDetails
 
         cert, _, _ = mgr.issue_certificate(_client_config())
         details = mgr.inspect_certificate(cert)
@@ -625,3 +647,214 @@ class TestCosignCertificate:
         cosigned = mgr.cosign_certificate(cert, days_valid=90)
         delta = cosigned.not_valid_after_utc - cosigned.not_valid_before_utc
         assert delta.days == 90
+
+
+class TestListCertificates:
+    """Test list_certificates method."""
+
+    def test_list_certificates_with_filters(self, mgr, mock_db):
+        mock_db.list_all.return_value = [MagicMock(), MagicMock()]
+        results = mgr.list_certificates(
+            status="valid", key_type="service", limit=10, offset=5
+        )
+        assert len(results) == 2
+        mock_db.list_all.assert_called_with(
+            status="valid", key_type="service", limit=10, offset=5
+        )
+
+
+class TestGetExpiringSoon:
+    """Test get_expiring_soon method."""
+
+    def test_get_expiring_soon_returns_list(self, mgr, mock_db):
+        mock_db.get_expiring.return_value = [MagicMock(), MagicMock()]
+        results = mgr.get_expiring_soon(within_days=30)
+        assert len(results) == 2
+        mock_db.get_expiring.assert_called_with(within_days=30)
+
+
+class TestDeleteCertificate:
+    """Test delete_certificate method."""
+
+    def test_delete_certificate_success(self, mgr, mock_db, storage):
+        mock_record = MagicMock()
+        mock_record.uuid = "test-uuid"
+        mock_db.get_by_serial.return_value = mock_record
+        mock_db.delete_by_uuid.return_value = True
+
+        result = mgr.delete_certificate(serial=12345)
+
+        assert result is True
+        mock_db.delete_by_uuid.assert_called_with(uuid="test-uuid")
+
+    def test_delete_certificate_calls_storage_when_deleted(
+        self, factory, mock_db, tmp_path
+    ):
+        """Covers branch 716->719: delete_by_uuid=True + uuid present → storage called."""
+        mock_storage = MagicMock(spec=BaseStorage)
+        mgr = CertLifecycleManager(
+            storage=mock_storage, factory=factory, db_handler=mock_db
+        )
+
+        mock_record = MagicMock()
+        mock_record.uuid = "uuid-to-clean"
+        mock_db.get_by_serial.return_value = mock_record
+        mock_db.delete_by_uuid.return_value = True
+
+        result = mgr.delete_certificate(serial=99, cert_path="some/path")
+
+        assert result is True
+        mock_storage.delete_certificate_folder.assert_called_once_with(
+            uuid_str="uuid-to-clean", cert_path="some/path"
+        )
+
+    def test_delete_certificate_not_found(self, mgr, mock_db):
+        mock_db.get_by_serial.return_value = None
+
+        result = mgr.delete_certificate(serial=12345)
+
+        assert result is False
+
+    def test_delete_certificate_uuid_none_skips_storage(self, factory, mock_db):
+        """Covers the False branch of 716->719: uuid=None → condition is False
+        → returns deleted without calling delete_certificate_folder."""
+        mock_storage = MagicMock(spec=BaseStorage)
+        mgr = CertLifecycleManager(
+            storage=mock_storage, factory=factory, db_handler=mock_db
+        )
+
+        mock_record = MagicMock()
+        mock_record.uuid = None  # falsy → `if deleted and uuid` evaluates to False
+        mock_db.get_by_serial.return_value = mock_record
+        mock_db.delete_by_uuid.return_value = True
+
+        result = mgr.delete_certificate(serial=99999)
+
+        assert result is True
+        mock_storage.delete_certificate_folder.assert_not_called()
+
+
+class TestRefreshExpiredStatuses:
+    """Test refresh_expired_statuses method."""
+
+    def test_refresh_expired_statuses_returns_count(self, mgr, mock_db):
+        mock_db.update_status_expired.return_value = 5
+        count = mgr.refresh_expired_statuses()
+        assert count == 5
+
+
+class TestIssueIntermediateCA:
+    """Test issue_intermediate_ca method."""
+
+    def test_issue_intermediate_ca_basic(self, mgr, storage):
+        cert, key = mgr.issue_intermediate_ca(
+            common_name="Sync Intermediate", key_size=4096, days_valid=1825
+        )
+        assert isinstance(cert, x509.Certificate)
+        assert isinstance(key, rsa.RSAPrivateKey)
+
+    def test_issue_intermediate_ca_with_custom_params(self, mgr):
+        cert, key = mgr.issue_intermediate_ca(
+            common_name="Custom Intermediate",
+            organization="Custom Org",
+            country="DE",
+            path_length=2,
+        )
+        org = cert.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[0].value
+        assert org == "Custom Org"
+
+
+class TestVerifyCRL:
+    """Test verify_crl method."""
+
+    def test_verify_crl_success(self, mgr):
+        crl = mgr.generate_crl()
+        mgr.verify_crl(crl)  # Should not raise
+
+    def test_verify_crl_expired_raises(self, mgr):
+        now = datetime.datetime.now(datetime.UTC)
+        crl = (
+            x509.CertificateRevocationListBuilder()
+            .issuer_name(mgr._factory._ca.ca_cert.subject)
+            .last_update(now - datetime.timedelta(days=2))
+            .next_update(now - datetime.timedelta(days=1))
+            .sign(mgr._factory._ca.ca_key, hashes.SHA256(), default_backend())
+        )
+        with pytest.raises(ValidationCertError):
+            mgr.verify_crl(crl)
+
+
+class TestExportPKCS12:
+    """Test export_pkcs12 method."""
+
+    def test_export_pkcs12(self, mgr):
+        cert, key, _ = mgr.issue_certificate(_client_config())
+        p12_bytes = mgr.export_pkcs12(cert, key)
+        assert isinstance(p12_bytes, bytes)
+        assert len(p12_bytes) > 0
+
+    def test_export_pkcs12_with_password(self, mgr):
+        cert, key, _ = mgr.issue_certificate(_client_config())
+        p12_bytes = mgr.export_pkcs12(cert, key, password=b"secret")
+        assert isinstance(p12_bytes, bytes)
+
+
+class TestGetCertChain:
+    """Test get_cert_chain method."""
+
+    def test_get_cert_chain(self, mgr):
+        cert, _, _ = mgr.issue_certificate(_client_config())
+        chain = mgr.get_cert_chain(cert)
+        assert len(chain) == 2
+        assert chain[0] == cert
+
+
+class TestRenewCertificate:
+    """Test renew_certificate method."""
+
+    def test_renew_certificate_success(self, mgr, mock_db):
+        cert, _, _ = mgr.issue_certificate(_client_config(common_name="renew.svc"))
+
+        mock_record = MagicMock()
+        mock_record.certificate_pem = cert.public_bytes(
+            serialization.Encoding.PEM
+        ).decode("utf-8")
+        mock_db.get_by_serial.return_value = mock_record
+
+        renewed = mgr.renew_certificate(serial=cert.serial_number, days_valid=365)
+        assert isinstance(renewed, x509.Certificate)
+        assert renewed.serial_number != cert.serial_number
+
+    def test_renew_certificate_not_found(self, mgr, mock_db):
+        mock_db.get_by_serial.return_value = None
+        with pytest.raises(CertNotFound):
+            mgr.renew_certificate(serial=99999)
+
+
+class TestDeleteCertificateNotFound:
+    """Test delete_certificate when folder doesn't exist (covers warning)."""
+
+    def test_delete_certificate_folder_not_exists_warning(self, mgr, mock_db, storage):
+        """Test that delete_certificate handles missing folder gracefully."""
+        mock_record = MagicMock()
+        mock_record.uuid = "nonexistent-uuid"
+        mock_db.get_by_serial.return_value = mock_record
+        mock_db.delete_by_uuid.return_value = True
+
+        # This should not raise exception, just log warning
+        result = mgr.delete_certificate(serial=12345, cert_path="some/path")
+
+        assert result is True
+
+
+class TestFinalCoverageSync:
+    """Test the last uncovered line in sync_lifecycle_manager.py (line 489)."""
+
+    def test_get_certificate_status_not_found_returns_unknown(self, mgr, mock_db):
+        """Line 489: Certificate not found in DB should return UNKNOWN."""
+        mock_db.get_by_serial.return_value = None
+
+        status = mgr.get_certificate_status(999999)
+
+        assert status == CertificateStatus.UNKNOWN
+        mock_db.get_by_serial.assert_called_once_with(serial=999999)

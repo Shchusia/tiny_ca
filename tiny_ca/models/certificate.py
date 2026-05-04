@@ -1,5 +1,5 @@
 """
-certtificate.py
+certificate.py
 
 Pydantic data models for certificate configuration and metadata.
 

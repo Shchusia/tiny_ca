@@ -89,7 +89,7 @@ pip install tiny_ca[async]
 
 ```python
 from tiny_ca.managers.sync_lifecycle_manager import CertLifecycleManager
-from tiny_ca.models.certtificate import CAConfig
+from tiny_ca.models.certificate import CAConfig
 from tiny_ca.storage.local_storage import LocalStorage
 from tiny_ca.db.sync_db_manager import SyncDBHandler
 
@@ -99,11 +99,11 @@ db = SyncDBHandler(db_url="sqlite:///pki.db")
 mgr = CertLifecycleManager(storage=storage, db_handler=db)
 
 config = CAConfig(
-    common_name="My Internal CA",
-    organization="ACME Corp",
-    country="UA",
-    key_size=4096,
-    days_valid=3650,
+  common_name="My Internal CA",
+  organization="ACME Corp",
+  country="UA",
+  key_size=4096,
+  days_valid=3650,
 )
 
 cert_path, key_path = mgr.create_self_signed_ca(config)
@@ -118,23 +118,23 @@ print(f"Приватний ключ CA: {key_path}")
 ```python
 from tiny_ca.ca_factory.utils.file_loader import CAFileLoader
 from tiny_ca.ca_factory.factory import CertificateFactory
-from tiny_ca.models.certtificate import ClientConfig
+from tiny_ca.models.certificate import ClientConfig
 from tiny_ca.const import CertType
 
 loader = CAFileLoader(
-    ca_cert_path="./pki/<uuid>/ca.pem",
-    ca_key_path="./pki/<uuid>/ca.key",
+  ca_cert_path="./pki/<uuid>/ca.pem",
+  ca_key_path="./pki/<uuid>/ca.key",
 )
 mgr.factory = CertificateFactory(loader)
 
 svc_config = ClientConfig(
-    common_name="nginx.internal",
-    serial_type=CertType.SERVICE,
-    key_size=2048,
-    days_valid=365,
-    is_server_cert=True,
-    san_dns=["nginx.internal", "www.nginx.internal"],
-    san_ip=["192.168.1.10"],
+  common_name="nginx.internal",
+  serial_type=CertType.SERVICE,
+  key_size=2048,
+  days_valid=365,
+  is_server_cert=True,
+  san_dns=["nginx.internal", "www.nginx.internal"],
+  san_ip=["192.168.1.10"],
 )
 
 cert, key, csr = mgr.issue_certificate(svc_config, cert_path="services")
@@ -191,38 +191,40 @@ import asyncio
 from tiny_ca.managers.async_lifecycle_manager import AsyncCertLifecycleManager
 from tiny_ca.storage.async_local_storage import AsyncLocalStorage
 from tiny_ca.db.async_db_manager import AsyncDBHandler
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.const import CertType
 
+
 async def main():
-    storage = AsyncLocalStorage(base_folder="./pki_async")
-    db = AsyncDBHandler(db_url="sqlite+aiosqlite:///pki_async.db")
-    await db._db.init_db()
+  storage = AsyncLocalStorage(base_folder="./pki_async")
+  db = AsyncDBHandler(db_url="sqlite+aiosqlite:///pki_async.db")
+  await db._db.init_db()
 
-    mgr = AsyncCertLifecycleManager(storage=storage, db_handler=db)
+  mgr = AsyncCertLifecycleManager(storage=storage, db_handler=db)
 
-    # Bootstrap CA
-    cert_path, key_path = await mgr.create_self_signed_ca(
-        CAConfig(common_name="Async CA", organization="ACME", country="UA",
-                 key_size=2048, days_valid=3650)
-    )
+  # Bootstrap CA
+  cert_path, key_path = await mgr.create_self_signed_ca(
+    CAConfig(common_name="Async CA", organization="ACME", country="UA",
+             key_size=2048, days_valid=3650)
+  )
 
-    # Прив'язати factory
-    from tiny_ca.ca_factory.utils.afile_loader import AsyncCAFileLoader
-    from tiny_ca.ca_factory.factory import CertificateFactory
+  # Прив'язати factory
+  from tiny_ca.ca_factory.utils.afile_loader import AsyncCAFileLoader
+  from tiny_ca.ca_factory.factory import CertificateFactory
 
-    loader = await AsyncCAFileLoader.create(
-        cert_path.parent / "ca.pem",
-        cert_path.parent / "ca.key",
-    )
-    mgr.factory = CertificateFactory(loader)
+  loader = await AsyncCAFileLoader.create(
+    cert_path.parent / "ca.pem",
+    cert_path.parent / "ca.key",
+  )
+  mgr.factory = CertificateFactory(loader)
 
-    # Видати сертифікат
-    cert, key, csr = await mgr.issue_certificate(
-        ClientConfig(common_name="modules.internal", serial_type=CertType.SERVICE,
-                     key_size=2048, days_valid=365, is_server_cert=True)
-    )
-    print("Видано:", cert.serial_number)
+  # Видати сертифікат
+  cert, key, csr = await mgr.issue_certificate(
+    ClientConfig(common_name="modules.internal", serial_type=CertType.SERVICE,
+                 key_size=2048, days_valid=365, is_server_cert=True)
+  )
+  print("Видано:", cert.serial_number)
+
 
 asyncio.run(main())
 ```

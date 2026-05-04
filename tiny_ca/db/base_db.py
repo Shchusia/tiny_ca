@@ -171,3 +171,94 @@ class BaseDB(ABC):
             Records (or row-like objects) for each revoked certificate that
             falls within the implementation's CRL inclusion window.
         """
+
+    @abstractmethod
+    def list_all(
+        self,
+        status: str | None = None,
+        key_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[CertificateRecord]:
+        """
+        Return a paginated list of certificate records with optional filters.
+
+        Parameters
+        ----------
+        status : str | None
+            Filter by lifecycle state (``"valid"``, ``"revoked"``,
+            ``"expired"``).  ``None`` returns all statuses.
+        key_type : str | None
+            Filter by certificate category (``"ca"``, ``"service"``,
+            ``"device"``, etc.).  ``None`` returns all types.
+        limit : int
+            Maximum number of records to return.  Default: ``100``.
+        offset : int
+            Number of records to skip (for pagination).  Default: ``0``.
+
+        Returns
+        -------
+        list[CertificateRecord]
+            Matching records ordered by ``id`` descending (newest first).
+            Returns an empty list on error.
+        """
+
+    @abstractmethod
+    def get_expiring(self, within_days: int = 30) -> list[CertificateRecord]:
+        """
+        Return VALID certificates that expire within *within_days* calendar days.
+
+        Only records with ``status == VALID`` are considered — already-revoked
+        or expired records are excluded.
+
+        Parameters
+        ----------
+        within_days : int
+            Look-ahead window in calendar days.  Default: ``30``.
+
+        Returns
+        -------
+        list[CertificateRecord]
+            Records ordered by ``not_valid_after`` ascending (soonest first).
+            Returns an empty list on error.
+        """
+
+    @abstractmethod
+    def delete_by_uuid(self, uuid: str) -> bool:
+        """
+        Permanently delete the certificate record identified by *uuid*.
+
+        This is a hard delete — the row is removed from the database.  The
+        caller is responsible for also removing the corresponding filesystem
+        artefacts via ``BaseStorage.delete_certificate_folder``.
+
+        Parameters
+        ----------
+        uuid : str
+            The storage folder UUID that uniquely identifies the certificate.
+
+        Returns
+        -------
+        bool
+            ``True`` if a row was found and deleted; ``False`` if no matching
+            record existed or if a database error occurred.
+        """
+
+    @abstractmethod
+    def update_status_expired(self) -> int:
+        """
+        Bulk-update all VALID certificates whose ``not_valid_after`` has passed.
+
+        Sets ``status = "expired"`` for every record where:
+        - ``status == "valid"``
+        - ``not_valid_after < now (UTC)``
+
+        This method is intended to be called periodically by a background task
+        (e.g. a cron job or an APScheduler job) so that status queries reflect
+        reality without per-request date comparisons.
+
+        Returns
+        -------
+        int
+            Number of rows updated.  Returns ``0`` on error (after logging).
+        """

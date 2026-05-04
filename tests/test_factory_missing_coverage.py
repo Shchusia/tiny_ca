@@ -23,7 +23,7 @@ from cryptography.x509.oid import NameOID
 
 from tiny_ca import CertificateFactory, ICALoader
 from tiny_ca.exc import InvalidRangeTimeCertificate
-from tiny_ca.models.certtificate import CertificateInfo
+from tiny_ca.models.certificate import CertificateInfo
 
 
 # ---------------------------------------------------------------------------
@@ -207,7 +207,7 @@ class TestInspectCertificate:
     # ── basic return type ──────────────────────────────────────────────────
 
     def test_returns_certificate_details(self, factory, ca_cert, ca_key):
-        from tiny_ca.models.certtificate import CertificateDetails
+        from tiny_ca.models.certificate import CertificateDetails
 
         leaf = _make_leaf(ca_cert, ca_key)
         details = factory.inspect_certificate(leaf)

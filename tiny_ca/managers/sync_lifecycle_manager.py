@@ -43,7 +43,7 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certtificate import CAConfig, CertificateDetails, ClientConfig
+from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
 
@@ -478,20 +478,18 @@ class CertLifecycleManager:
 
         cert = self._db.get_by_serial(serial=serial)
         if not cert:
-            self._logger.debug(
-                "Certificate serial=%d not found in DB → UNKNOWN", serial
-            )
             return CertificateStatus.UNKNOWN
-
         if cert.revocation_date:
-            self._logger.debug("Certificate serial=%d is revoked", serial)
             return CertificateStatus.REVOKED
-
         now = datetime.now(UTC)
-        if cert.not_valid_after < now:
-            self._logger.debug("Certificate serial=%d has expired", serial)
-            return CertificateStatus.EXPIRED
 
+        # Handle both aware and naive datetimes
+        not_valid_after = cert.not_valid_after
+        if not_valid_after.tzinfo is None:
+            not_valid_after = not_valid_after.replace(tzinfo=UTC)
+
+        if not_valid_after < now:
+            return CertificateStatus.EXPIRED
         return CertificateStatus.VALID
 
     def verify_certificate(self, cert: x509.Certificate) -> bool:
@@ -603,85 +601,165 @@ class CertLifecycleManager:
         )
         return new_cert, new_key, new_csr
 
-    # ------------------------------------------------------------------
-    # Certificate inspection and co-signing
-    # ------------------------------------------------------------------
-
-    def inspect_certificate(
-        self,
-        cert: x509.Certificate,
-    ) -> CertificateDetails:
-        """
-        Extract a structured, human-readable summary of *cert*.
-
-        Delegates to ``CertificateFactory.inspect_certificate`` which parses
-        every commonly-used X.509 v3 extension and Subject attribute into plain
-        Python values.  No cryptographic verification is performed — use
-        :meth:`verify_certificate` for that.
-
-        Parameters
-        ----------
-        cert : x509.Certificate
-            The certificate to inspect.  May have been issued by this CA or
-            by a completely different PKI.
-
-        Returns
-        -------
-        CertificateDetails
-            Frozen dataclass with serial, CN, SANs, key usage, fingerprint,
-            validity window, and other fields populated from *cert*.
-
-        Raises
-        ------
-        ValueError
-            If ``self.factory`` has not been initialised.
-        """
+    def inspect_certificate(self, cert: x509.Certificate):
         self._require_factory()
         return self._factory.inspect_certificate(cert)  # type: ignore[union-attr]
 
     def cosign_certificate(
+        self, cert: x509.Certificate, days_valid: int | None = None, valid_from=None
+    ) -> x509.Certificate:
+        self._require_factory()
+        return self._factory.cosign_certificate(
+            cert=cert, days_valid=days_valid, valid_from=valid_from
+        )  # type: ignore[union-attr]
+
+    def export_pkcs12(
         self,
         cert: x509.Certificate,
-        days_valid: int | None = None,
-        valid_from: datetime = None,
+        private_key,
+        password: bytes | None = None,
+        name: str | None = None,
+    ) -> bytes:
+        """Pack cert + key into a PKCS#12 bundle. Delegates to CertificateFactory.export_pkcs12."""
+        self._require_factory()
+        return self._factory.export_pkcs12(
+            cert=cert, private_key=private_key, password=password, name=name
+        )  # type: ignore[union-attr]
+
+    def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
+        """Return [cert, ca_cert] chain. Delegates to CertificateFactory.get_cert_chain."""
+        self._require_factory()
+        return self._factory.get_cert_chain(cert)  # type: ignore[union-attr]
+
+    def renew_certificate(
+        self,
+        serial: int,
+        days_valid: int = 365,
+        valid_from=None,
     ) -> x509.Certificate:
         """
-        Re-sign an existing certificate with this CA's key.
+        Renew the certificate identified by *serial*: same key, new validity window.
 
-        Preserves the original Subject, public key, and all v3 extensions but
-        replaces the Issuer, AuthorityKeyIdentifier, serial number, and
-        (optionally) the validity window.
-
-        Parameters
-        ----------
-        cert : x509.Certificate
-            The source certificate to co-sign.
-        days_valid : int | None
-            Override the validity duration in calendar days.  ``None`` keeps
-            the original ``not_valid_before`` / ``not_valid_after`` unchanged.
-        valid_from : datetime | None
-            Override the start of the validity window.  Ignored when
-            *days_valid* is ``None``.
-
-        Returns
-        -------
-        x509.Certificate
-            A new certificate signed by this CA.
+        Fetches the certificate PEM from the database, deserialises it, and
+        delegates to ``CertificateFactory.renew_certificate``.
 
         Raises
         ------
+        DBNotInitedError
+            If no ``db_handler`` was provided.
+        CertNotFound
+            If no record exists for *serial*.
         ValueError
             If ``self.factory`` has not been initialised.
-        InvalidRangeTimeCertificate
-            If *days_valid* is provided and the computed expiry is already
-            in the past.
+        """
+        self._require_db()
+        self._require_factory()
+
+        record = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
+        if record is None:
+            raise CertNotFound()
+
+        from cryptography import x509 as _x509
+
+        cert = _x509.load_pem_x509_certificate(record.certificate_pem.encode())
+        renewed = self._factory.renew_certificate(
+            cert=cert, days_valid=days_valid, valid_from=valid_from
+        )  # type: ignore[union-attr]
+        self._logger.info(
+            "Certificate renewed: serial=%d → new_serial=%s",
+            serial,
+            renewed.serial_number,
+        )
+        return renewed
+
+    def issue_intermediate_ca(
+        self,
+        common_name: str,
+        key_size: int = 4096,
+        days_valid: int = 1825,
+        valid_from=None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+        cert_path: str | None = None,
+        uuid_str: str | None = None,
+    ) -> tuple[x509.Certificate, object]:
+        """
+        Issue a subordinate CA cert signed by this CA and save artefacts.
+
+        Returns (cert, private_key). The cert is NOT registered in the DB
+        automatically — call ``register_cert_in_db`` if persistence is needed.
         """
         self._require_factory()
-        return self._factory.cosign_certificate(  # type: ignore[union-attr]
-            cert=cert,
+        cert, key = self._factory.issue_intermediate_ca(  # type: ignore[union-attr]
+            common_name=common_name,
+            key_size=key_size,
             days_valid=days_valid,
             valid_from=valid_from,
+            path_length=path_length,
+            organization=organization,
+            country=country,
         )
+        self._storage.save_certificate(
+            cert=cert,
+            file_name="intermediate_ca",
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=True,
+        )
+        self._storage.save_certificate(
+            cert=key,
+            file_name="intermediate_ca",
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=True,
+        )
+        return cert, key
+
+    def list_certificates(
+        self,
+        status: str | None = None,
+        key_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list:
+        """Return paginated certificate records. Requires db_handler."""
+        self._require_db()
+        return self._db.list_all(
+            status=status, key_type=key_type, limit=limit, offset=offset
+        )  # type: ignore[union-attr]
+
+    def get_expiring_soon(self, within_days: int = 30) -> list:
+        """Return VALID certs expiring within *within_days* days. Requires db_handler."""
+        self._require_db()
+        return self._db.get_expiring(within_days=within_days)  # type: ignore[union-attr]
+
+    def delete_certificate(self, serial: int, cert_path: str | None = None) -> bool:
+        """
+        Hard-delete a certificate from the DB and its artefact folder from storage.
+
+        Returns True if the DB row was deleted (storage deletion is best-effort).
+        """
+        self._require_db()
+        record = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
+        if record is None:
+            return False
+        uuid = record.uuid
+        deleted = self._db.delete_by_uuid(uuid=uuid)  # type: ignore[union-attr]
+        if deleted and uuid:
+            # Delete the certificate folder from storage
+            self._storage.delete_certificate_folder(uuid_str=uuid, cert_path=cert_path)
+        return deleted
+
+    def refresh_expired_statuses(self) -> int:
+        """Bulk-mark expired certificates. Returns count of updated rows."""
+        self._require_db()
+        return self._db.update_status_expired()  # type: ignore[union-attr]
+
+    def verify_crl(self, crl: x509.CertificateRevocationList) -> None:
+        """Verify CRL signature and expiry. Delegates to CertificateFactory.verify_crl."""
+        self._require_factory()
+        self._factory.verify_crl(crl)  # type: ignore[union-attr]
 
     # ------------------------------------------------------------------
     # Private helpers

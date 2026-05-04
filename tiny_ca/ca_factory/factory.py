@@ -32,15 +32,16 @@ from typing import Any, cast
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from sqlalchemy import Row
 
 from ..const import CertType
 from ..db.models import CertificateRecord
 from ..exc import ValidationCertError
-from ..models.certtificate import CertificateDetails
+from ..models.certificate import CertificateDetails
 from ..settings import DEFAULT_LOGGER
 from ..utils.serial_generator import SerialWithEncoding
 from .utils import CertLifetime, ICALoader
@@ -753,9 +754,7 @@ class CertificateFactory:
                 try:
                     if getattr(ku, bit):
                         key_usage.append(bit)
-                except (
-                    x509.exceptions.UnsupportedGeneralNameType  # type: ignore[attr-defined]
-                ):  # pragma: no cover  # type: ignore[attr-defined]
+                except x509.exceptions.UnsupportedGeneralNameType:  # pragma: no cover
                     pass
         except x509.ExtensionNotFound:
             pass
@@ -805,6 +804,358 @@ class CertificateFactory:
             subject_key_identifier=subject_key_identifier,
             public_key_size=public_key_size,
         )
+
+    # ------------------------------------------------------------------
+    # Certificate co-signing
+    # ------------------------------------------------------------------
+
+    def export_pkcs12(
+        self,
+        cert: x509.Certificate,
+        private_key: rsa.RSAPrivateKey,
+        password: bytes | None = None,
+        name: str | None = None,
+    ) -> bytes:
+        """
+        Pack *cert* and *private_key* into a PKCS#12 (PFX) bundle.
+
+        PKCS#12 is the standard container format accepted by Windows certificate
+        stores, macOS Keychain, Java keystores, and most browser import dialogs.
+        The CA certificate is automatically included as the issuer in the chain.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The leaf certificate to export.
+        private_key : rsa.RSAPrivateKey
+            The private key corresponding to *cert*'s public key.
+        password : bytes | None
+            Optional password to encrypt the PKCS#12 file.  ``None`` produces
+            an unencrypted bundle (not recommended for production).
+        name : str | None
+            Friendly name (alias) embedded in the PKCS#12 bag.  Defaults to
+            the certificate's Common Name when ``None``.
+
+        Returns
+        -------
+        bytes
+            Raw DER-encoded PKCS#12 bytes.  Write to a ``.p12`` or ``.pfx``
+            file, or send as an HTTP response with
+            ``Content-Type: application/x-pkcs12``.
+        """
+        if name is None:
+            cn_attrs = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+            name = cast(str, cn_attrs[0].value) if cn_attrs else "certificate"
+
+        encryption_algorithm = (
+            serialization.BestAvailableEncryption(password)
+            if password
+            else serialization.NoEncryption()
+        )
+
+        p12_bytes = pkcs12.serialize_key_and_certificates(
+            name=name.encode(),
+            key=private_key,
+            cert=cert,
+            cas=[self._ca.ca_cert],
+            encryption_algorithm=encryption_algorithm,
+        )
+        self._logger.info("PKCS#12 exported: CN=%s", name)
+        return p12_bytes
+
+    def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
+        """
+        Return the full certificate chain from *cert* up to the CA root.
+
+        For a single-level PKI (leaf → root CA) this returns ``[cert, ca_cert]``.
+        The list is ordered leaf-first, root-last — the same order expected by
+        nginx ``ssl_certificate``, envoy ``tls_certificates``, and the
+        ``fullchain.pem`` convention used by Let's Encrypt.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The leaf (or intermediate) certificate to start the chain from.
+
+        Returns
+        -------
+        list[x509.Certificate]
+            ``[cert, self._ca.ca_cert]`` — leaf first, CA root last.
+        """
+        self._logger.debug("Building cert chain for serial=%s", cert.serial_number)
+        return [cert, self._ca.ca_cert]
+
+    def renew_certificate(
+        self,
+        cert: x509.Certificate,
+        days_valid: int = 365,
+        valid_from: datetime.datetime | None = None,
+    ) -> x509.Certificate:
+        """
+        Issue a renewal of *cert* with a fresh validity window but the same
+        Subject, public key, and extensions.
+
+        Unlike :meth:`rotate_certificate` (which generates a new key pair),
+        renewal re-uses the existing public key.  This is appropriate when the
+        private key has not been compromised and the owner simply needs to
+        extend the validity period.
+
+        The renewed certificate receives a new serial number generated by
+        :class:`SerialWithEncoding` so it is distinguishable from the original
+        in CRLs and audit logs.
+
+        Parameters
+        ----------
+        cert : x509.Certificate
+            The certificate to renew.  Its Subject, public key, and all v3
+            extensions (except AKI, which is updated to point to the current CA)
+            are copied verbatim into the renewal.
+        days_valid : int
+            Number of days the renewed certificate should be valid.
+            Default: ``365``.
+        valid_from : datetime.datetime | None
+            Start of the new validity window.  ``None`` uses the current UTC
+            time.
+
+        Returns
+        -------
+        x509.Certificate
+            A freshly signed certificate with the same identity but a new
+            validity window and serial number.
+
+        Raises
+        ------
+        InvalidRangeTimeCertificate
+            If the computed expiry is already in the past.
+        """
+        not_before, not_after = CertLifetime.compute(valid_from, days_valid)
+
+        cn_attrs = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+        cn_raw = cast(str, cn_attrs[0].value) if cn_attrs else "renewed"
+        cn_safe = cn_raw.lower().replace(os.sep, "_")
+        new_serial = SerialWithEncoding.generate(
+            name=cn_safe,
+            serial_type=CertType.SERVICE,
+        )
+
+        builder = (
+            x509.CertificateBuilder()
+            .subject_name(cert.subject)
+            .issuer_name(self._ca.ca_cert.subject)
+            .public_key(cert.public_key())
+            .serial_number(new_serial)
+            .not_valid_before(not_before)
+            .not_valid_after(not_after)
+        )
+
+        _skip_oids = {x509.AuthorityKeyIdentifier.oid}
+        for ext in cert.extensions:
+            if ext.oid in _skip_oids:
+                continue
+            builder = builder.add_extension(ext.value, critical=ext.critical)
+
+        try:
+            ca_ski = self._ca.ca_cert.extensions.get_extension_for_class(
+                x509.SubjectKeyIdentifier
+            ).value
+            builder = builder.add_extension(
+                x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ca_ski),
+                critical=False,
+            )
+        except x509.ExtensionNotFound:  # pragma: no cover
+            builder = builder.add_extension(
+                x509.AuthorityKeyIdentifier(
+                    key_identifier=None,
+                    authority_cert_issuer=[
+                        x509.DirectoryName(self._ca.ca_cert.subject)
+                    ],
+                    authority_cert_serial_number=self._ca.ca_cert.serial_number,
+                ),
+                critical=False,
+            )
+
+        renewed = builder.sign(self._ca.ca_key, hashes.SHA256(), default_backend())
+        self._logger.info(
+            "Certificate renewed: CN=%s, old_serial=%s → new_serial=%s, valid_until=%s",
+            cn_raw,
+            cert.serial_number,
+            renewed.serial_number,
+            not_after.isoformat(),
+        )
+        return renewed
+
+    def issue_intermediate_ca(
+        self,
+        common_name: str,
+        key_size: int = 4096,
+        days_valid: int = 1825,
+        valid_from: datetime.datetime | None = None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+    ) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
+        """
+        Issue a subordinate (intermediate) CA certificate signed by this CA.
+
+        The resulting certificate has ``BasicConstraints(ca=True)`` and
+        ``KeyUsage(key_cert_sign=True, crl_sign=True)`` so it can in turn
+        sign leaf certificates.  The ``path_length`` constraint limits how
+        deep the sub-hierarchy can go.
+
+        Parameters
+        ----------
+        common_name : str
+            CN for the intermediate CA Subject.
+        key_size : int
+            RSA key size for the intermediate CA key.  Defaults to ``4096``
+            (recommended for long-lived CA keys).
+        days_valid : int
+            Validity in calendar days.  Defaults to ``1825`` (5 years).
+        valid_from : datetime.datetime | None
+            Start of the validity window.  ``None`` uses the current UTC time.
+        path_length : int | None
+            ``BasicConstraints.path_length`` value.  ``0`` means this
+            intermediate can only sign leaf certificates (cannot create further
+            sub-CAs).  ``None`` means unlimited sub-levels.
+        organization : str | None
+            O field for the intermediate CA Subject.  Falls back to the parent
+            CA's organization when ``None``.
+        country : str | None
+            C field.  Falls back to the parent CA's country when ``None``.
+
+        Returns
+        -------
+        tuple[x509.Certificate, rsa.RSAPrivateKey]
+            ``(intermediate_ca_cert, intermediate_ca_key)``.
+
+        Raises
+        ------
+        InvalidRangeTimeCertificate
+            If the computed expiry is already in the past.
+        """
+        self._logger.info(
+            "Issuing intermediate CA: CN=%s, path_length=%s", common_name, path_length
+        )
+
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=key_size,
+            backend=default_backend(),
+        )
+
+        info = self._ca.base_info
+        attrs: list[x509.NameAttribute] = []
+        resolved_country = country or info.country
+        resolved_org = organization or info.organization
+        if resolved_country:  # pragma: no cover
+            attrs.append(x509.NameAttribute(NameOID.COUNTRY_NAME, resolved_country))
+        if resolved_org:  # pragma: no cover
+            attrs.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, resolved_org))
+        attrs.append(x509.NameAttribute(NameOID.COMMON_NAME, common_name))
+        subject = x509.Name(attrs)
+
+        not_before, not_after = CertLifetime.compute(valid_from, days_valid)
+        serial_number = SerialWithEncoding.generate(
+            name=common_name.lower().replace(os.sep, "_"),
+            serial_type=CertType.CA,
+        )
+
+        builder = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(self._ca.ca_cert.subject)
+            .public_key(private_key.public_key())
+            .serial_number(serial_number)
+            .not_valid_before(not_before)
+            .not_valid_after(not_after)
+            .add_extension(
+                x509.BasicConstraints(ca=True, path_length=path_length),
+                critical=True,
+            )
+            .add_extension(
+                x509.KeyUsage(
+                    digital_signature=False,
+                    key_encipherment=False,
+                    content_commitment=False,
+                    data_encipherment=False,
+                    key_agreement=False,
+                    key_cert_sign=True,
+                    crl_sign=True,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                critical=True,
+            )
+            .add_extension(
+                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+                critical=False,
+            )
+        )
+
+        try:
+            ca_ski = self._ca.ca_cert.extensions.get_extension_for_class(
+                x509.SubjectKeyIdentifier
+            ).value
+            builder = builder.add_extension(
+                x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ca_ski),
+                critical=False,
+            )
+        except x509.ExtensionNotFound:  # pragma: no cover
+            pass
+
+        cert = builder.sign(self._ca.ca_key, hashes.SHA256(), default_backend())
+        self._logger.info(
+            "Intermediate CA issued: CN=%s, serial=%s, valid_until=%s",
+            common_name,
+            cert.serial_number,
+            not_after.isoformat(),
+        )
+        return cert, private_key
+
+    def verify_crl(self, crl: x509.CertificateRevocationList) -> None:
+        """
+        Verify the signature and validity window of *crl*.
+
+        Checks that:
+        1. The CRL was signed by this CA's private key (issuer match + signature).
+        2. The CRL's ``nextUpdate`` timestamp has not yet passed — i.e. the CRL
+           is still within its declared validity window.
+
+        Parameters
+        ----------
+        crl : x509.CertificateRevocationList
+            The CRL object to verify.
+
+        Returns
+        -------
+        None
+            Returns silently when all checks pass.
+
+        Raises
+        ------
+        ValidationCertError
+            If the CRL issuer does not match this CA, the signature is invalid,
+            or the CRL has expired (``nextUpdate`` is in the past).
+        """
+        if crl.issuer != self._ca.ca_cert.subject:
+            raise ValidationCertError("CRL issuer does not match CA subject.")
+
+        now = datetime.datetime.now(datetime.UTC)
+        next_update = crl.next_update_utc
+        if next_update is not None and next_update < now:
+            raise ValidationCertError(
+                f"CRL has expired: nextUpdate={next_update.isoformat()}, "
+                f"now={now.isoformat()}"
+            )
+
+        try:
+            crl.is_signature_valid(self._ca.ca_cert.public_key())  # type: ignore[arg-type]
+        except Exception as exc:  # pragma: no cover
+            raise ValidationCertError(
+                f"CRL signature verification failed: {exc}"
+            ) from exc
+
+        self._logger.debug("CRL verified successfully")
 
     # ------------------------------------------------------------------
     # Certificate co-signing

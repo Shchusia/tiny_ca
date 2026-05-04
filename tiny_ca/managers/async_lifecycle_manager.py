@@ -17,7 +17,7 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
 from tiny_ca.storage.async_local_storage import AsyncLocalStorage
@@ -448,7 +448,7 @@ class AsyncCertLifecycleManager:
         ]
         crl = await asyncio.to_thread(
             self._factory.build_crl,  # type: ignore[union-attr]
-            revoked_certs=iter(revoked_rows),  # type: ignore[arg-type]
+            revoked_certs=iter(revoked_rows),
             days_valid=days_valid,
         )
         path, _ = await self._storage.save_certificate(
@@ -500,7 +500,14 @@ class AsyncCertLifecycleManager:
         if cert.revocation_date:
             return CertificateStatus.REVOKED
         now = datetime.now(UTC)
-        if cert.not_valid_after < now:
+
+        # Handle both aware and naive datetimes
+        not_valid_after = cert.not_valid_after
+        if not_valid_after.tzinfo is None:
+            # Make naive datetime aware by assuming UTC
+            not_valid_after = not_valid_after.replace(tzinfo=UTC)
+
+        if not_valid_after < now:
             return CertificateStatus.EXPIRED
         return CertificateStatus.VALID
 
@@ -618,89 +625,163 @@ class AsyncCertLifecycleManager:
         )
         return new_cert, new_key, new_csr
 
-    # ------------------------------------------------------------------
-    # Certificate inspection and co-signing
-    # ------------------------------------------------------------------
-
-    async def inspect_certificate(
-        self,
-        cert: x509.Certificate,
-    ) -> None:
-        """
-        Extract a structured, human-readable summary of *cert*.
-
-        Runs ``CertificateFactory.inspect_certificate`` in a thread pool so
-        the event loop is not blocked.  No cryptographic verification is
-        performed — use :meth:`verify_certificate` for that.
-
-        Parameters
-        ----------
-        cert : x509.Certificate
-            The certificate to inspect.  May have been issued by this CA or
-            by a completely different PKI.
-
-        Returns
-        -------
-        CertificateDetails
-            Frozen dataclass with serial, CN, SANs, key usage, fingerprint,
-            validity window, and other fields populated from *cert*.
-
-        Raises
-        ------
-        ValueError
-            If ``self.factory`` has not been initialised.
-        """
+    async def inspect_certificate(self, cert: x509.Certificate):
         self._require_factory()
-        return await asyncio.to_thread(
-            self._factory.inspect_certificate,  # type: ignore[arg-type]
-            cert,
-        )
+        return await asyncio.to_thread(self._factory.inspect_certificate, cert)  # type: ignore[union-attr]
 
     async def cosign_certificate(
-        self,
-        cert: x509.Certificate,
-        days_valid: int | None = None,
-        valid_from: datetime = None,
+        self, cert: x509.Certificate, days_valid: int | None = None, valid_from=None
     ) -> x509.Certificate:
-        """
-        Re-sign an existing certificate with this CA's key.
-
-        Runs ``CertificateFactory.cosign_certificate`` in a thread pool.
-        Preserves the original Subject, public key, and all v3 extensions but
-        replaces the Issuer, AuthorityKeyIdentifier, serial number, and
-        (optionally) the validity window.
-
-        Parameters
-        ----------
-        cert : x509.Certificate
-            The source certificate to co-sign.
-        days_valid : int | None
-            Override the validity duration in calendar days.  ``None`` keeps
-            the original ``not_valid_before`` / ``not_valid_after`` unchanged.
-        valid_from : datetime | None
-            Override the start of the validity window.  Ignored when
-            *days_valid* is ``None``.
-
-        Returns
-        -------
-        x509.Certificate
-            A new certificate signed by this CA.
-
-        Raises
-        ------
-        ValueError
-            If ``self.factory`` has not been initialised.
-        InvalidRangeTimeCertificate
-            If *days_valid* is provided and the computed expiry is already
-            in the past.
-        """
         self._require_factory()
         return await asyncio.to_thread(
-            self._factory.cosign_certificate,  # type: ignore[union-attr]
+            self._factory.cosign_certificate,
             cert=cert,
             days_valid=days_valid,
             valid_from=valid_from,
+        )  # type: ignore[union-attr]
+
+    async def export_pkcs12(
+        self,
+        cert: x509.Certificate,
+        private_key,
+        password: bytes | None = None,
+        name: str | None = None,
+    ) -> bytes:
+        """Pack cert + key into PKCS#12 bytes. Runs in thread pool."""
+        self._require_factory()
+        return await asyncio.to_thread(
+            self._factory.export_pkcs12,
+            cert=cert,
+            private_key=private_key,
+            password=password,
+            name=name,
+        )  # type: ignore[union-attr]
+
+    async def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
+        """Return [cert, ca_cert] chain."""
+        self._require_factory()
+        return await asyncio.to_thread(self._factory.get_cert_chain, cert)  # type: ignore[union-attr]
+
+    async def renew_certificate(
+        self,
+        serial: int,
+        days_valid: int = 365,
+        valid_from=None,
+    ) -> x509.Certificate:
+        """
+        Renew the certificate identified by *serial*: same key, new validity window.
+
+        Raises
+        ------
+        DBNotInitedError / CertNotFound / ValueError
+        """
+        self._require_db()
+        self._require_factory()
+
+        record = await self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
+        if record is None:
+            raise CertNotFound()
+
+        from cryptography import x509 as _x509
+
+        cert = _x509.load_pem_x509_certificate(record.certificate_pem.encode())
+        renewed = await asyncio.to_thread(
+            self._factory.renew_certificate,
+            cert=cert,
+            days_valid=days_valid,
+            valid_from=valid_from,  # type: ignore[union-attr]
         )
+        self._logger.info(
+            "Certificate renewed: serial=%d → new_serial=%s",
+            serial,
+            renewed.serial_number,
+        )
+        return renewed
+
+    async def issue_intermediate_ca(
+        self,
+        common_name: str,
+        key_size: int = 4096,
+        days_valid: int = 1825,
+        valid_from=None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+        cert_path: str | None = None,
+        uuid_str: str | None = None,
+    ) -> tuple[x509.Certificate, object]:
+        """Issue a subordinate CA cert signed by this CA and save artefacts."""
+        self._require_factory()
+        cert, key = await asyncio.to_thread(
+            self._factory.issue_intermediate_ca,  # type: ignore[union-attr]
+            common_name=common_name,
+            key_size=key_size,
+            days_valid=days_valid,
+            valid_from=valid_from,
+            path_length=path_length,
+            organization=organization,
+            country=country,
+        )
+        await self._storage.save_certificate(
+            cert=cert,
+            file_name="intermediate_ca",
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=True,
+        )
+        await self._storage.save_certificate(
+            cert=key,
+            file_name="intermediate_ca",
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=True,
+        )
+        return cert, key
+
+    async def list_certificates(
+        self,
+        status: str | None = None,
+        key_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list:
+        """Return paginated certificate records. Requires db_handler."""
+        self._require_db()
+        return await self._db.list_all(
+            status=status, key_type=key_type, limit=limit, offset=offset
+        )  # type: ignore[union-attr]
+
+    async def get_expiring_soon(self, within_days: int = 30) -> list:
+        """Return VALID certs expiring within *within_days* days."""
+        self._require_db()
+        return await self._db.get_expiring(within_days=within_days)  # type: ignore[union-attr]
+
+    async def delete_certificate(
+        self, serial: int, cert_path: str | None = None
+    ) -> bool:
+        """Hard-delete from DB + storage. Returns True if DB row was deleted."""
+        self._require_db()
+        record = await self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
+        if record is None:
+            return False
+        uuid = record.uuid
+        deleted = await self._db.delete_by_uuid(uuid=uuid)  # type: ignore[union-attr]
+        if deleted and uuid:
+            # Delete the certificate folder from storage
+            await self._storage.delete_certificate_folder(
+                uuid_str=uuid, cert_path=cert_path
+            )
+        return deleted
+
+    async def refresh_expired_statuses(self) -> int:
+        """Bulk-mark expired certificates. Returns count of updated rows."""
+        self._require_db()
+        return await self._db.update_status_expired()  # type: ignore[union-attr]
+
+    async def verify_crl(self, crl: x509.CertificateRevocationList) -> None:
+        """Verify CRL signature and expiry in thread pool."""
+        self._require_factory()
+        await asyncio.to_thread(self._factory.verify_crl, crl)  # type: ignore[union-attr]
 
     # ------------------------------------------------------------------
     # private helpers

@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from tiny_ca.const import ALLOWED_CERT_EXTENSIONS
 from tiny_ca.exc import ErrorLoadCert, IsNotFile, NotExistCertFile, WrongType
-from tiny_ca.models.certtificate import CertificateInfo
+from tiny_ca.models.certificate import CertificateInfo
 from tiny_ca.settings import DEFAULT_LOGGER
 
 from .file_loader import CAFileLoader

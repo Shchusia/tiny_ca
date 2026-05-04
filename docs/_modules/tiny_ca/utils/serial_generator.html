@@ -193,13 +193,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/ca_factory.html">ca_factory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/managers.html">Lifecycle Managers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/storage.html">Storage Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/db.html">Database Layer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/models.html">Configuration Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">Exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -277,7 +277,7 @@
 
 
 <div class="viewcode-block" id="ISerialGenerator">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.ISerialGenerator">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.ISerialGenerator">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ISerialGenerator</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -289,7 +289,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ISerialGenerator.generate">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.ISerialGenerator.generate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.ISerialGenerator.generate">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -311,7 +311,7 @@
 
 
 <div class="viewcode-block" id="ISerialGenerator.parse">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.ISerialGenerator.parse">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.ISerialGenerator.parse">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -423,7 +423,7 @@
 
 
 <div class="viewcode-block" id="SerialGenerator">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialGenerator">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SerialGenerator</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stateful serial-number generator with a bidirectional id ↔ serial registry.</span>
@@ -459,7 +459,7 @@
     <span class="n">_DATA_MASK</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">_DATA_BITS</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="SerialGenerator.__init__">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialGenerator.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -471,7 +471,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="SerialGenerator.generate">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialGenerator.generate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.generate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate a serial number for *id_value* and register the mapping.</span>
@@ -518,7 +518,7 @@
 
 
 <div class="viewcode-block" id="SerialGenerator.parse">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialGenerator.parse">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.parse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decode a serial number back to its type and original identifier.</span>
@@ -549,7 +549,7 @@
 
 
 <div class="viewcode-block" id="SerialGenerator.get_serial_by_name">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialGenerator.get_serial_by_name">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.get_serial_by_name">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_serial_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Look up the serial number previously assigned to a string identifier.</span>
@@ -577,7 +577,7 @@
 
 
 <div class="viewcode-block" id="SerialWithEncoding">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialWithEncoding">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialWithEncoding">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SerialWithEncoding</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stateless serial-number generator that encodes a short name prefix and</span>
@@ -625,7 +625,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="SerialWithEncoding.generate">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialWithEncoding.generate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialWithEncoding.generate">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -672,7 +672,7 @@
 
 
 <div class="viewcode-block" id="SerialWithEncoding.parse">
-<a class="viewcode-back" href="../../../api/utils.html#tiny_ca.utils.serial_generator.SerialWithEncoding.parse">[docs]</a>
+<a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialWithEncoding.parse">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>

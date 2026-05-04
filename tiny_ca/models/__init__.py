@@ -1,3 +1,3 @@
-from .certtificate import CAConfig, ClientConfig
+from .certificate import CAConfig, ClientConfig
 
 __all__ = ["CAConfig", "ClientConfig"]

@@ -193,13 +193,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/ca_factory.html">ca_factory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/managers.html">Lifecycle Managers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/storage.html">Storage Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/db.html">Database Layer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/models.html">Configuration Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">Exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -272,7 +272,7 @@
 
 
 <div class="viewcode-block" id="CommonNameCertificate">
-<a class="viewcode-back" href="../../../api/models.html#tiny_ca.models.certtificate.CommonNameCertificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CommonNameCertificate">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CommonNameCertificate</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Minimal certificate identity fragment carrying only the Common Name.</span>
@@ -295,7 +295,7 @@
 
 
 <div class="viewcode-block" id="BaseCertificateDataModel">
-<a class="viewcode-back" href="../../../api/models.html#tiny_ca.models.certtificate.BaseCertificateDataModel">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseCertificateDataModel</span><span class="p">(</span><span class="n">CommonNameCertificate</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Certificate Subject identity fields shared by all CA configurations.</span>
@@ -328,7 +328,7 @@
 
 
 <div class="viewcode-block" id="BaseCertificateConfig">
-<a class="viewcode-back" href="../../../api/models.html#tiny_ca.models.certtificate.BaseCertificateConfig">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseCertificateConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cryptographic validity parameters shared by all certificate types.</span>
@@ -382,7 +382,7 @@
 
 
 <div class="viewcode-block" id="CAConfig">
-<a class="viewcode-back" href="../../../api/models.html#tiny_ca.models.certtificate.CAConfig">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CAConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CAConfig</span><span class="p">(</span><span class="n">BaseCertificateConfig</span><span class="p">,</span> <span class="n">BaseCertificateDataModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Complete configuration for bootstrapping a self-signed root CA certificate.</span>
@@ -411,7 +411,7 @@
 
 
 <div class="viewcode-block" id="ClientConfig">
-<a class="viewcode-back" href="../../../api/models.html#tiny_ca.models.certtificate.ClientConfig">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClientConfig</span><span class="p">(</span><span class="n">CommonNameCertificate</span><span class="p">,</span> <span class="n">BaseCertificateConfig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configuration for issuing an end-entity (client or server) certificate.</span>
@@ -501,7 +501,7 @@
 
 
 <div class="viewcode-block" id="CertificateInfo">
-<a class="viewcode-back" href="../../../api/models.html#tiny_ca.models.certtificate.CertificateInfo">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CertificateInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Structured metadata extracted from the Subject field of a CA certificate.</span>
@@ -549,6 +549,83 @@
     <span class="n">locality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Locality / City (L) extracted from the CA certificate Subject.&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CertificateDetails">
+<a class="viewcode-back" href="../../../modules/tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CertificateDetails</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Structured read-only snapshot of an ``x509.Certificate``.</span>
+
+<span class="sd">    All fields are extracted from the certificate at creation time and stored</span>
+<span class="sd">    as plain Python values — no ``cryptography`` objects leak out — so the</span>
+<span class="sd">    model is trivially serialisable (JSON, msgpack, etc.).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
+        <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">,</span>
+        <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">serial_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Raw integer serial number as stored in the certificate.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;First commonName (CN) from the Subject.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">organization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;First organizationName (O) from the Subject.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">country</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;First countryName (C) from the Subject.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">issuer_cn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Common Name extracted from the Issuer.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">not_valid_before</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Start of the validity window (UTC).&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">not_valid_after</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;End of the validity window (UTC).&quot;</span><span class="p">)</span>
+
+    <span class="n">is_ca</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;True if BasicConstraints marks this certificate as CA.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">san_dns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;DNS names from SubjectAlternativeName.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">san_ip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;IP addresses from SubjectAlternativeName.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">key_usage</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enabled KeyUsage flags.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">extended_key_usage</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;OID strings from ExtendedKeyUsage.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">fingerprint_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;SHA256 fingerprint of the certificate.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">subject_key_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;SubjectKeyIdentifier hex digest.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">public_key_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;RSA key size in bits (None for non-RSA keys).&quot;</span>
     <span class="p">)</span></div>
 
 </pre></div>

@@ -5,7 +5,9 @@ from logging import Logger
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import serialization
-from sqlalchemy import Row, delete, select
+from sqlalchemy import Row, asc, delete, desc, select
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from tiny_ca.const import CertType
@@ -356,3 +358,160 @@ class AsyncDBHandler(BaseDB):
 
             async for row in result:
                 yield row
+
+    async def list_all(  # type: ignore[override]
+        self,
+        status: str | None = None,
+        key_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[CertificateRecord]:
+        """
+        Return a paginated list of certificate records with optional filters.
+
+        Parameters
+        ----------
+        status : str | None
+            Filter by lifecycle state.  ``None`` returns all statuses.
+        key_type : str | None
+            Filter by certificate category.  ``None`` returns all types.
+        limit : int
+            Maximum records to return.  Default: ``100``.
+        offset : int
+            Records to skip (pagination).  Default: ``0``.
+
+        Returns
+        -------
+        list[CertificateRecord]
+            Records ordered by ``id`` descending.  Empty list on error.
+        """
+
+        async with self._db.get_session() as session:
+            try:
+                stmt = select(CertificateRecord)
+                if status is not None:
+                    stmt = stmt.where(CertificateRecord.status == status)
+                if key_type is not None:
+                    stmt = stmt.where(CertificateRecord.key_type == key_type)
+                stmt = (
+                    stmt.order_by(desc(CertificateRecord.id))
+                    .limit(limit)
+                    .offset(offset)
+                )
+                result = await session.execute(stmt)
+                rows = result.scalars().all()
+                self._logger.debug(
+                    "list_all(status=%r, key_type=%r) → %d rows",
+                    status,
+                    key_type,
+                    len(rows),
+                )
+                return list(rows)
+            except Exception as exc:
+                self._logger.error("list_all failed: %s", exc, exc_info=True)
+                return []
+
+    async def get_expiring(self, within_days: int = 30) -> list[CertificateRecord]:  # type: ignore[override]
+        """
+        Return VALID certificates expiring within *within_days* calendar days.
+
+        Parameters
+        ----------
+        within_days : int
+            Look-ahead window in days.  Default: ``30``.
+
+        Returns
+        -------
+        list[CertificateRecord]
+            Records ordered by ``not_valid_after`` ascending.  Empty list on error.
+        """
+
+        now = datetime.now(UTC)
+        cutoff = now + timedelta(days=within_days)
+        async with self._db.get_session() as session:
+            try:
+                stmt = (
+                    select(CertificateRecord)
+                    .where(
+                        CertificateRecord.status == CertificateStatus.VALID,
+                        CertificateRecord.not_valid_after > now,
+                        CertificateRecord.not_valid_after <= cutoff,
+                    )
+                    .order_by(asc(CertificateRecord.not_valid_after))
+                )
+                result = await session.execute(stmt)
+                rows = result.scalars().all()
+                self._logger.debug(
+                    "get_expiring(within_days=%d) → %d rows", within_days, len(rows)
+                )
+                return list(rows)
+            except Exception as exc:
+                self._logger.error("get_expiring failed: %s", exc, exc_info=True)
+                return []
+
+    async def delete_by_uuid(self, uuid: str) -> bool:  # type: ignore[override]
+        """
+        Permanently delete the certificate record identified by *uuid*.
+
+        Parameters
+        ----------
+        uuid : str
+            Storage folder UUID of the certificate to delete.
+
+        Returns
+        -------
+        bool
+            ``True`` if a row was deleted; ``False`` otherwise.
+        """
+
+        async with self._db.get_session() as session:
+            try:
+                stmt = sa_delete(CertificateRecord).where(
+                    CertificateRecord.uuid == uuid
+                )
+                result = await session.execute(stmt)
+                await session.commit()
+                deleted = bool(result.rowcount > 0)  # type: ignore[attr-defined]
+                self._logger.info("delete_by_uuid(%r) → deleted=%s", uuid, deleted)
+                return deleted
+            except Exception as exc:
+                await session.rollback()
+                self._logger.error(
+                    "delete_by_uuid(%r) failed: %s", uuid, exc, exc_info=True
+                )
+                return False
+
+    async def update_status_expired(self) -> int:  # type: ignore[override]
+        """
+        Bulk-set status=expired for all VALID certs whose validity has passed.
+
+        Returns
+        -------
+        int
+            Number of rows updated.  ``0`` on error.
+        """
+
+        now = datetime.now(UTC)
+        async with self._db.get_session() as session:
+            try:
+                stmt = (
+                    sa_update(CertificateRecord)
+                    .where(
+                        CertificateRecord.status == CertificateStatus.VALID,
+                        CertificateRecord.not_valid_after < now,
+                    )
+                    .values(status=CertificateStatus.EXPIRED)
+                )
+                result = await session.execute(stmt)
+                await session.commit()
+                count = int(result.rowcount)  # type: ignore[attr-defined]
+                self._logger.info(
+                    "update_status_expired: %d rows marked expired", count
+                )
+                return count
+            except Exception as exc:
+                await session.rollback()
+                self._logger.error(
+                    "update_status_expired failed: %s", exc, exc_info=True
+                )
+                return 0

@@ -193,13 +193,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/ca_factory.html">ca_factory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/managers.html">Lifecycle Managers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/storage.html">Storage Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/db.html">Database Layer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/models.html">Configuration Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">Exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -259,7 +259,7 @@
 
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AsyncCertLifecycleManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Orchestrates the full lifecycle of X.509 certificates.</span>
@@ -342,7 +342,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.__init__">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">storage</span><span class="p">:</span> <span class="n">AsyncLocalStorage</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -401,7 +401,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.create_self_signed_ca">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.create_self_signed_ca">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.create_self_signed_ca">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_self_signed_ca</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">CAConfig</span><span class="p">,</span>
@@ -491,7 +491,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.issue_certificate">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.issue_certificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.issue_certificate">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">issue_certificate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">ClientConfig</span><span class="p">,</span>
@@ -602,7 +602,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.revoke_certificate">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.revoke_certificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.revoke_certificate">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">revoke_certificate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -657,8 +657,10 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.generate_crl">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.generate_crl">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate_crl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateRevocationList</span><span class="p">:</span>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.generate_crl">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate_crl</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateRevocationList</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build, sign, and persist a fresh Certificate Revocation List.</span>
 
@@ -691,21 +693,20 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating CRL: days_valid=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">)</span>
 
-        <span class="n">revoked_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_revoked_certificates</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">revoked_rows</span><span class="p">))</span>
-        <span class="n">crl</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">abuild_crl</span><span class="p">(</span><span class="n">revoked_rows</span><span class="p">)</span>
-        <span class="c1"># revoked_rows = [</span>
-        <span class="c1">#     row</span>
-        <span class="c1">#     async for row in self._db.get_revoked_certificates()  # type: ignore[union-attr]</span>
-        <span class="c1"># ]</span>
-
-        <span class="c1"># crl = await asyncio.to_thread(</span>
-        <span class="c1">#     self._factory.build_crl,  # type: ignore[union-attr]</span>
-        <span class="c1">#     revoked_certs=iter(revoked_rows),</span>
-        <span class="c1">#     days_valid=days_valid,</span>
-        <span class="c1"># )</span>
+        <span class="n">revoked_rows</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">row</span> <span class="k">async</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_revoked_certificates</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
+        <span class="p">]</span>
+        <span class="n">crl</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">build_crl</span><span class="p">,</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">revoked_certs</span><span class="o">=</span><span class="nb">iter</span><span class="p">(</span><span class="n">revoked_rows</span><span class="p">),</span>
+            <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">crl</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;crl&quot;</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_add_uuid</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+            <span class="n">cert</span><span class="o">=</span><span class="n">crl</span><span class="p">,</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;crl&quot;</span><span class="p">,</span>
+            <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">is_add_uuid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CRL saved to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">crl</span></div>
@@ -716,7 +717,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.get_certificate_status">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.get_certificate_status">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.get_certificate_status">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_certificate_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateStatus</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determine the current status of the certificate identified by *serial*.</span>
@@ -758,7 +759,7 @@
 
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.verify_certificate">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.verify_certificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.verify_certificate">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_certificate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform a full verification of *cert*: chain, signature, and revocation.</span>
@@ -815,11 +816,12 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="AsyncCertLifecycleManager.rotate_certificate">
-<a class="viewcode-back" href="../../../api/managers.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.rotate_certificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.rotate_certificate">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rotate_certificate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">ClientConfig</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateSigningRequest</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Revoke an existing certificate and issue a replacement in a single operation.</span>
@@ -865,13 +867,105 @@
 
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">superseded</span><span class="p">)</span>
 
-        <span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue_certificate</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue_certificate</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Rotation complete: old serial=</span><span class="si">%d</span><span class="s2"> replaced by serial=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">serial</span><span class="p">,</span>
             <span class="n">new_cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Certificate inspection and co-signing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="AsyncCertLifecycleManager.inspect_certificate">
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.inspect_certificate">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">inspect_certificate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract a structured, human-readable summary of *cert*.</span>
+
+<span class="sd">        Runs ``CertificateFactory.inspect_certificate`` in a thread pool so</span>
+<span class="sd">        the event loop is not blocked.  No cryptographic verification is</span>
+<span class="sd">        performed — use :meth:`verify_certificate` for that.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The certificate to inspect.  May have been issued by this CA or</span>
+<span class="sd">            by a completely different PKI.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        CertificateDetails</span>
+<span class="sd">            Frozen dataclass with serial, CN, SANs, key usage, fingerprint,</span>
+<span class="sd">            validity window, and other fields populated from *cert*.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``self.factory`` has not been initialised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">inspect_certificate</span><span class="p">,</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">cert</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AsyncCertLifecycleManager.cosign_certificate">
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.cosign_certificate">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cosign_certificate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">valid_from</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-sign an existing certificate with this CA&#39;s key.</span>
+
+<span class="sd">        Runs ``CertificateFactory.cosign_certificate`` in a thread pool.</span>
+<span class="sd">        Preserves the original Subject, public key, and all v3 extensions but</span>
+<span class="sd">        replaces the Issuer, AuthorityKeyIdentifier, serial number, and</span>
+<span class="sd">        (optionally) the validity window.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The source certificate to co-sign.</span>
+<span class="sd">        days_valid : int | None</span>
+<span class="sd">            Override the validity duration in calendar days.  ``None`` keeps</span>
+<span class="sd">            the original ``not_valid_before`` / ``not_valid_after`` unchanged.</span>
+<span class="sd">        valid_from : datetime | None</span>
+<span class="sd">            Override the start of the validity window.  Ignored when</span>
+<span class="sd">            *days_valid* is ``None``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        x509.Certificate</span>
+<span class="sd">            A new certificate signed by this CA.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``self.factory`` has not been initialised.</span>
+<span class="sd">        InvalidRangeTimeCertificate</span>
+<span class="sd">            If *days_valid* is provided and the computed expiry is already</span>
+<span class="sd">            in the past.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">cosign_certificate</span><span class="p">,</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span>
+            <span class="n">valid_from</span><span class="o">=</span><span class="n">valid_from</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -918,9 +1012,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">existing</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_name</span><span class="p">(</span><span class="n">common_name</span><span class="o">=</span><span class="n">common_name</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;exis&quot;</span><span class="p">,</span> <span class="n">existing</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;exiss&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">is_overwrite</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="s2">&quot;Duplicate CN detected: CN=</span><span class="si">%s</span><span class="s2"> is already registered&quot;</span><span class="p">,</span> <span class="n">common_name</span>

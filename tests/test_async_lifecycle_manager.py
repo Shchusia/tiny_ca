@@ -15,11 +15,12 @@ import datetime
 import logging
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC
 
 import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
@@ -33,7 +34,7 @@ from tiny_ca.exc import (
     ValidationCertError,
 )
 from tiny_ca.managers.async_lifecycle_manager import AsyncCertLifecycleManager
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage.async_local_storage import AsyncLocalStorage
 
@@ -106,7 +107,7 @@ def factory(ca_cert, ca_key):
 
         @property
         def base_info(self):
-            from tiny_ca.models.certtificate import CertificateInfo
+            from tiny_ca.models.certificate import CertificateInfo
 
             return CertificateInfo(
                 organization="Test Corp",
@@ -394,6 +395,36 @@ class TestAsyncGenerateCRL:
         crls = list(storage._base_folder.rglob("crl.pem"))
         assert len(crls) == 1
 
+    def test_generate_crl_with_revoked_certs(self, mgr, mock_db):
+        # Create objects with proper attributes for build_crl
+        class RevokedRecord:
+            def __init__(self, serial, date, reason):
+                self.serial_number = serial
+                self.revocation_date = date
+                self.revocation_reason = reason
+
+        async def revoked_gen():
+            yield RevokedRecord("12345", datetime.datetime.now(UTC), "keyCompromise")
+            yield RevokedRecord("67890", datetime.datetime.now(UTC), "superseded")
+
+        mock_db.get_revoked_certificates = MagicMock(return_value=revoked_gen())
+
+        crl = run(mgr.generate_crl())
+
+        assert isinstance(crl, x509.CertificateRevocationList)
+
+    def test_generate_crl_with_empty_revoked_list(self, mgr, mock_db):
+        async def empty_gen():
+            return
+            yield
+
+        mock_db.get_revoked_certificates = MagicMock(return_value=empty_gen())
+
+        crl = run(mgr.generate_crl())
+
+        assert isinstance(crl, x509.CertificateRevocationList)
+        assert len(list(crl)) == 0
+
 
 # ===========================================================================
 # get_certificate_status
@@ -436,6 +467,15 @@ class TestAsyncGetCertificateStatus:
         )
         mock_db.get_by_serial = AsyncMock(return_value=rec)
         assert run(mgr.get_certificate_status(1)) == CertificateStatus.VALID
+
+    def test_expired_when_not_valid_after_is_naive(self, mgr, mock_db):
+        """Covers line 507: naive not_valid_after (tzinfo is None) is made UTC-aware."""
+        rec = MagicMock()
+        rec.revocation_date = None
+        # naive datetime — no tzinfo
+        rec.not_valid_after = datetime.datetime(2000, 1, 1)
+        mock_db.get_by_serial = AsyncMock(return_value=rec)
+        assert run(mgr.get_certificate_status(1)) == CertificateStatus.EXPIRED
 
 
 # ===========================================================================
@@ -490,6 +530,55 @@ class TestAsyncVerifyCertificate:
         mock_db.get_by_serial = AsyncMock(return_value=rec)
         with pytest.raises(ValidationCertError):
             run(mgr.verify_certificate(foreign))
+
+    def test_verify_certificate_revoked_raises(self, mgr, mock_db):
+        cert, _, _ = run(mgr.issue_certificate(_client_config(common_name="test.svc")))
+
+        rec = MagicMock()
+        rec.revocation_date = datetime.datetime.now(UTC)
+        rec.not_valid_after = datetime.datetime.now(UTC) + datetime.timedelta(days=365)
+        mock_db.get_by_serial = AsyncMock(return_value=rec)
+
+        with pytest.raises(ValidationCertError, match="revoked"):
+            run(mgr.verify_certificate(cert))
+
+    def test_verify_certificate_valid(self, mgr, mock_db):
+        cert, _, _ = run(mgr.issue_certificate(_client_config(common_name="valid.svc")))
+
+        rec = MagicMock()
+        rec.revocation_date = None
+        rec.not_valid_after = datetime.datetime.now(UTC) + datetime.timedelta(days=365)
+        mock_db.get_by_serial = AsyncMock(return_value=rec)
+
+        result = run(mgr.verify_certificate(cert))
+
+        assert result is True
+
+    def test_verify_certificate_wrong_issuer_raises(self, mgr, mock_db):
+        # Create a cert from a different CA
+        other_key = rsa.generate_private_key(65537, 2048, default_backend())
+        other_cert, _ = CertificateFactory.build_self_signed_ca()
+
+        now = datetime.datetime.now(UTC)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "foreign.svc")])
+        foreign_cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(other_cert.subject)
+            .public_key(other_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now)
+            .not_valid_after(now + datetime.timedelta(days=365))
+            .sign(other_key, hashes.SHA256(), default_backend())
+        )
+
+        rec = MagicMock()
+        rec.revocation_date = None
+        rec.not_valid_after = now + datetime.timedelta(days=365)
+        mock_db.get_by_serial = AsyncMock(return_value=rec)
+
+        with pytest.raises(ValidationCertError, match="issuer"):
+            run(mgr.verify_certificate(foreign_cert))
 
 
 # ===========================================================================
@@ -559,3 +648,544 @@ class TestAsyncPersistCertToDB:
         )
         assert isinstance(cert, x509.Certificate)
         mock_db.revoke_certificate.assert_called()
+
+
+# ===========================================================================
+# inspect_certificate
+# ===========================================================================
+
+
+class TestAsyncInspectCertificate:
+    def test_raises_without_factory(self, storage, mock_db):
+        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.inspect_certificate(MagicMock(spec=x509.Certificate)))
+
+    def test_returns_certificate_details(self, mgr):
+        from tiny_ca.models.certificate import CertificateDetails
+
+        cert, _, _ = run(mgr.issue_certificate(_client_config()))
+        details = run(mgr.inspect_certificate(cert))
+        assert isinstance(details, CertificateDetails)
+
+    def test_common_name_matches(self, mgr):
+        cert, _, _ = run(
+            mgr.issue_certificate(_client_config(common_name="inspect.svc"))
+        )
+        details = run(mgr.inspect_certificate(cert))
+        assert details.common_name == "inspect.svc"
+
+
+# ===========================================================================
+# cosign_certificate
+# ===========================================================================
+
+
+class TestAsyncCosignCertificate:
+    def test_raises_without_factory(self, storage, mock_db):
+        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.cosign_certificate(MagicMock(spec=x509.Certificate)))
+
+    def test_returns_certificate(self, mgr):
+        cert, _, _ = run(mgr.issue_certificate(_client_config()))
+        cosigned = run(mgr.cosign_certificate(cert))
+        assert isinstance(cosigned, x509.Certificate)
+
+    def test_issuer_is_ca(self, mgr, factory):
+        cert, _, _ = run(mgr.issue_certificate(_client_config()))
+        cosigned = run(mgr.cosign_certificate(cert))
+        assert cosigned.issuer == factory._ca.ca_cert.subject
+
+    def test_days_valid_override(self, mgr):
+        cert, _, _ = run(mgr.issue_certificate(_client_config()))
+        cosigned = run(mgr.cosign_certificate(cert, days_valid=90))
+        delta = cosigned.not_valid_after_utc - cosigned.not_valid_before_utc
+        assert delta.days == 90
+
+
+# ===========================================================================
+# Edge Cases for Coverage
+# ===========================================================================
+
+
+class TestAsyncCertLifecycleManagerEdgeCases:
+    """Additional edge cases for full coverage."""
+
+    def test_revoke_certificate_already_revoked(self, mgr, mock_db):
+        mock_db.revoke_certificate = AsyncMock(
+            return_value=(False, RevokeStatus.NOT_FOUND)
+        )
+
+        result = run(mgr.revoke_certificate(12345, x509.ReasonFlags.unspecified))
+
+        assert result is False
+
+    def test_rotate_certificate_with_overwrite(self, mgr, mock_db):
+        old_rec = MagicMock()
+        old_rec.serial_number = "12345"
+        mock_db.get_by_serial = AsyncMock(return_value=old_rec)
+        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
+        mock_db.get_by_name = AsyncMock(return_value=None)
+
+        new_cert, _, _ = run(
+            mgr.rotate_certificate(12345, _client_config(common_name="rotated.svc"))
+        )
+        assert isinstance(new_cert, x509.Certificate)
+
+    def test_delete_certificate_folder_not_exists(self, mgr, mock_db, storage):
+        mock_record = MagicMock()
+        mock_record.uuid = "missing-uuid"
+        mock_db.get_by_serial = AsyncMock(return_value=mock_record)
+        mock_db.delete_by_uuid = AsyncMock(return_value=True)
+
+        result = run(mgr.delete_certificate(serial=12345))
+        assert result is True
+
+
+# ===========================================================================
+# Missing Coverage Tests
+# ===========================================================================
+
+
+class TestMissingCoverage:
+    """Tests for the remaining uncovered lines in async_lifecycle_manager.py"""
+
+    def test_create_self_signed_ca_with_overwrite_true_existing_revokes(
+        self, storage, mock_db
+    ):
+        """Lines 651-664: Create CA with overwrite=True and existing cert"""
+        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
+
+        # Mock existing certificate
+        existing = MagicMock()
+        existing.serial_number = "99999"
+        existing.uuid = "existing-ca-uuid"
+        mock_db.get_by_name = AsyncMock(return_value=existing)
+        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
+        mock_db.register_cert_in_db = AsyncMock(return_value=True)
+
+        config = _ca_config(common_name="Overwrite CA")
+        cert_path, key_path = run(mgr.create_self_signed_ca(config, is_overwrite=True))
+
+        assert cert_path.exists()
+        assert key_path.exists()
+        mock_db.revoke_certificate.assert_called_once()
+        mock_db.register_cert_in_db.assert_called_once()
+
+    def test_create_self_signed_ca_with_overwrite_false_existing_raises(
+        self, storage, mock_db
+    ):
+        """Lines 651-664: Create CA with overwrite=False and existing cert should raise"""
+        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
+
+        # Mock existing certificate
+        existing = MagicMock()
+        existing.serial_number = "88888"
+        mock_db.get_by_name = AsyncMock(return_value=existing)
+
+        config = _ca_config(common_name="Existing CA")
+
+        with pytest.raises(NotUniqueCertOwner):
+            run(mgr.create_self_signed_ca(config, is_overwrite=False))
+
+    def test_issue_certificate_with_overwrite_true_existing_cert(self, mgr, mock_db):
+        """Lines 679-688: Issue certificate with overwrite=True and existing CN"""
+        existing = MagicMock()
+        existing.serial_number = "77777"
+        existing.uuid = "existing-cert-uuid"
+        mock_db.get_by_name = AsyncMock(return_value=existing)
+        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
+        mock_db.register_cert_in_db = AsyncMock(return_value=True)
+
+        cert, key, csr = run(
+            mgr.issue_certificate(
+                _client_config(common_name="existing-cert.svc"), is_overwrite=True
+            )
+        )
+
+        assert isinstance(cert, x509.Certificate)
+        mock_db.revoke_certificate.assert_called_once()
+        mock_db.register_cert_in_db.assert_called_once()
+
+    def test_issue_certificate_with_overwrite_false_existing_raises(self, mgr, mock_db):
+        """Lines 679-688: Issue certificate with overwrite=False and existing CN raises"""
+        existing = MagicMock()
+        existing.serial_number = "66666"
+        mock_db.get_by_name = AsyncMock(return_value=existing)
+
+        with pytest.raises(NotUniqueCertOwner):
+            run(
+                mgr.issue_certificate(
+                    _client_config(common_name="exists.svc"), is_overwrite=False
+                )
+            )
+
+    def test_generate_crl_processes_revoked_certs(self, mgr, mock_db):
+        """Lines 703-704: Process revoked certificates in CRL generation"""
+
+        # Create objects with proper attributes
+        class RevokedRecord:
+            def __init__(self, serial, date, reason):
+                self.serial_number = serial
+                self.revocation_date = date
+                self.revocation_reason = reason
+
+        async def revoked_gen():
+            yield RevokedRecord("11111", datetime.datetime.now(UTC), "keyCompromise")
+            yield RevokedRecord("22222", datetime.datetime.now(UTC), "superseded")
+            yield RevokedRecord(
+                "33333", datetime.datetime.now(UTC), "cessationOfOperation"
+            )
+
+        mock_db.get_revoked_certificates = MagicMock(return_value=revoked_gen())
+
+        crl = run(mgr.generate_crl())
+
+        assert isinstance(crl, x509.CertificateRevocationList)
+        # Verify CRL contains entries
+        revoked_list = list(crl)
+        assert len(revoked_list) == 3
+
+    def test_verify_certificate_with_valid_cert_returns_true(self, mgr, mock_db):
+        """Lines 720-721, 725-726: Verification succeeds for valid certificate"""
+        cert, _, _ = run(
+            mgr.issue_certificate(_client_config(common_name="valid-test.svc"))
+        )
+
+        rec = MagicMock()
+        rec.revocation_date = None
+        rec.not_valid_after = datetime.datetime.now(UTC) + datetime.timedelta(days=365)
+        mock_db.get_by_serial = AsyncMock(return_value=rec)
+
+        result = run(mgr.verify_certificate(cert))
+
+        assert result is True
+
+    def test_generate_crl_with_no_revoked_certs_returns_empty_crl(self, mgr, mock_db):
+        """Lines 703-704: Empty CRL when no revoked certificates"""
+
+        async def empty_gen():
+            return
+            yield
+
+        mock_db.get_revoked_certificates = MagicMock(return_value=empty_gen())
+
+        crl = run(mgr.generate_crl())
+
+        assert isinstance(crl, x509.CertificateRevocationList)
+        assert len(list(crl)) == 0
+
+    def test_create_self_signed_ca_no_db_skips_registration(self, storage):
+        """Lines 651-664: Skip DB registration when db_handler is None"""
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        config = _ca_config(common_name="NoDB CA")
+
+        cert_path, key_path = run(mgr.create_self_signed_ca(config))
+
+        assert cert_path.exists()
+        assert key_path.exists()
+        # No DB calls should be made (no exception)
+
+    def test_issue_certificate_no_db_skips_registration(self, storage, factory):
+        """Lines 679-688: Skip DB registration when db_handler is None"""
+        mgr = AsyncCertLifecycleManager(storage=storage, factory=factory)
+
+        cert, key, csr = run(
+            mgr.issue_certificate(_client_config(common_name="nodb-registration.svc"))
+        )
+
+        assert isinstance(cert, x509.Certificate)
+        assert isinstance(key, rsa.RSAPrivateKey)
+
+
+# ===========================================================================
+# TESTS FOR UNCOVERED METHODS
+# ===========================================================================
+
+
+class TestExportPKCS12:
+    """Test export_pkcs12 method."""
+
+    def test_export_pkcs12_basic(self, mgr):
+        cert, key, _ = run(
+            mgr.issue_certificate(_client_config(common_name="export-test.svc"))
+        )
+        p12_bytes = run(mgr.export_pkcs12(cert, key))
+        assert isinstance(p12_bytes, bytes)
+        assert len(p12_bytes) > 0
+
+    def test_export_pkcs12_with_password(self, mgr):
+        cert, key, _ = run(
+            mgr.issue_certificate(_client_config(common_name="export-pwd.svc"))
+        )
+        p12_bytes = run(mgr.export_pkcs12(cert, key, password=b"secret123"))
+        assert isinstance(p12_bytes, bytes)
+
+    def test_export_pkcs12_with_name(self, mgr):
+        cert, key, _ = run(
+            mgr.issue_certificate(_client_config(common_name="export-name.svc"))
+        )
+        p12_bytes = run(mgr.export_pkcs12(cert, key, name="CustomFriendlyName"))
+        assert isinstance(p12_bytes, bytes)
+
+    def test_export_pkcs12_raises_without_factory(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        cert = MagicMock(spec=x509.Certificate)
+        key = MagicMock()
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.export_pkcs12(cert, key))
+
+
+class TestGetCertChain:
+    """Test get_cert_chain method."""
+
+    def test_get_cert_chain_returns_list(self, mgr):
+        cert, _, _ = run(
+            mgr.issue_certificate(_client_config(common_name="chain-test.svc"))
+        )
+        chain = run(mgr.get_cert_chain(cert))
+        assert isinstance(chain, list)
+        assert len(chain) == 2
+        assert chain[0] == cert
+
+    def test_get_cert_chain_raises_without_factory(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        cert = MagicMock(spec=x509.Certificate)
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.get_cert_chain(cert))
+
+
+class TestRenewCertificate:
+    """Test renew_certificate method."""
+
+    def test_renew_certificate_success(self, mgr, mock_db):
+        # First issue a certificate and register it in DB
+        cert, _, _ = run(
+            mgr.issue_certificate(_client_config(common_name="renew-test.svc"))
+        )
+
+        # Mock DB to return the certificate record
+        mock_record = MagicMock()
+        mock_record.certificate_pem = cert.public_bytes(
+            serialization.Encoding.PEM
+        ).decode("utf-8")
+        mock_db.get_by_serial = AsyncMock(return_value=mock_record)
+
+        renewed = run(mgr.renew_certificate(serial=cert.serial_number, days_valid=365))
+
+        assert isinstance(renewed, x509.Certificate)
+        assert renewed.serial_number != cert.serial_number
+        assert renewed.subject == cert.subject
+
+    def test_renew_certificate_with_valid_from(self, mgr, mock_db):
+        cert, _, _ = run(
+            mgr.issue_certificate(_client_config(common_name="renew-vf.svc"))
+        )
+
+        mock_record = MagicMock()
+        mock_record.certificate_pem = cert.public_bytes(
+            serialization.Encoding.PEM
+        ).decode("utf-8")
+        mock_db.get_by_serial = AsyncMock(return_value=mock_record)
+
+        valid_from = datetime.datetime.now(UTC)
+        renewed = run(
+            mgr.renew_certificate(
+                serial=cert.serial_number, days_valid=30, valid_from=valid_from
+            )
+        )
+
+        assert renewed.not_valid_before_utc.date() == valid_from.date()
+
+    def test_renew_certificate_not_found_raises(self, mgr, mock_db):
+        mock_db.get_by_serial = AsyncMock(return_value=None)
+
+        with pytest.raises(CertNotFound):
+            run(mgr.renew_certificate(serial=99999))
+
+    def test_renew_certificate_raises_without_db(self, storage, factory):
+        mgr = AsyncCertLifecycleManager(storage=storage, factory=factory)
+        with pytest.raises(DBNotInitedError):
+            run(mgr.renew_certificate(serial=12345))
+
+    def test_renew_certificate_raises_without_factory(self, storage, mock_db):
+        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.renew_certificate(serial=12345))
+
+
+class TestIssueIntermediateCA:
+    """Test issue_intermediate_ca method."""
+
+    def test_issue_intermediate_ca_basic(self, mgr, storage):
+        cert, key = run(
+            mgr.issue_intermediate_ca(
+                common_name="Test Intermediate CA", key_size=4096, days_valid=1825
+            )
+        )
+        assert isinstance(cert, x509.Certificate)
+        assert isinstance(key, rsa.RSAPrivateKey)
+
+        # Verify it's a CA certificate
+        bc = cert.extensions.get_extension_for_class(x509.BasicConstraints)
+        assert bc.value.ca is True
+
+    def test_issue_intermediate_ca_with_path_length(self, mgr):
+        cert, _ = run(
+            mgr.issue_intermediate_ca(common_name="Limited Intermediate", path_length=2)
+        )
+        bc = cert.extensions.get_extension_for_class(x509.BasicConstraints)
+        assert bc.value.path_length == 2
+
+    def test_issue_intermediate_ca_with_custom_org(self, mgr):
+        cert, _ = run(
+            mgr.issue_intermediate_ca(
+                common_name="Custom Org CA",
+                organization="Custom Organization",
+                country="DE",
+            )
+        )
+        org = cert.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[0].value
+        country = cert.subject.get_attributes_for_oid(NameOID.COUNTRY_NAME)[0].value
+        assert org == "Custom Organization"
+        assert country == "DE"
+
+    def test_issue_intermediate_ca_with_cert_path(self, mgr, storage):
+        cert, key = run(
+            mgr.issue_intermediate_ca(
+                common_name="Path Test CA", cert_path="intermediates"
+            )
+        )
+        # Verify files were saved in the subdirectory
+        cert_files = list(
+            (storage._base_folder / "intermediates").rglob("intermediate_ca.pem")
+        )
+        assert len(cert_files) >= 1
+
+    def test_issue_intermediate_ca_raises_without_factory(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.issue_intermediate_ca(common_name="Test CA"))
+
+
+class TestListCertificates:
+    """Test list_certificates method."""
+
+    def test_list_certificates_with_filters(self, mgr, mock_db):
+        mock_db.list_all = AsyncMock(return_value=[MagicMock(), MagicMock()])
+        results = run(
+            mgr.list_certificates(
+                status="valid", key_type="service", limit=10, offset=5
+            )
+        )
+        assert len(results) == 2
+        mock_db.list_all.assert_called_with(
+            status="valid", key_type="service", limit=10, offset=5
+        )
+
+    def test_list_certificates_no_filters(self, mgr, mock_db):
+        mock_db.list_all = AsyncMock(return_value=[MagicMock()])
+        results = run(mgr.list_certificates())
+        assert len(results) == 1
+        mock_db.list_all.assert_called_with(
+            status=None, key_type=None, limit=100, offset=0
+        )
+
+    def test_list_certificates_raises_without_db(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        with pytest.raises(DBNotInitedError):
+            run(mgr.list_certificates())
+
+
+class TestGetExpiringSoon:
+    """Test get_expiring_soon method."""
+
+    def test_get_expiring_soon_returns_list(self, mgr, mock_db):
+        mock_db.get_expiring = AsyncMock(
+            return_value=[MagicMock(), MagicMock(), MagicMock()]
+        )
+        results = run(mgr.get_expiring_soon(within_days=30))
+        assert len(results) == 3
+        mock_db.get_expiring.assert_called_with(within_days=30)
+
+    def test_get_expiring_soon_default_days(self, mgr, mock_db):
+        mock_db.get_expiring = AsyncMock(return_value=[])
+        results = run(mgr.get_expiring_soon())
+        assert results == []
+        mock_db.get_expiring.assert_called_with(within_days=30)
+
+    def test_get_expiring_soon_raises_without_db(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        with pytest.raises(DBNotInitedError):
+            run(mgr.get_expiring_soon())
+
+
+class TestDeleteCertificate:
+    """Test delete_certificate method."""
+
+    def test_delete_certificate_success(self, mgr, mock_db):
+        mock_record = MagicMock()
+        mock_record.uuid = "test-uuid-for-delete"
+        mock_db.get_by_serial = AsyncMock(return_value=mock_record)
+        mock_db.delete_by_uuid = AsyncMock(return_value=True)
+
+        result = run(mgr.delete_certificate(serial=12345))
+
+        assert result is True
+        mock_db.delete_by_uuid.assert_called_with(uuid="test-uuid-for-delete")
+
+    def test_delete_certificate_not_found(self, mgr, mock_db):
+        mock_db.get_by_serial = AsyncMock(return_value=None)
+
+        result = run(mgr.delete_certificate(serial=99999))
+
+        assert result is False
+
+    def test_delete_certificate_db_delete_fails(self, mgr, mock_db):
+        mock_record = MagicMock()
+        mock_record.uuid = "test-uuid"
+        mock_db.get_by_serial = AsyncMock(return_value=mock_record)
+        mock_db.delete_by_uuid = AsyncMock(return_value=False)
+
+        result = run(mgr.delete_certificate(serial=12345))
+
+        assert result is False
+
+    def test_delete_certificate_raises_without_db(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        with pytest.raises(DBNotInitedError):
+            run(mgr.delete_certificate(serial=12345))
+
+
+class TestRefreshExpiredStatuses:
+    """Test refresh_expired_statuses method."""
+
+    def test_refresh_expired_statuses_returns_count(self, mgr, mock_db):
+        mock_db.update_status_expired = AsyncMock(return_value=7)
+        count = run(mgr.refresh_expired_statuses())
+        assert count == 7
+
+    def test_refresh_expired_statuses_zero(self, mgr, mock_db):
+        mock_db.update_status_expired = AsyncMock(return_value=0)
+        count = run(mgr.refresh_expired_statuses())
+        assert count == 0
+
+    def test_refresh_expired_statuses_raises_without_db(self, storage):
+        mgr = AsyncCertLifecycleManager(storage=storage)
+        with pytest.raises(DBNotInitedError):
+            run(mgr.refresh_expired_statuses())
+
+
+class TestVerifyCRL:
+    """Test verify_crl method."""
+
+    def test_verify_crl_valid(self, mgr):
+        crl = run(mgr.generate_crl())
+        run(mgr.verify_crl(crl))  # Should not raise
+
+    def test_verify_crl_raises_without_factory(self, storage, mock_db):
+        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
+        crl = MagicMock(spec=x509.CertificateRevocationList)
+        with pytest.raises(ValueError, match="factory"):
+            run(mgr.verify_crl(crl))

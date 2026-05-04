@@ -25,7 +25,7 @@ Class hierarchy
 
 from __future__ import annotations
 
-import datetime
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, IPvAnyAddress
 
@@ -121,7 +121,7 @@ class BaseCertificateConfig(BaseModel):
         default=3650,
         description="Certificate validity period in calendar days.",
     )
-    valid_from: datetime.datetime | None = Field(
+    valid_from: datetime | None = Field(
         default=None,
         description=(
             "Explicit validity start as a timezone-aware datetime. "
@@ -184,7 +184,7 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
         Explicit validity start.  Default: ``None``.
     serial_type : CertType
         Certificate category used when encoding the serial number.
-        Default: ``CertType.CA``.
+        Default: ``CertType.SERVICE``.
     is_client_cert : bool
         When ``True``, ``ClientAuth`` is added to the Extended Key Usage
         extension.  Default: ``False``.
@@ -209,7 +209,7 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
     """
 
     serial_type: CertType = Field(
-        default=CertType.CA,
+        default=CertType.SERVICE,
         description="Certificate category encoded into the serial number.",
     )
     is_client_cert: bool = Field(
@@ -297,4 +297,78 @@ class CertificateInfo(BaseModel):
     locality: str | None = Field(
         default=None,
         description="Locality / City (L) extracted from the CA certificate Subject.",
+    )
+
+
+class CertificateDetails(BaseModel):
+    """
+    Structured read-only snapshot of an ``x509.Certificate``.
+
+    All fields are extracted from the certificate at creation time and stored
+    as plain Python values — no ``cryptography`` objects leak out — so the
+    model is trivially serialisable (JSON, msgpack, etc.).
+    """
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        arbitrary_types_allowed=True,
+    )
+
+    serial_number: int = Field(
+        description="Raw integer serial number as stored in the certificate."
+    )
+
+    common_name: str | None = Field(
+        default=None, description="First commonName (CN) from the Subject."
+    )
+
+    organization: str | None = Field(
+        default=None, description="First organizationName (O) from the Subject."
+    )
+
+    country: str | None = Field(
+        default=None, description="First countryName (C) from the Subject."
+    )
+
+    issuer_cn: str | None = Field(
+        default=None, description="Common Name extracted from the Issuer."
+    )
+
+    not_valid_before: datetime = Field(
+        description="Start of the validity window (UTC)."
+    )
+
+    not_valid_after: datetime = Field(description="End of the validity window (UTC).")
+
+    is_ca: bool = Field(
+        description="True if BasicConstraints marks this certificate as CA."
+    )
+
+    san_dns: list[str] = Field(
+        default_factory=list, description="DNS names from SubjectAlternativeName."
+    )
+
+    san_ip: list[str] = Field(
+        default_factory=list, description="IP addresses from SubjectAlternativeName."
+    )
+
+    key_usage: list[str] = Field(
+        default_factory=list, description="Enabled KeyUsage flags."
+    )
+
+    extended_key_usage: list[str] = Field(
+        default_factory=list, description="OID strings from ExtendedKeyUsage."
+    )
+
+    fingerprint_sha256: str = Field(
+        description="SHA256 fingerprint of the certificate."
+    )
+
+    subject_key_identifier: str | None = Field(
+        default=None, description="SubjectKeyIdentifier hex digest."
+    )
+
+    public_key_size: int | None = Field(
+        default=None, description="RSA key size in bits (None for non-RSA keys)."
     )

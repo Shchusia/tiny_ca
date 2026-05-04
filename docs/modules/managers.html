@@ -331,6 +331,39 @@ persistence (status lookup, revocation, rotation) will raise
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.cosign_certificate">
+<span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.cosign_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Re-sign an existing certificate with this CA’s key.</p>
+<p>Preserves the original Subject, public key, and all v3 extensions but
+replaces the Issuer, AuthorityKeyIdentifier, serial number, and
+(optionally) the validity window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The source certificate to co-sign.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Override the validity duration in calendar days.  <code class="docutils literal notranslate"><span class="pre">None</span></code> keeps
+the original <code class="docutils literal notranslate"><span class="pre">not_valid_before</span></code> / <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> unchanged.</p></li>
+<li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>) – Override the start of the validity window.  Ignored when
+<em>days_valid</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new certificate signed by this CA.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>x509.Certificate</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If <em>days_valid</em> is provided and the computed expiry is already
+    in the past.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.create_self_signed_ca">
 <span class="sig-name descname"><span class="pre">create_self_signed_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.create_self_signed_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.create_self_signed_ca" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a self-signed root CA certificate and persist both artefacts.</p>
@@ -380,7 +413,7 @@ layer.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl">
-<span class="sig-name descname"><span class="pre">generate_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.generate_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">generate_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.generate_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl" title="Link to this definition">¶</a></dt>
 <dd><p>Build, sign, and persist a fresh Certificate Revocation List.</p>
 <p>Retrieves all currently-revoked certificates from the database,
 passes them to <code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl</span></code>, and writes the
@@ -388,8 +421,11 @@ resulting CRL to storage as <code class="docutils literal notranslate"><span cla
 version — CRLs are always regenerated in-place).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> field.  Relying
-parties will reject the CRL after this point.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> field.  Relying
+parties will reject the CRL after this point.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The signed CRL object (also persisted to storage).</p>
@@ -428,6 +464,32 @@ state in the following priority order:
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.inspect_certificate">
+<span class="sig-name descname"><span class="pre">inspect_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.inspect_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.inspect_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a structured, human-readable summary of <em>cert</em>.</p>
+<p>Delegates to <code class="docutils literal notranslate"><span class="pre">CertificateFactory.inspect_certificate</span></code> which parses
+every commonly-used X.509 v3 extension and Subject attribute into plain
+Python values.  No cryptographic verification is performed — use
+<a class="reference internal" href="tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_certificate" title="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_certificate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">verify_certificate()</span></code></a> for that.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to inspect.  May have been issued by this CA or
+by a completely different PKI.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Frozen dataclass with serial, CN, SANs, key usage, fingerprint,
+validity window, and other fields populated from <em>cert</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails" title="tiny_ca.models.certtificate.CertificateDetails">CertificateDetails</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -691,6 +753,40 @@ persistence (status lookup, revocation, rotation) will raise
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.cosign_certificate">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.cosign_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Re-sign an existing certificate with this CA’s key.</p>
+<p>Runs <code class="docutils literal notranslate"><span class="pre">CertificateFactory.cosign_certificate</span></code> in a thread pool.
+Preserves the original Subject, public key, and all v3 extensions but
+replaces the Issuer, AuthorityKeyIdentifier, serial number, and
+(optionally) the validity window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The source certificate to co-sign.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Override the validity duration in calendar days.  <code class="docutils literal notranslate"><span class="pre">None</span></code> keeps
+the original <code class="docutils literal notranslate"><span class="pre">not_valid_before</span></code> / <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> unchanged.</p></li>
+<li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>) – Override the start of the validity window.  Ignored when
+<em>days_valid</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new certificate signed by this CA.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>x509.Certificate</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If <em>days_valid</em> is provided and the computed expiry is already
+    in the past.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.create_self_signed_ca">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create_self_signed_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.create_self_signed_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.create_self_signed_ca" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a self-signed root CA certificate and persist both artefacts.</p>
@@ -756,7 +852,7 @@ layer.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.generate_crl">
-<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.generate_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.generate_crl" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.generate_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.generate_crl" title="Link to this definition">¶</a></dt>
 <dd><p>Build, sign, and persist a fresh Certificate Revocation List.</p>
 <p>Retrieves all currently-revoked certificates from the database,
 passes them to <code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl</span></code>, and writes the
@@ -764,8 +860,11 @@ resulting CRL to storage as <code class="docutils literal notranslate"><span cla
 version — CRLs are always regenerated in-place).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> field.  Relying
-parties will reject the CRL after this point.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> field.  Relying
+parties will reject the CRL after this point.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The signed CRL object (also persisted to storage).</p>
@@ -804,6 +903,31 @@ state in the following priority order:
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.inspect_certificate">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">inspect_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.inspect_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.inspect_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a structured, human-readable summary of <em>cert</em>.</p>
+<p>Runs <code class="docutils literal notranslate"><span class="pre">CertificateFactory.inspect_certificate</span></code> in a thread pool so
+the event loop is not blocked.  No cryptographic verification is
+performed — use <a class="reference internal" href="tiny_ca.managers.async_lifecycle_manager.html#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.verify_certificate" title="tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.verify_certificate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">verify_certificate()</span></code></a> for that.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to inspect.  May have been issued by this CA or
+by a completely different PKI.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Frozen dataclass with serial, CN, SANs, key usage, fingerprint,
+validity window, and other fields populated from <em>cert</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails" title="tiny_ca.models.certtificate.CertificateDetails">CertificateDetails</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -924,7 +1048,7 @@ updated revocation list.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.rotate_certificate">
-<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">rotate_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.rotate_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.rotate_certificate" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">rotate_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/async_lifecycle_manager.html#AsyncCertLifecycleManager.rotate_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.rotate_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Revoke an existing certificate and issue a replacement in a single operation.</p>
 <p>The old certificate is revoked with reason <code class="docutils literal notranslate"><span class="pre">superseded</span></code> before the
 new one is issued.  Both operations are performed against the configured
@@ -936,6 +1060,7 @@ the new certificate is not issued.</p>
 <li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Serial number of the certificate to replace.</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig" title="tiny_ca.models.certtificate.ClientConfig"><em>ClientConfig</em></a>) – Parameters for the replacement certificate.  The CN may differ
 from the original.</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1067,10 +1192,12 @@ with a database revocation check (via <code class="docutils literal notranslate"
 <li><a class="reference internal" href="#solid-notes">SOLID notes</a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.__init__"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.cosign_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.create_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.create_self_signed_ca()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.factory"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.factory</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.generate_crl()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_certificate_status"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.get_certificate_status()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.inspect_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.inspect_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.issue_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.issue_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.revoke_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.revoke_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.rotate_certificate"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.rotate_certificate()</span></code></a></li>
@@ -1082,10 +1209,12 @@ with a database revocation check (via <code class="docutils literal notranslate"
 <li><a class="reference internal" href="#module-tiny_ca.managers.async_lifecycle_manager">Asynchronous</a><ul>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.__init__"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.cosign_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.create_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.create_self_signed_ca()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.factory"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.factory</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.generate_crl"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.generate_crl()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.get_certificate_status"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.get_certificate_status()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.inspect_certificate"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.inspect_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.issue_certificate"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.issue_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.revoke_certificate"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.revoke_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.async_lifecycle_manager.AsyncCertLifecycleManager.rotate_certificate"><code class="docutils literal notranslate"><span class="pre">AsyncCertLifecycleManager.rotate_certificate()</span></code></a></li>

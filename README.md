@@ -553,31 +553,3 @@ tiny_ca/
 ├── exc.py                          # All custom exceptions
 └── settings.py                     # DEFAULT_LOGGER, DT_STR_FORMAT
 ```
-
----
-
-## Design Notes
-
-### What the code does well
-
-**SOLID adherence is genuine, not decorative.** `CertificateFactory` truly contains zero file I/O and zero SQL — it only knows `cryptography`. `BaseStorage` and `BaseDB` are real abstractions backed by real implementations, not wrappers around a single concrete class. The `ICALoader` Protocol makes it trivial to substitute a test double or an HSM-backed loader without any code change in the factory.
-
-**`SerialWithEncoding` is a standout component.** Encoding CertType prefix + name + UUID randomness into a 160-bit integer is clever and immediately useful — a DBA can identify certificate category from a raw SQL `SELECT` without joining any lookup table. The `_PrefixRegistry` cleanly owns the CertType↔hex mapping and is the only place to change when a new type is added.
-
-**The sync/async symmetry is clean.** `AsyncCertLifecycleManager` wraps CPU-bound crypto in `asyncio.to_thread` and I/O in async storage — the event loop is never blocked. The decision to share `CertificateFactory` (sync crypto) between both managers rather than duplicating it is correct.
-
-**`_CertSerializer` is a well-scoped private helper.** Isolating type-dispatch logic for serialisation into its own class means `LocalStorage` contains only path resolution and file I/O. Adding a new crypto type (e.g. Ed25519 keys) touches one branch in `_CertSerializer` and nothing else.
-
-### What could be improved
-
-**`factory.py` imports `sqlalchemy.Row` at the module level** but only uses it in a type annotation for `build_crl`. This creates a hard SQLAlchemy dependency in what is supposed to be a pure cryptography module. The type annotation should use `Any` or a local `TYPE_CHECKING` guard.
-
-**`renew_certificate` in the lifecycle managers** does `from cryptography import x509 as _x509` inside the method body — a deferred import that exists to avoid a name collision with the parameter. The parameter should be renamed (e.g. `cert_obj`) and the import moved to the top of the file.
-
-**`issue_intermediate_ca` in the lifecycle managers** saves the cert and key with the same `file_name="intermediate_ca"` in two consecutive calls. The second call will silently overwrite the first because `is_overwrite=True`. The key file needs a distinct name (e.g. `"intermediate_ca"` → `.key`, `"intermediate_ca"` → `.pem` — they do get different extensions from `_CertSerializer`, so this is actually fine, but the intent is not obvious from reading the code). A comment would clarify.
-
-**`CertLifecycleManager.get_certificate_status`** reads `cert.not_valid_after` (a naive datetime from the ORM) and handles the `tzinfo is None` case inline. This timezone-normalisation logic belongs in `CertLifetime` or in the ORM model, not scattered across two lifecycle manager files.
-
-**`models.py` has a typo in the filename** (`certtificate.py` — double `t`). Minor but affects discoverability.
-
-**The `README` database adapter table** previously listed only 5 `BaseDB` methods. There are now 9 — the new ones (`list_all`, `get_expiring`, `delete_by_uuid`, `update_status_expired`) were missing from the documentation.

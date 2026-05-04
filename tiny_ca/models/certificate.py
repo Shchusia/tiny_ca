@@ -1,5 +1,5 @@
 """
-certificate.py
+certtificate.py
 
 Pydantic data models for certificate configuration and metadata.
 
@@ -184,7 +184,7 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
         Explicit validity start.  Default: ``None``.
     serial_type : CertType
         Certificate category used when encoding the serial number.
-        Default: ``CertType.CA``.
+        Default: ``CertType.SERVICE``.
     is_client_cert : bool
         When ``True``, ``ClientAuth`` is added to the Extended Key Usage
         extension.  Default: ``False``.
@@ -209,7 +209,7 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
     """
 
     serial_type: CertType = Field(
-        default=CertType.CA,
+        default=CertType.SERVICE,
         description="Certificate category encoded into the serial number.",
     )
     is_client_cert: bool = Field(

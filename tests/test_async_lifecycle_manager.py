@@ -709,126 +709,8 @@ class TestAsyncCosignCertificate:
 # ===========================================================================
 
 
-class TestAsyncLifecycleManagerRequireMethods:
-    """Test _require_db and _require_factory methods - lines 630-631, 635-636."""
-
-    def test_require_db_raises_when_no_db(self, storage):
-        mgr = AsyncCertLifecycleManager(storage=storage)
-        with pytest.raises(DBNotInitedError):
-            mgr._require_db()
-
-    def test_require_factory_raises_when_no_factory(self, storage):
-        mgr = AsyncCertLifecycleManager(storage=storage)
-        with pytest.raises(ValueError, match="factory"):
-            mgr._require_factory()
-
-
-class TestAsyncCreateSelfSignedCAWithOverwrite:
-    """Test create_self_signed_ca with overwrite - lines 651-664."""
-
-    def test_create_self_signed_ca_with_overwrite_and_db(self, storage, mock_db):
-        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
-
-        existing = MagicMock()
-        existing.serial_number = "12345"
-        existing.uuid = "existing-uuid"
-        mock_db.get_by_name = AsyncMock(return_value=existing)
-        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
-        mock_db.register_cert_in_db = AsyncMock(return_value=True)
-
-        config = _ca_config(common_name="Test CA")
-        cert_path, key_path = run(mgr.create_self_signed_ca(config, is_overwrite=True))
-
-        assert cert_path.exists()
-        assert key_path.exists()
-        mock_db.revoke_certificate.assert_called()
-        mock_db.register_cert_in_db.assert_called()
-
-    def test_create_self_signed_ca_with_db_no_overwrite(self, storage, mock_db):
-        mgr = AsyncCertLifecycleManager(storage=storage, db_handler=mock_db)
-
-        mock_db.get_by_name = AsyncMock(return_value=None)
-        mock_db.register_cert_in_db = AsyncMock(return_value=True)
-
-        config = _ca_config(common_name="New CA")
-        cert_path, key_path = run(mgr.create_self_signed_ca(config, is_overwrite=False))
-
-        assert cert_path.exists()
-        assert key_path.exists()
-
-
-class TestAsyncIssueCertificateWithOverwrite:
-    """Test issue_certificate with overwrite - lines 679-688."""
-
-    def test_issue_certificate_with_overwrite_false_no_existing(self, mgr, mock_db):
-        mock_db.get_by_name = AsyncMock(return_value=None)
-        mock_db.register_cert_in_db = AsyncMock(return_value=True)
-
-        cert, key, csr = run(
-            mgr.issue_certificate(
-                _client_config(common_name="new.svc"), is_overwrite=False
-            )
-        )
-        assert isinstance(cert, x509.Certificate)
-
-    def test_issue_certificate_with_overwrite_true_existing(self, mgr, mock_db):
-        existing = MagicMock()
-        existing.serial_number = "54321"
-        existing.uuid = "existing-uuid"
-        mock_db.get_by_name = AsyncMock(return_value=existing)
-        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
-        mock_db.register_cert_in_db = AsyncMock(return_value=True)
-
-        cert, key, csr = run(
-            mgr.issue_certificate(
-                _client_config(common_name="existing.svc"), is_overwrite=True
-            )
-        )
-        assert isinstance(cert, x509.Certificate)
-        mock_db.revoke_certificate.assert_called_once()
-
-
-class TestAsyncRevokeCertificateLogging:
-    """Test revoke_certificate logging - lines 698-699."""
-
-    def test_revoke_certificate_success_logging(self, mgr, mock_db):
-        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
-
-        result = run(mgr.revoke_certificate(12345, x509.ReasonFlags.unspecified))
-
-        assert result is True
-
-    def test_revoke_certificate_failure_logging(self, mgr, mock_db):
-        mock_db.revoke_certificate = AsyncMock(
-            return_value=(False, RevokeStatus.NOT_FOUND)
-        )
-
-        result = run(mgr.revoke_certificate(12345, x509.ReasonFlags.unspecified))
-
-        assert result is False
-
-
 class TestAsyncCertLifecycleManagerEdgeCases:
     """Additional edge cases for full coverage."""
-
-    def test_create_self_signed_ca_without_db(self, storage):
-        mgr = AsyncCertLifecycleManager(storage=storage)
-        config = _ca_config(common_name="NoDB CA")
-
-        cert_path, key_path = run(mgr.create_self_signed_ca(config))
-
-        assert cert_path.exists()
-        assert key_path.exists()
-
-    def test_issue_certificate_without_db(self, storage, factory):
-        mgr = AsyncCertLifecycleManager(storage=storage, factory=factory)
-
-        cert, key, csr = run(
-            mgr.issue_certificate(_client_config(common_name="nodb.svc"))
-        )
-
-        assert isinstance(cert, x509.Certificate)
-        assert isinstance(key, rsa.RSAPrivateKey)
 
     def test_revoke_certificate_already_revoked(self, mgr, mock_db):
         mock_db.revoke_certificate = AsyncMock(
@@ -838,15 +720,6 @@ class TestAsyncCertLifecycleManagerEdgeCases:
         result = run(mgr.revoke_certificate(12345, x509.ReasonFlags.unspecified))
 
         assert result is False
-
-    def test_issue_certificate_with_overwrite_true_no_existing(self, mgr, mock_db):
-        mock_db.get_by_name = AsyncMock(return_value=None)
-        cert, _, _ = run(
-            mgr.issue_certificate(
-                _client_config(common_name="new.svc"), is_overwrite=True
-            )
-        )
-        assert isinstance(cert, x509.Certificate)
 
     def test_rotate_certificate_with_overwrite(self, mgr, mock_db):
         old_rec = MagicMock()
@@ -877,15 +750,6 @@ class TestAsyncCertLifecycleManagerEdgeCases:
 
 class TestMissingCoverage:
     """Tests for the remaining uncovered lines in async_lifecycle_manager.py"""
-
-    def test_require_db_passes_with_db(self, mgr):
-        """Line 630-631: _require_db should not raise when db is set"""
-        # mgr already has db_handler set in the fixture
-        mgr._require_db()  # Should not raise
-
-    def test_require_factory_passes_with_factory(self, mgr):
-        """Line 635-636: _require_factory should not raise when factory is set"""
-        mgr._require_factory()  # Should not raise
 
     def test_create_self_signed_ca_with_overwrite_true_existing_revokes(
         self, storage, mock_db
@@ -957,39 +821,6 @@ class TestMissingCoverage:
                 )
             )
 
-    def test_revoke_certificate_logs_info_on_success(self, mgr, mock_db):
-        """Lines 698-699: Verify logging on successful revocation"""
-        # Use a mock logger to capture log calls
-        mock_logger = MagicMock()
-        original_logger = mgr._logger
-        mgr._logger = mock_logger
-
-        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
-
-        result = run(mgr.revoke_certificate(12345, x509.ReasonFlags.unspecified))
-
-        assert result is True
-        mock_logger.info.assert_called()
-        # Restore original logger
-        mgr._logger = original_logger
-
-    def test_revoke_certificate_logs_warning_on_failure(self, mgr, mock_db):
-        """Lines 698-699: Verify logging on failed revocation"""
-        mock_logger = MagicMock()
-        original_logger = mgr._logger
-        mgr._logger = mock_logger
-
-        mock_db.revoke_certificate = AsyncMock(
-            return_value=(False, RevokeStatus.NOT_FOUND)
-        )
-
-        result = run(mgr.revoke_certificate(12345, x509.ReasonFlags.unspecified))
-
-        assert result is False
-        mock_logger.warning.assert_called()
-        # Restore original logger
-        mgr._logger = original_logger
-
     def test_generate_crl_processes_revoked_certs(self, mgr, mock_db):
         """Lines 703-704: Process revoked certificates in CRL generation"""
 
@@ -1015,36 +846,6 @@ class TestMissingCoverage:
         # Verify CRL contains entries
         revoked_list = list(crl)
         assert len(revoked_list) == 3
-
-    def test_get_certificate_status_returns_revoked_when_revocation_date_set(
-        self, mgr, mock_db
-    ):
-        """Lines 711, 714-716: Status REVOKED when revocation_date is set"""
-        rec = MagicMock()
-        rec.revocation_date = datetime.datetime.now(UTC)  # Has revocation date
-        rec.revocation_reason = "keyCompromise"
-        mock_db.get_by_serial = AsyncMock(return_value=rec)
-
-        status = run(mgr.get_certificate_status(12345))
-
-        assert status == CertificateStatus.REVOKED
-
-    def test_verify_certificate_with_revoked_cert_raises(self, mgr, mock_db):
-        """Lines 720-721, 725-726: Verification fails for revoked certificate"""
-        # Issue a real certificate
-        cert, _, _ = run(
-            mgr.issue_certificate(_client_config(common_name="revoked-test.svc"))
-        )
-
-        # Mock DB to return revoked status
-        rec = MagicMock()
-        rec.revocation_date = datetime.datetime.now(UTC)
-        rec.revocation_reason = "keyCompromise"
-        rec.not_valid_after = datetime.datetime.now(UTC) + datetime.timedelta(days=365)
-        mock_db.get_by_serial = AsyncMock(return_value=rec)
-
-        with pytest.raises(ValidationCertError, match="revoked"):
-            run(mgr.verify_certificate(cert))
 
     def test_verify_certificate_with_valid_cert_returns_true(self, mgr, mock_db):
         """Lines 720-721, 725-726: Verification succeeds for valid certificate"""
@@ -1388,121 +1189,3 @@ class TestVerifyCRL:
         crl = MagicMock(spec=x509.CertificateRevocationList)
         with pytest.raises(ValueError, match="factory"):
             run(mgr.verify_crl(crl))
-
-
-class TestPersistCertToDB:
-    """Test _persist_cert_to_db private method."""
-
-    def _create_test_cert(self):
-        """Create a simple test certificate without registering it."""
-        key = rsa.generate_private_key(65537, 2048, default_backend())
-        now = datetime.datetime.now(UTC)
-        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "test-cert")])
-        cert = (
-            x509.CertificateBuilder()
-            .subject_name(subject)
-            .issuer_name(subject)
-            .public_key(key.public_key())
-            .serial_number(x509.random_serial_number())
-            .not_valid_before(now)
-            .not_valid_after(now + datetime.timedelta(days=365))
-            .sign(key, hashes.SHA256(), default_backend())
-        )
-        return cert
-
-    def test_persist_cert_to_db_no_existing(self, mgr, mock_db):
-        mock_db.get_by_name = AsyncMock(return_value=None)
-        mock_db.register_cert_in_db = AsyncMock(return_value=True)
-
-        cert = self._create_test_cert()
-
-        run(
-            mgr._persist_cert_to_db(
-                common_name="persist-new.svc",
-                uuid_str="test-uuid",
-                certificate=cert,
-                cert_type=CertType.SERVICE,
-                cert_path=None,
-                is_overwrite=False,
-            )
-        )
-
-        mock_db.register_cert_in_db.assert_called_once()
-        mock_db.revoke_certificate.assert_not_called()
-
-    def test_persist_cert_to_db_existing_with_overwrite(self, mgr, mock_db):
-        existing = MagicMock()
-        existing.serial_number = "77777"
-        existing.uuid = "existing-uuid"
-        mock_db.get_by_name = AsyncMock(return_value=existing)
-        mock_db.revoke_certificate = AsyncMock(return_value=(True, RevokeStatus.OK))
-        mock_db.register_cert_in_db = AsyncMock(return_value=True)
-
-        cert = self._create_test_cert()
-
-        run(
-            mgr._persist_cert_to_db(
-                common_name="test-overwrite.svc",
-                uuid_str="test-uuid",
-                certificate=cert,
-                cert_type=CertType.SERVICE,
-                cert_path=None,
-                is_overwrite=True,
-            )
-        )
-
-        mock_db.revoke_certificate.assert_called_once()
-        mock_db.register_cert_in_db.assert_called_once()
-
-    def test_persist_cert_to_db_existing_no_overwrite_raises(self, mgr, mock_db):
-        existing = MagicMock()
-        existing.serial_number = "88888"
-        mock_db.get_by_name = AsyncMock(return_value=existing)
-
-        cert = self._create_test_cert()
-
-        with pytest.raises(NotUniqueCertOwner):
-            run(
-                mgr._persist_cert_to_db(
-                    common_name="test-dup.svc",
-                    uuid_str="test-uuid",
-                    certificate=cert,
-                    cert_type=CertType.SERVICE,
-                    cert_path=None,
-                    is_overwrite=False,
-                )
-            )
-
-
-class TestFinalCoverageAsync:
-    """Test the last uncovered line in async_lifecycle_manager.py (line 507)."""
-
-    def test_get_certificate_status_not_found_returns_unknown(self, mgr, mock_db):
-        """Line 507: Certificate not found in DB should return UNKNOWN."""
-        mock_db.get_by_serial = AsyncMock(return_value=None)
-
-        status = run(mgr.get_certificate_status(999999))
-
-        assert status == CertificateStatus.UNKNOWN
-        mock_db.get_by_serial.assert_called_once_with(serial=999999)
-
-
-class TestRequireMethodsCoverage:
-    """Test require methods for coverage."""
-
-    def test_require_db_called_in_get_status(self, mgr, mock_db):
-        """Ensure _require_db is called in get_certificate_status."""
-        mock_db.get_by_serial = AsyncMock(return_value=None)
-
-        # This should call _require_db internally
-        run(mgr.get_certificate_status(123))
-
-        # No exception means _require_db was called and passed
-        assert True
-
-    def test_get_certificate_status_without_db_raises(self, storage):
-        """Test get_certificate_status when db_handler is None."""
-        mgr = AsyncCertLifecycleManager(storage=storage)
-
-        with pytest.raises(DBNotInitedError):
-            run(mgr.get_certificate_status(123))

@@ -32,8 +32,11 @@ import os
 from pathlib import Path
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import rsa
 
+from tiny_ca import CertificateRecord
 from tiny_ca.ca_factory import CertificateFactory
+from tiny_ca.ca_factory.utils.life_time import CertLifetime
 from tiny_ca.const import CertType
 from tiny_ca.db.base_db import BaseDB
 from tiny_ca.db.const import CertificateStatus
@@ -43,7 +46,7 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, CertificateDetails, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
 
@@ -483,10 +486,8 @@ class CertLifecycleManager:
             return CertificateStatus.REVOKED
         now = datetime.now(UTC)
 
-        # Handle both aware and naive datetimes
-        not_valid_after = cert.not_valid_after
-        if not_valid_after.tzinfo is None:
-            not_valid_after = not_valid_after.replace(tzinfo=UTC)
+        # Normalise: SQLAlchemy stores naive datetimes; make UTC-aware via CertLifetime.
+        not_valid_after = CertLifetime.normalize_dt(cert.not_valid_after)
 
         if not_valid_after < now:
             return CertificateStatus.EXPIRED
@@ -593,7 +594,7 @@ class CertLifecycleManager:
 
         self.revoke_certificate(serial=serial, reason=x509.ReasonFlags.superseded)
 
-        new_cert, new_key, new_csr = self.issue_certificate(config)
+        new_cert, new_key, new_csr = self.issue_certificate(config, is_overwrite=True)
         self._logger.info(
             "Rotation complete: old serial=%d replaced by serial=%s",
             serial,
@@ -601,12 +602,15 @@ class CertLifecycleManager:
         )
         return new_cert, new_key, new_csr
 
-    def inspect_certificate(self, cert: x509.Certificate):
+    def inspect_certificate(self, cert: x509.Certificate) -> CertificateDetails:
         self._require_factory()
         return self._factory.inspect_certificate(cert)  # type: ignore[union-attr]
 
     def cosign_certificate(
-        self, cert: x509.Certificate, days_valid: int | None = None, valid_from=None
+        self,
+        cert: x509.Certificate,
+        days_valid: int | None = None,
+        valid_from: datetime | None = None,
     ) -> x509.Certificate:
         self._require_factory()
         return self._factory.cosign_certificate(
@@ -616,7 +620,7 @@ class CertLifecycleManager:
     def export_pkcs12(
         self,
         cert: x509.Certificate,
-        private_key,
+        private_key: rsa.RSAPrivateKey,
         password: bytes | None = None,
         name: str | None = None,
     ) -> bytes:
@@ -635,7 +639,7 @@ class CertLifecycleManager:
         self,
         serial: int,
         days_valid: int = 365,
-        valid_from=None,
+        valid_from: datetime | None = None,
     ) -> x509.Certificate:
         """
         Renew the certificate identified by *serial*: same key, new validity window.
@@ -659,11 +663,9 @@ class CertLifecycleManager:
         if record is None:
             raise CertNotFound()
 
-        from cryptography import x509 as _x509
-
-        cert = _x509.load_pem_x509_certificate(record.certificate_pem.encode())
+        cert_obj = x509.load_pem_x509_certificate(record.certificate_pem.encode())
         renewed = self._factory.renew_certificate(
-            cert=cert, days_valid=days_valid, valid_from=valid_from
+            cert=cert_obj, days_valid=days_valid, valid_from=valid_from
         )  # type: ignore[union-attr]
         self._logger.info(
             "Certificate renewed: serial=%d → new_serial=%s",
@@ -677,7 +679,7 @@ class CertLifecycleManager:
         common_name: str,
         key_size: int = 4096,
         days_valid: int = 1825,
-        valid_from=None,
+        valid_from: datetime = None,
         path_length: int | None = 0,
         organization: str | None = None,
         country: str | None = None,
@@ -722,14 +724,14 @@ class CertLifecycleManager:
         key_type: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> list:
+    ) -> list[CertificateRecord]:
         """Return paginated certificate records. Requires db_handler."""
         self._require_db()
         return self._db.list_all(
             status=status, key_type=key_type, limit=limit, offset=offset
         )  # type: ignore[union-attr]
 
-    def get_expiring_soon(self, within_days: int = 30) -> list:
+    def get_expiring_soon(self, within_days: int = 30) -> list[CertificateRecord]:
         """Return VALID certs expiring within *within_days* days. Requires db_handler."""
         self._require_db()
         return self._db.get_expiring(within_days=within_days)  # type: ignore[union-attr]

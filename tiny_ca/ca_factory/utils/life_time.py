@@ -81,6 +81,38 @@ class CertLifetime:
         return start, end
 
     @staticmethod
+    def normalize_dt(dt: datetime) -> datetime:
+        """
+        Ensure *dt* is a timezone-aware UTC ``datetime``.
+
+        SQLAlchemy's ``DateTime`` column stores naive datetimes (no ``tzinfo``).
+        This helper centralises the normalisation so that lifecycle managers
+        never duplicate the ``if dt.tzinfo is None`` guard inline.
+
+        Parameters
+        ----------
+        dt : datetime
+            Any ``datetime`` object, aware or naive.
+
+        Returns
+        -------
+        datetime
+            The same instant expressed as a UTC-aware ``datetime``.
+            If *dt* already carries ``tzinfo``, it is returned unchanged.
+            If *dt* is naive it is assumed to represent UTC and ``tzinfo``
+            is attached via ``.replace(tzinfo=UTC)``.
+
+        Examples
+        --------
+        >>> naive = datetime(2025, 1, 1, 12, 0, 0)
+        >>> CertLifetime.normalize_dt(naive).tzinfo is UTC
+        True
+        """
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=UTC)
+        return dt
+
+    @staticmethod
     def valid_to(cert: x509.Certificate) -> datetime:
         """
         Return the expiry timestamp of *cert* as a timezone-aware UTC datetime.

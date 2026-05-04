@@ -525,7 +525,7 @@ class SyncDBHandler(BaseDB):
             stmt = sa_delete(CertificateRecord).where(CertificateRecord.uuid == uuid)
             result = session.execute(stmt)
             session.commit()
-            deleted = result.rowcount > 0
+            deleted = bool(result.rowcount > 0)  # type: ignore[attr-defined]
             self._logger.info("delete_by_uuid(%r) → deleted=%s", uuid, deleted)
             return deleted
         except Exception as exc:
@@ -561,7 +561,7 @@ class SyncDBHandler(BaseDB):
             )
             result = session.execute(stmt)
             session.commit()
-            count = result.rowcount
+            count = int(result.rowcount)  # type: ignore[attr-defined]
             self._logger.info("update_status_expired: %d rows marked expired", count)
             return count
         except Exception as exc:

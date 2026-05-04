@@ -5,7 +5,9 @@ from logging import Logger
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import serialization
-from sqlalchemy import Row, delete, select
+from sqlalchemy import Row, asc, delete, desc, select
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from tiny_ca.const import CertType
@@ -357,7 +359,7 @@ class AsyncDBHandler(BaseDB):
             async for row in result:
                 yield row
 
-    async def list_all(
+    async def list_all(  # type: ignore[override]
         self,
         status: str | None = None,
         key_type: str | None = None,
@@ -383,7 +385,6 @@ class AsyncDBHandler(BaseDB):
         list[CertificateRecord]
             Records ordered by ``id`` descending.  Empty list on error.
         """
-        from sqlalchemy import desc
 
         async with self._db.get_session() as session:
             try:
@@ -410,7 +411,7 @@ class AsyncDBHandler(BaseDB):
                 self._logger.error("list_all failed: %s", exc, exc_info=True)
                 return []
 
-    async def get_expiring(self, within_days: int = 30) -> list[CertificateRecord]:
+    async def get_expiring(self, within_days: int = 30) -> list[CertificateRecord]:  # type: ignore[override]
         """
         Return VALID certificates expiring within *within_days* calendar days.
 
@@ -424,9 +425,6 @@ class AsyncDBHandler(BaseDB):
         list[CertificateRecord]
             Records ordered by ``not_valid_after`` ascending.  Empty list on error.
         """
-        from datetime import UTC, datetime, timedelta
-
-        from sqlalchemy import asc
 
         now = datetime.now(UTC)
         cutoff = now + timedelta(days=within_days)
@@ -451,7 +449,7 @@ class AsyncDBHandler(BaseDB):
                 self._logger.error("get_expiring failed: %s", exc, exc_info=True)
                 return []
 
-    async def delete_by_uuid(self, uuid: str) -> bool:
+    async def delete_by_uuid(self, uuid: str) -> bool:  # type: ignore[override]
         """
         Permanently delete the certificate record identified by *uuid*.
 
@@ -465,7 +463,6 @@ class AsyncDBHandler(BaseDB):
         bool
             ``True`` if a row was deleted; ``False`` otherwise.
         """
-        from sqlalchemy import delete as sa_delete
 
         async with self._db.get_session() as session:
             try:
@@ -474,7 +471,7 @@ class AsyncDBHandler(BaseDB):
                 )
                 result = await session.execute(stmt)
                 await session.commit()
-                deleted = result.rowcount > 0
+                deleted = bool(result.rowcount > 0)  # type: ignore[attr-defined]
                 self._logger.info("delete_by_uuid(%r) → deleted=%s", uuid, deleted)
                 return deleted
             except Exception as exc:
@@ -484,7 +481,7 @@ class AsyncDBHandler(BaseDB):
                 )
                 return False
 
-    async def update_status_expired(self) -> int:
+    async def update_status_expired(self) -> int:  # type: ignore[override]
         """
         Bulk-set status=expired for all VALID certs whose validity has passed.
 
@@ -493,9 +490,6 @@ class AsyncDBHandler(BaseDB):
         int
             Number of rows updated.  ``0`` on error.
         """
-        from datetime import UTC, datetime
-
-        from sqlalchemy import update as sa_update
 
         now = datetime.now(UTC)
         async with self._db.get_session() as session:
@@ -510,7 +504,7 @@ class AsyncDBHandler(BaseDB):
                 )
                 result = await session.execute(stmt)
                 await session.commit()
-                count = result.rowcount
+                count = int(result.rowcount)  # type: ignore[attr-defined]
                 self._logger.info(
                     "update_status_expired: %d rows marked expired", count
                 )

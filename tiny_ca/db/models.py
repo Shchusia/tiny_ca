@@ -12,7 +12,7 @@ Module-level contents
 Design notes
 ------------
 - ``CertificateStatus`` uses ``StrEnum`` so that values are stored as plain
-  strings in the database, making the column human-readable and compatible
+  strings in the database, making the Column human-readable and compatible
   with non-Python tooling that queries the database directly.
 - ``CertificateRecord`` stores the full PEM-encoded public certificate so the
   certificate can be reconstructed independently of the filesystem artefacts.
@@ -26,8 +26,10 @@ Design notes
 
 from __future__ import annotations
 
-from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.orm import Mapped, declarative_base
+from datetime import datetime
+
+from sqlalchemy import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
 from tiny_ca.const import CertType
 
@@ -61,7 +63,7 @@ class CertificateRecord(Base):  # type: ignore
         Defaults to ``CertificateStatus.VALID`` on insertion.
     not_valid_before : datetime
         Start of the certificate's validity period (UTC, naive datetime as
-        stored by SQLAlchemy's ``DateTime`` column type).
+        stored by SQLAlchemy's ``DateTime`` Column type).
     not_valid_after : datetime
         End of the certificate's validity period (UTC, naive datetime).
         Indexed to allow efficient queries for expired certificates.
@@ -87,57 +89,57 @@ class CertificateRecord(Base):  # type: ignore
 
     __tablename__ = "certificates"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    serial_number = Column(
+    serial_number: Mapped[str] = mapped_column(
         String,
         unique=True,
         nullable=False,
         index=True,
         comment="X.509 serial number as a decimal string (up to 160-bit value).",
     )
-    common_name = Column(
+    common_name: Mapped[str] = mapped_column(
         String,
         nullable=False,
         comment="CN extracted from the certificate Subject at issuance time.",
     )
-    status: Mapped[str] = Column(  # type: ignore
+    status: Mapped[str] = mapped_column(  # type: ignore
         String,
         default=CertificateStatus.VALID,
         comment="Lifecycle state: valid | revoked | expired | unknown.",
     )
-    not_valid_before = Column(
+    not_valid_before: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         comment="Start of the certificate validity window (UTC).",
     )
-    not_valid_after = Column(
+    not_valid_after: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         index=True,
         comment="End of the certificate validity window (UTC). Indexed for expiry queries.",
     )
-    key_type = Column(
+    key_type: Mapped[str] = mapped_column(
         String,
         default=CertType.DEVICE.value,
         comment="Certificate category: ca | device | service | user | internal.",
     )
-    certificate_pem = Column(
+    certificate_pem: Mapped[str] = mapped_column(
         String,
         nullable=False,
         comment="Full PEM-encoded public certificate for offline reconstruction.",
     )
-    revocation_date = Column(
+    revocation_date: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=True,
         comment="UTC timestamp of revocation. NULL for non-revoked certificates.",
     )
-    revocation_reason: Mapped[str] = Column(  # type: ignore
+    revocation_reason: Mapped[str] = mapped_column(  # type: ignore
         String,
         nullable=True,
         comment="RFC 5280 §5.3.1 reason code integer. NULL for non-revoked certificates.",
     )
-    uuid = Column(
+    uuid: Mapped[str] = mapped_column(
         String,
         unique=True,
         comment="Filesystem folder UUID linking this record to its storage artefacts.",

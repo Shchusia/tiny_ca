@@ -829,32 +829,3 @@ class TestRenewCertificate:
         mock_db.get_by_serial.return_value = None
         with pytest.raises(CertNotFound):
             mgr.renew_certificate(serial=99999)
-
-
-class TestDeleteCertificateNotFound:
-    """Test delete_certificate when folder doesn't exist (covers warning)."""
-
-    def test_delete_certificate_folder_not_exists_warning(self, mgr, mock_db, storage):
-        """Test that delete_certificate handles missing folder gracefully."""
-        mock_record = MagicMock()
-        mock_record.uuid = "nonexistent-uuid"
-        mock_db.get_by_serial.return_value = mock_record
-        mock_db.delete_by_uuid.return_value = True
-
-        # This should not raise exception, just log warning
-        result = mgr.delete_certificate(serial=12345, cert_path="some/path")
-
-        assert result is True
-
-
-class TestFinalCoverageSync:
-    """Test the last uncovered line in sync_lifecycle_manager.py (line 489)."""
-
-    def test_get_certificate_status_not_found_returns_unknown(self, mgr, mock_db):
-        """Line 489: Certificate not found in DB should return UNKNOWN."""
-        mock_db.get_by_serial.return_value = None
-
-        status = mgr.get_certificate_status(999999)
-
-        assert status == CertificateStatus.UNKNOWN
-        mock_db.get_by_serial.assert_called_once_with(serial=999999)

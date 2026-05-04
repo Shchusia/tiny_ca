@@ -28,7 +28,7 @@ import datetime
 import ipaddress
 from logging import Logger
 import os
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -36,10 +36,17 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
-from sqlalchemy import Row
+
+if TYPE_CHECKING:
+    # sqlalchemy.Row is only needed for type annotations in abuild_crl.
+    # Keeping it behind TYPE_CHECKING means factory.py has zero SQLAlchemy
+    # runtime dependency — callers that use only the sync path never pay
+    # the import cost and the module stays a pure-crypto unit.
+    from sqlalchemy import Row
+
+    from ..db.models import CertificateRecord
 
 from ..const import CertType
-from ..db.models import CertificateRecord
 from ..exc import ValidationCertError
 from ..models.certificate import CertificateDetails
 from ..settings import DEFAULT_LOGGER
@@ -754,7 +761,7 @@ class CertificateFactory:
                 try:
                     if getattr(ku, bit):
                         key_usage.append(bit)
-                except x509.exceptions.UnsupportedGeneralNameType:  # pragma: no cover
+                except x509.exceptions.UnsupportedGeneralNameType:  # type: ignore[attr-defined]  # pragma: no cover
                     pass
         except x509.ExtensionNotFound:
             pass
@@ -1044,7 +1051,7 @@ class CertificateFactory:
         )
 
         info = self._ca.base_info
-        attrs: list[x509.NameAttribute] = []
+        attrs: list[x509.NameAttribute] = []  # type: ignore[type-arg]
         resolved_country = country or info.country
         resolved_org = organization or info.organization
         if resolved_country:  # pragma: no cover

@@ -1,18 +1,76 @@
+# ──────────────────────────────────────────────
+# Build system
+# ──────────────────────────────────────────────
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ──────────────────────────────────────────────
+# Project metadata
+# ──────────────────────────────────────────────
 [project]
 name = "tiny-ca"
-version = "0.1.1"
-description = "A lightweight Python library for managing the full lifecycle of X.509 certificates"
+version = "0.2.0"
+description = "A lightweight, 100%-tested Python library for managing the full lifecycle of X.509 certificates — issuance, revocation, rotation, CRL generation, PKCS#12 export, and more."
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Denis Shchutskyi", email = "denisshchutskyi@gmail.com" }
+]
+keywords = ["pki", "x509", "certificate", "ca", "tls", "ssl", "cryptography", "crl", "pkcs12"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Internet",
+    "Intended Audience :: Developers",
+    "Typing :: Typed",
+]
+# Core sync dependencies only — aiosqlite/aiofiles are in the [async] extra
 dependencies = [
-    "aiofiles>=25.1.0",
-    "aiosqlite>=0.22.1",
-    "cryptography>=46.0.5",
-    "pydantic[email]>=2.12.5",
-    "sqlalchemy[mypy]>=2.0.48",
-    "types-aiofiles>=25.1.0.20251011",
+    "cryptography>=46.0.0",
+    "pydantic[email]>=2.12.0",
+    "sqlalchemy>=2.0.0",
 ]
 
+[project.urls]
+Repository    = "https://github.com/Shchusia/tiny_ca"
+Documentation = "https://shchusia.github.io/tiny_ca/"
+"Bug Tracker" = "https://github.com/Shchusia/tiny_ca/issues"
+Changelog     = "https://github.com/Shchusia/tiny_ca/blob/main/CHANGELOG.md"
+
+# ──────────────────────────────────────────────
+# Optional extras
+# ──────────────────────────────────────────────
+[project.optional-dependencies]
+async = [
+    "aiofiles>=25.1.0",
+    "aiosqlite>=0.22.0",
+    "types-aiofiles>=25.1.0",
+]
+postgres = [
+    "psycopg2-binary>=2.9.0",
+]
+postgres-async = [
+    "asyncpg>=0.30.0",
+]
+mysql = [
+    "pymysql>=1.1.0",
+]
+mysql-async = [
+    "aiomysql>=0.2.0",
+]
+all = [
+    "tiny-ca[async,postgres,postgres-async,mysql,mysql-async]",
+]
+
+# ──────────────────────────────────────────────
+# Development dependency groups (uv)
+# ──────────────────────────────────────────────
 [dependency-groups]
 lint = [
     "bandit>=1.9.4",
@@ -23,6 +81,8 @@ lint = [
     "ruff>=0.15.5",
 ]
 tests = [
+    "aiofiles>=25.1.0",
+    "aiosqlite>=0.22.0",
     "coverage>=7.13.4",
     "coveralls>=4.1.0",
     "pytest>=9.0.2",
@@ -38,6 +98,18 @@ docs = [
     "sphinx-autodoc-typehints>=3.5.2",
     "sphinx-rtd-theme>=3.0.2",
 ]
+example = [
+    "psutil>=7.2.2",
+]
+
+# ──────────────────────────────────────────────
+# uv / Setuptools
+# ──────────────────────────────────────────────
+[tool.uv.build-backend]
+source-include = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+exclude = ["certs*", "tests*", "examples*"]
 
 [tool.black]
 line-length = 88
@@ -60,7 +132,7 @@ select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM"]
 ignore = [
   "E501",
   "B008",
-    "F401"
+    "F401",
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -101,6 +173,9 @@ warn_unused_ignores = false
 disallow_subclassing_any = false
 disallow_untyped_defs = true
 warn_redundant_casts=true
+plugins = ["pydantic.mypy"]
+exclude = "migrations/"
+disable_error_code = ["untyped-decorator"]
 
 [[tool.mypy.overrides]]
 module = "*"
@@ -112,10 +187,17 @@ no_implicit_optional = true
 strict_optional = true
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = "aiofile.*"
-ignore_missing_imports = true
 
+[tool.bandit.assert_used]
+exclude_dirs = ["venv", "tests"]
+exclude = ["/tests", "/venv"]
+nosec = ["B608"]
+skips = ["*/*_test.py", "*/test_*.py", "*/grafana.py","B608"]
+
+
+# ──────────────────────────────────────────────
+# Pytest
+# ──────────────────────────────────────────────
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

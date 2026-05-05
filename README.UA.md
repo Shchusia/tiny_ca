@@ -1,197 +1,259 @@
 # tiny_ca
 
-[![Coverage Status](https://img.shields.io/badge/%20Python%20Versions-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
+[![Python](https://img.shields.io/badge/Python-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
+[![PyPI](https://img.shields.io/pypi/v/tiny-ca?color=blue)](https://pypi.org/project/tiny-ca/)
 [![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
+[![Docs](https://img.shields.io/badge/Docs-passing-green)](https://shchusia.github.io/tiny_ca/)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-[![Coverage Status](https://img.shields.io/badge/Version-0.1.1-informational)](https://pypi.org/project/tiny-ca/)
-[![Coverage Status](https://img.shields.io/badge/Docs-passed-green)](https://shchusia.github.io/tiny_ca/)
-
-Легка Python-бібліотека для керування повним циклом X.509-сертифікатів — від bootstrap самопідписаного кореневого CA до видачі, відкликання та ротації сертифікатів кінцевих сутностей, генерації CRL та збереження всіх артефактів у локальному сховищі з підтримкою реляційної бази даних.
+Легковісна Python-бібліотека з **покриттям тестами 100 %** для управління повним циклом X.509-сертифікатів — від розгортання самопідписаного кореневого CA до видачі, відкликання, ротації, поновлення та співпідписання кінцевих сертифікатів, генерації та верифікації CRL, експорту PKCS#12-бандлів та видачі проміжних CA — з підтримкою синхронного й асинхронного API.
 
 ---
 
 ## Зміст
 
 - [Можливості](#можливості)
+- [Вимоги](#вимоги)
 - [Архітектура](#архітектура)
 - [Встановлення](#встановлення)
 - [Швидкий старт](#швидкий-старт)
-  - [1. Bootstrap самопідписаного кореневого CA](#1-bootstrap-самопідписаного-кореневого-ca)
-  - [2. Видача сертифіката кінцевої сутності](#2-видача-сертифіката-кінцевої-сутності)
-  - [3. Відкликання сертифіката](#3-відкликання-сертифіката)
-  - [4. Генерація CRL](#4-генерація-crl)
-  - [5. Верифікація сертифіката](#5-верифікація-сертифіката)
-  - [6. Ротація сертифіката](#6-ротація-сертифіката)
-  - [7. Асинхронне використання](#7-асинхронне-використання)
+- [Повні приклади](#повні-приклади)
 - [Моделі конфігурації](#моделі-конфігурації)
 - [Сховища](#сховища)
 - [Адаптери бази даних](#адаптери-бази-даних)
-- [Кодування серійного номера](#кодування-серійного-номера)
+- [Кодування серійних номерів](#кодування-серійних-номерів)
 - [Довідник помилок](#довідник-помилок)
-- [Запуск тестів](#запуск-тестів)
-- [Структура проекту](#структура-проекту)
+- [FAQ](#faq)
+- [Міграція з інших CA](#міграція-з-інших-ca)
+- [Результати бенчмарків](#результати-бенчмарків)
+- [Структура проєкту](#структура-проєкту)
+- [Безпека](#безпека)
+- [Ліцензія](#ліцензія)
 
 ---
 
 ## Можливості
 
-- **Bootstrap самопідписаного CA** — генерація кореневого сертифіката та ключа одним викликом.
-- **Видача сертифікатів** — серверні, клієнтські, пристроїв, користувачів та сервісів із підтримкою SAN (DNS + IP).
-- **Відкликання** — позначення сертифікатів як відкликаних у базі даних з кодами причин RFC 5280.
-- **Генерація CRL** — побудова та підписання списку відкликання сертифікатів з поточних записів бази даних.
-- **Верифікація** — перевірка видавця, вікна дійсності, підпису та статусу відкликання.
-- **Ротація** — атомарне відкликання старого сертифіката та видача нового.
-- **Підключаємі сховища** — `LocalStorage` та `AsyncLocalStorage` записують PEM/key/CSR/CRL у настроювану файлову систему.
-- **Підключаємі БД** — `SyncDBHandler` (SQLAlchemy sync) та `AsyncDBHandler` (SQLAlchemy async/aiosqlite).
-- **Синхронний та асинхронний API** — `CertLifecycleManager` і `AsyncCertLifecycleManager` з однаковим набором функцій.
-- **Розумні серійні номери** — `SerialWithEncoding` упаковує префікс `CertType`, фрагмент імені та UUID-випадковість в один 160-бітний цілочисельний номер; повністю відповідає RFC 5280.
+| Категорія | Можливість |
+|---|---|
+| **Розгортання CA** | Самопідписаний кореневий CA і проміжний (підлеглий) CA з налаштуванням `path_length` |
+| **Видача** | Листові сертифікати з SAN (DNS + IP), EKU (Server/Client Auth), email-атрибутом |
+| **Lifecycle** | Відкликання (RFC 5280), поновлення (той самий ключ), ротація (новий ключ), жорстке видалення |
+| **CRL** | Побудова, підписання та верифікація списків відкликань з налаштуванням терміну |
+| **Інспекція** | Структурований `CertificateDetails` для будь-якого `x509.Certificate` — повністю серіалізовний |
+| **Експорт** | PKCS#12 (`.p12`/`.pfx`) із повним ланцюжком CA |
+| **Співпідписання** | Перепідписання чужого сертифіката під цим CA зі збереженням Subject і розширень |
+| **Ланцюжок** | Побудова `[leaf, ca]` `fullchain.pem` для nginx, Apache або Envoy |
+| **Моніторинг** | Список із фільтрами, сертифікати що спливають, масова позначка прострочених |
+| **Сховище** | `LocalStorage` (sync) і `AsyncLocalStorage` (async, aiofiles) з UUID-ізоляцією |
+| **База даних** | `SyncDBHandler` (SQLAlchemy) і `AsyncDBHandler` (aiosqlite) — SQLite, PostgreSQL, MySQL |
+| **Паритет API** | `CertLifecycleManager` і `AsyncCertLifecycleManager` мають ідентичний набір методів |
+| **Серійні номери** | `SerialWithEncoding` — 160-бітні RFC 5280, з префіксом типу та фрагментом імені |
+| **Тестування** | **100 %** покриття рядків і гілок по всіх модулях |
+
+---
+
+## Вимоги
+
+- **Python** 3.11 або вище
+- **Основні:** `cryptography >= 46`, `sqlalchemy >= 2`, `pydantic >= 2`
+- **Async-extras:** `aiofiles`, `aiosqlite`
+- **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)
+- **MySQL:** `pymysql` (sync) / `aiomysql` (async)
 
 ---
 
 ## Архітектура
 
 ```
-CertLifecycleManager / AsyncCertLifecycleManager
+CertLifecycleManager / AsyncCertLifecycleManager   ← точка входу
         │
-        ├── CertificateFactory          ← лише криптографічні операції
-        │       ├── CAFileLoader / AsyncCAFileLoader   ← завантаження CA з PEM-файлів
-        │       └── CertLifetime / CertSerialParser    ← допоміжні класи
+        ├── CertificateFactory                      ← тільки крипто, без I/O
+        │       ├── ICALoader (Protocol)
+        │       │       ├── CAFileLoader            ← sync PEM-завантажувач
+        │       │       └── AsyncCAFileLoader       ← async PEM-завантажувач
+        │       ├── CertLifetime                    ← утиліти вікна валідності
+        │       ├── CertSerialParser                ← читання серійних номерів
+        │       └── SerialWithEncoding              ← кодування/декодування серійних номерів
         │
-        ├── BaseStorage
-        │       ├── LocalStorage        ← синхронний файловий бекенд
-        │       └── AsyncLocalStorage   ← асинхронний файловий бекенд
+        ├── BaseStorage (ABC)
+        │       ├── LocalStorage                    ← sync файлова система (UUID-ізоляція)
+        │       └── AsyncLocalStorage               ← async файлова система (aiofiles)
         │
-        └── BaseDB
-                ├── SyncDBHandler       ← SQLAlchemy sync
-                └── AsyncDBHandler      ← SQLAlchemy async (aiosqlite)
+        └── BaseDB (ABC)
+                ├── SyncDBHandler                   ← SQLAlchemy sync
+                └── AsyncDBHandler                  ← SQLAlchemy async (aiosqlite)
 ```
 
-Кожен компонент передається через dependency injection — жодного глобального стану, легко тестувати.
+Кожен компонент інжектується при конструюванні — жодних глобальних синглтонів, легко тестується і мокується.
 
 ---
 
 ## Встановлення
 
 ```bash
-pip install tiny_ca
-# підтримка async (aiosqlite + aiofiles)
-pip install tiny_ca[async]
-```
+# Тільки sync (мінімум)
+pip install tiny-ca
 
-Залежності: `cryptography`, `sqlalchemy`, `pydantic`.
-Опціональні: `aiosqlite`, `aiofiles` (async-бекенди).
+# З підтримкою async (рекомендовано)
+pip install tiny-ca[async]
+
+# PostgreSQL
+pip install tiny-ca[postgres]           # sync (psycopg2)
+pip install tiny-ca[postgres-async]     # async (asyncpg)
+
+# MySQL
+pip install tiny-ca[mysql]              # sync (pymysql)
+pip install tiny-ca[mysql-async]        # async (aiomysql)
+
+# Все одразу
+pip install tiny-ca[all]
+```
 
 ---
 
 ## Швидкий старт
 
-### 1. Bootstrap самопідписаного кореневого CA
+### 1. Розгортання кореневого CA
 
 ```python
 from tiny_ca.managers.sync_lifecycle_manager import CertLifecycleManager
-from tiny_ca.models.certtificate import CAConfig
 from tiny_ca.storage.local_storage import LocalStorage
 from tiny_ca.db.sync_db_manager import SyncDBHandler
+from tiny_ca.models.certificate import CAConfig
 
 storage = LocalStorage(base_folder="./pki")
 db = SyncDBHandler(db_url="sqlite:///pki.db")
-
 mgr = CertLifecycleManager(storage=storage, db_handler=db)
 
-config = CAConfig(
-    common_name="My Internal CA",
-    organization="ACME Corp",
-    country="UA",
-    key_size=4096,
-    days_valid=3650,
+cert_path, key_path = mgr.create_self_signed_ca(
+    CAConfig(common_name="Мій кореневий CA", organization="ACME Corp",
+             country="UA", key_size=4096, days_valid=3650)
 )
-
-cert_path, key_path = mgr.create_self_signed_ca(config)
-print(f"Сертифікат CA: {cert_path}")
-print(f"Приватний ключ CA: {key_path}")
 ```
 
-### 2. Видача сертифіката кінцевої сутності
-
-Після bootstrap потрібно завантажити CA та прив'язати `CertificateFactory`:
+Підключіть factory щоб видавати сертифікати:
 
 ```python
 from tiny_ca.ca_factory.utils.file_loader import CAFileLoader
 from tiny_ca.ca_factory.factory import CertificateFactory
-from tiny_ca.models.certtificate import ClientConfig
+
+loader = CAFileLoader(ca_cert_path=cert_path, ca_key_path=key_path)
+mgr.factory = CertificateFactory(loader)
+```
+
+### 2. Видача листового сертифіката
+
+```python
+from tiny_ca.models.certificate import ClientConfig
 from tiny_ca.const import CertType
 
-loader = CAFileLoader(
-    ca_cert_path="./pki/<uuid>/ca.pem",
-    ca_key_path="./pki/<uuid>/ca.key",
+cert, key, csr = mgr.issue_certificate(
+    ClientConfig(
+        common_name="nginx.internal",
+        serial_type=CertType.SERVICE,
+        key_size=2048,
+        days_valid=365,
+        is_server_cert=True,
+        san_dns=["nginx.internal", "www.nginx.internal"],
+        san_ip=["192.168.1.10"],
+    ),
+    cert_path="services",
 )
-mgr.factory = CertificateFactory(loader)
-
-svc_config = ClientConfig(
-    common_name="nginx.internal",
-    serial_type=CertType.SERVICE,
-    key_size=2048,
-    days_valid=365,
-    is_server_cert=True,
-    san_dns=["nginx.internal", "www.nginx.internal"],
-    san_ip=["192.168.1.10"],
-)
-
-cert, key, csr = mgr.issue_certificate(svc_config, cert_path="services")
-print(f"Видано: {cert.serial_number}")
 ```
 
-### 3. Відкликання сертифіката
+### 3. Поновлення сертифіката (той самий ключ)
+
+Зберігає існуючий публічний ключ — змінюється лише вікно валідності та серійний номер.
+Використовуйте коли приватний ключ **не скомпрометований**.
 
 ```python
-from cryptography import x509
-
-success = mgr.revoke_certificate(
-    serial=cert.serial_number,
-    reason=x509.ReasonFlags.key_compromise,
-)
-print("Відкликано:", success)
+renewed = mgr.renew_certificate(serial=cert.serial_number, days_valid=365)
 ```
 
-### 4. Генерація CRL
+### 4. Ротація сертифіката (новий ключ)
 
-```python
-crl = mgr.generate_crl(days_valid=7)
-# Автоматично записується у <base_folder>/crl.pem
-```
-
-### 5. Верифікація сертифіката
-
-```python
-from tiny_ca.exc import ValidationCertError
-
-try:
-    mgr.verify_certificate(cert)
-    print("Сертифікат дійсний")
-except ValidationCertError as e:
-    print(f"Перевірка не пройдена: {e}")
-```
-
-### 6. Ротація сертифіката
+Атомарно відкликає старий сертифікат і видає заміну з новою парою ключів.
 
 ```python
 new_cert, new_key, new_csr = mgr.rotate_certificate(
     serial=cert.serial_number,
-    config=svc_config,
+    config=ClientConfig(common_name="nginx.internal",
+                        serial_type=CertType.SERVICE, days_valid=365,
+                        is_server_cert=True),
 )
-print(f"Ротовано до серійного: {new_cert.serial_number}")
 ```
 
-### 7. Асинхронне використання
+### 5. Відкликання сертифіката
 
-Всі операції доступні як `async`/`await` через `AsyncCertLifecycleManager`:
+```python
+from cryptography import x509
+mgr.revoke_certificate(serial=cert.serial_number, reason=x509.ReasonFlags.key_compromise)
+```
+
+### 6. Генерація та верифікація CRL
+
+```python
+crl = mgr.generate_crl(days_valid=7)   # записується в <base_folder>/crl.pem
+mgr.verify_crl(crl)                     # кидає ValidationCertError при помилці
+```
+
+### 7. Видача проміжного CA
+
+```python
+sub_ca_cert, sub_ca_key = mgr.issue_intermediate_ca(
+    common_name="Видавальний CA", key_size=4096, days_valid=1825,
+    path_length=0, organization="ACME Corp", country="UA",
+    cert_path="intermediate",
+)
+```
+
+### 8. Експорт PKCS#12
+
+```python
+p12_bytes = mgr.export_pkcs12(cert=cert, private_key=key,
+                               password=b"надійний-пароль", name="nginx.internal")
+with open("nginx.p12", "wb") as f:
+    f.write(p12_bytes)
+```
+
+### 9. Співпідписання чужого сертифіката
+
+```python
+from cryptography import x509
+third_party = x509.load_pem_x509_certificate(open("partner.pem", "rb").read())
+cosigned = mgr.cosign_certificate(cert=third_party, days_valid=365)
+```
+
+### 10. Інспекція сертифіката
+
+```python
+details = mgr.inspect_certificate(cert)
+print(details.common_name, details.fingerprint_sha256, details.public_key_size)
+
+# fullchain.pem для nginx
+from cryptography.hazmat.primitives.serialization import Encoding
+chain = mgr.get_cert_chain(cert)
+fullchain_pem = b"".join(c.public_bytes(Encoding.PEM) for c in chain)
+```
+
+### 11. Моніторинг сертифікатів
+
+```python
+records  = mgr.list_certificates(status="valid", key_type="service", limit=50)
+expiring = mgr.get_expiring_soon(within_days=30)
+updated  = mgr.refresh_expired_statuses()   # запускати по розкладу
+mgr.delete_certificate(serial=cert.serial_number)
+```
+
+### 12. Асинхронне використання
 
 ```python
 import asyncio
 from tiny_ca.managers.async_lifecycle_manager import AsyncCertLifecycleManager
 from tiny_ca.storage.async_local_storage import AsyncLocalStorage
 from tiny_ca.db.async_db_manager import AsyncDBHandler
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.const import CertType
 
 async def main():
@@ -200,151 +262,145 @@ async def main():
     await db._db.init_db()
 
     mgr = AsyncCertLifecycleManager(storage=storage, db_handler=db)
-
-    # Bootstrap CA
     cert_path, key_path = await mgr.create_self_signed_ca(
-        CAConfig(common_name="Async CA", organization="ACME", country="UA",
-                 key_size=2048, days_valid=3650)
+        CAConfig(common_name="Async CA", organization="ACME",
+                 country="UA", key_size=2048, days_valid=3650)
     )
 
-    # Прив'язати factory
     from tiny_ca.ca_factory.utils.afile_loader import AsyncCAFileLoader
     from tiny_ca.ca_factory.factory import CertificateFactory
-
-    loader = await AsyncCAFileLoader.create(
-        cert_path.parent / "ca.pem",
-        cert_path.parent / "ca.key",
-    )
+    loader = await AsyncCAFileLoader.create(cert_path, key_path)
     mgr.factory = CertificateFactory(loader)
 
-    # Видати сертифікат
     cert, key, csr = await mgr.issue_certificate(
-        ClientConfig(common_name="modules.internal", serial_type=CertType.SERVICE,
+        ClientConfig(common_name="api.internal", serial_type=CertType.SERVICE,
                      key_size=2048, days_valid=365, is_server_cert=True)
     )
-    print("Видано:", cert.serial_number)
+    details = await mgr.inspect_certificate(cert)
+    p12 = await mgr.export_pkcs12(cert, key, password=b"secret")
 
 asyncio.run(main())
 ```
 
 ---
 
-## Моделі конфігурації
+## Повні приклади
 
-Обидві моделі є Pydantic `BaseModel` — всі поля валідуються при створенні.
+| Файл | Опис |
+|---|---|
+| `examples/complete_example.py` | Sync API — повний lifecycle |
+| `examples/acomplete_example.py` | Async API — повний lifecycle |
+
+```bash
+python examples/complete_example.py
+python examples/acomplete_example.py
+```
+
+---
+
+## Моделі конфігурації
 
 ### `CAConfig`
 
-| Поле | Тип | Замовчування | Опис |
+| Поле | Тип | За замовчуванням | Опис |
 |---|---|---|---|
-| `common_name` | `str` | — | Common Name (CN) CA |
-| `organization` | `str` | — | Організація (O) |
-| `country` | `str` | — | Дволітерний код країни ISO |
+| `common_name` | `str` | `"Internal CA"` | CN кореневого CA |
+| `organization` | `str` | `"My Company"` | Організація (O) |
+| `country` | `str` | `"UA"` | Двобуквений код країни ISO 3166-1 |
 | `key_size` | `int` | `2048` | Довжина RSA-ключа в бітах |
 | `days_valid` | `int` | `3650` | Термін дії в днях |
+| `valid_from` | `datetime \| None` | `None` | Явний початок (UTC); `None` = зараз |
 
 ### `ClientConfig`
 
-| Поле | Тип | Замовчування | Опис |
+| Поле | Тип | За замовчуванням | Опис |
 |---|---|---|---|
 | `common_name` | `str` | — | CN сертифіката |
 | `serial_type` | `CertType` | `SERVICE` | Категорія сертифіката |
 | `key_size` | `int` | `2048` | Довжина RSA-ключа |
-| `days_valid` | `int` | `365` | Термін дії |
-| `email` | `str \| None` | `None` | Атрибут emailAddress в Subject |
-| `is_server_cert` | `bool` | `False` | Додає ServerAuth EKU + DNS SAN з CN |
+| `days_valid` | `int` | `3650` | Термін дії |
+| `email` | `EmailStr \| None` | `None` | Атрибут `emailAddress` у Subject |
+| `is_server_cert` | `bool` | `True` | Додає ServerAuth EKU + CN як DNS SAN |
 | `is_client_cert` | `bool` | `False` | Додає ClientAuth EKU |
 | `san_dns` | `list[str] \| None` | `None` | Додаткові DNS SAN |
 | `san_ip` | `list[str] \| None` | `None` | IP-адреси SAN |
-| `name` | `str \| None` | `None` | Ім'я вихідного файлу (без розширення) |
+| `name` | `str \| None` | `None` | Перевизначення базового імені файлу |
 
-### Enum `CertType`
+### Перелік `CertType`
 
-| Значення | Опис |
-|---|---|
-| `CA` | Кореневий або проміжний CA |
-| `USER` | Сертифікат користувача |
-| `SERVICE` | Сертифікат сервісу / сервера |
-| `DEVICE` | Сертифікат пристрою IoT |
-| `INTERNAL` | Внутрішня інфраструктура |
+| Значення | Рядок | Опис |
+|---|---|---|
+| `CertType.CA` | `"CA"` | Кореневий або проміжний CA |
+| `CertType.USER` | `"USR"` | Персональний сертифікат користувача |
+| `CertType.SERVICE` | `"SVC"` | Сертифікат сервісу / сервера |
+| `CertType.DEVICE` | `"DEV"` | Сертифікат пристрою (IoT тощо) |
+| `CertType.INTERNAL` | `"INT"` | Внутрішній інфраструктурний сертифікат |
 
 ---
 
 ## Сховища
 
-### `LocalStorage` (синхронне)
+### `LocalStorage` (sync)
 
 ```python
 from tiny_ca.storage.local_storage import LocalStorage
-from cryptography.hazmat.primitives import serialization
-
-storage = LocalStorage(
-    base_folder="./pki",
-    base_encoding=serialization.Encoding.PEM,
-    base_private_format=serialization.PrivateFormat.TraditionalOpenSSL,
-    base_encryption_algorithm=serialization.NoEncryption(),
-)
+storage = LocalStorage(base_folder="./pki")
 ```
 
-Структура директорій:
 ```
 ./pki/
 └── [cert_path/]
     └── <uuid>/
-        ├── service.pem    # x509.Certificate
-        ├── service.key    # RSA приватний ключ
-        └── service.csr    # CertificateSigningRequest
+        ├── nginx.pem    ← x509.Certificate
+        ├── nginx.key    ← RSA приватний ключ
+        └── nginx.csr    ← CSR
 ```
 
-### `AsyncLocalStorage` (асинхронне)
+### `AsyncLocalStorage` (async)
 
-Повна асинхронна заміна `LocalStorage` — той самий конструктор, та сама структура директорій, всі методи I/O є `async`.
+Пряма async-заміна — однаковий конструктор, однакова структура, весь I/O через `aiofiles`.
 
 ---
 
 ## Адаптери бази даних
 
-### `SyncDBHandler`
-
 ```python
-from tiny_ca.db.sync_db_manager import SyncDBHandler
-
+# Sync
 db = SyncDBHandler(db_url="sqlite:///pki.db")
-# PostgreSQL: "postgresql+psycopg2://user:pass@host/dbname"
-```
+db = SyncDBHandler(db_url="postgresql+psycopg2://user:pass@host/pki")
 
-### `AsyncDBHandler`
-
-```python
-from tiny_ca.db.async_db_manager import AsyncDBHandler
-
+# Async
 db = AsyncDBHandler(db_url="sqlite+aiosqlite:///pki.db")
-await db._db.init_db()  # створення схеми при першому запуску
+db = AsyncDBHandler(db_url="postgresql+asyncpg://user:pass@host/pki")
+await db._db.init_db()
 ```
 
-Обидва реалізують `BaseDB`:
+### Контракт `BaseDB`
 
 | Метод | Опис |
 |---|---|
-| `get_by_serial(serial)` | Отримати запис за серійним номером X.509 |
-| `get_by_name(common_name)` | Отримати активний VALID запис за CN |
+| `get_by_serial(serial)` | Отримати запис за серійним номером |
+| `get_by_name(cn)` | Отримати активний VALID-запис за CN |
 | `register_cert_in_db(cert, uuid, key_type)` | Зберегти новий сертифікат |
-| `revoke_certificate(serial, reason)` | Позначити сертифікат як відкликаний |
-| `get_revoked_certificates()` | Повернути записи для генерації CRL |
+| `revoke_certificate(serial, reason)` | Позначити як відкликаний (RFC 5280) |
+| `get_revoked_certificates()` | Генератор рядків для побудови CRL |
+| `list_all(status, key_type, limit, offset)` | Пагінований список із фільтрами |
+| `get_expiring(within_days)` | VALID-сертифікати що спливають за N днів |
+| `delete_by_uuid(uuid)` | Жорстке видалення запису |
+| `update_status_expired()` | Масово позначити прострочені VALID-записи як EXPIRED |
 
 ---
 
-## Кодування серійного номера
+## Кодування серійних номерів
 
-`SerialWithEncoding` упаковує три поля в один 160-бітний цілочисельний номер:
+`SerialWithEncoding` пакує три поля в один 160-бітний integer (RFC 5280):
 
 ```
-[ 16-bit prefix ][ 80-bit name ][ 64-bit random ]
+┌──────────────────┬──────────────────────┬────────────────────┐
+│  16-бітний тип   │  80-бітне ім'я       │  64-бітний random  │
+│  (префікс)       │  (до 10 символів)    │  (фрагмент UUID)   │
+└──────────────────┴──────────────────────┴────────────────────┘
 ```
-
-- **prefix** — 2-байтний ASCII-код `CertType` (наприклад, `"SV"` для `SERVICE`).
-- **name** — до 10 ASCII-символів CN, доповнений нулями.
-- **random** — молодші 64 біти нового `uuid.uuid4()`.
 
 ```python
 from tiny_ca.utils.serial_generator import SerialWithEncoding
@@ -352,68 +408,139 @@ from tiny_ca.const import CertType
 
 serial = SerialWithEncoding.generate("nginx", CertType.SERVICE)
 cert_type, name = SerialWithEncoding.parse(serial)
-# cert_type == CertType.SERVICE
-# name == "nginx"
+# cert_type == CertType.SERVICE, name == "nginx"
 ```
 
 ---
 
 ## Довідник помилок
 
-| Виняток | Коли виникає |
-|---|---|
-| `DBNotInitedError` | Операція, що потребує БД, викликана без `db_handler` |
-| `NotUniqueCertOwner` | Конфлікт CN при `is_overwrite=False` |
-| `CertNotFound` | `rotate_certificate` викликано для неіснуючого серійного номера |
-| `ValidationCertError` | Невідповідність видавця, строк минув, або помилка перевірки підпису |
-| `InvalidRangeTimeCertificate` | Обчислений `not_after` вже в минулому |
-| `FileAlreadyExists` | Файл вже існує при `is_overwrite=False` |
-| `NotExistCertFile` | Шлях до CA PEM-файлу не існує |
-| `IsNotFile` | Шлях існує, але не є звичайним файлом |
-| `WrongType` | CA PEM-файл має непідтримуване розширення |
-| `ErrorLoadCert` | Помилка десеріалізації PEM |
+| Виняток | Коли виникає | Вирішення |
+|---|---|---|
+| `DBNotInitedError` | `db_handler is None` | Передайте `db_handler` в менеджер |
+| `NotUniqueCertOwner` | Конфлікт CN, `is_overwrite=False` | Використайте `is_overwrite=True` |
+| `CertNotFound` | `renew`/`rotate` для неіснуючого серійного | Перевірте серійний номер |
+| `ValidationCertError` | Невірний емітент, прострочений, невірний підпис | Перевірте сертифікат і CA |
+| `InvalidRangeTimeCertificate` | `not_after` вже в минулому | Виправте `valid_from` або `days_valid` |
+| `FileAlreadyExists` | Файл існує, `is_overwrite=False` | Використайте `is_overwrite=True` |
+| `NotExistCertFile` | Шлях до PEM-файлу CA не існує | Перевірте шлях до файлу |
+| `IsNotFile` | Шлях до PEM — директорія | Вкажіть файл, а не директорію |
+| `WrongType` | Непідтримуване розширення | Використайте `.pem`, `.key`, `.csr` |
+| `ErrorLoadCert` | Десеріалізація PEM не вдалась | Перевірте формат та цілісність файлу |
 
 ---
 
-## Запуск тестів
+## FAQ
 
-```bash
-pip install pytest pytest-cov aiosqlite aiofiles
-pytest tests/ --cov=tiny_ca --cov-report=term-missing
+**Чи можна використовувати існуючий CA?**
+Так — завантажте його через `CAFileLoader` або `AsyncCAFileLoader`.
+
+**В чому різниця між `renew` і `rotate`?**
+`renew` зберігає пару ключів і продовжує валідність. `rotate` генерує новий ключ і відкликає старий сертифікат.
+
+**Як запланувати регенерацію CRL?**
+```python
+scheduler.add_job(mgr.generate_crl, "cron", day_of_week="mon", hour=0)
+```
+
+**Чи можна реалізувати власне сховище (S3, Redis)?**
+Так — успадкуйте `BaseStorage` і реалізуйте `save_certificate` та `delete_certificate_folder`.
+
+**Як захистити приватний ключ CA паролем?**
+```python
+loader = CAFileLoader(ca_cert_path="ca.pem", ca_key_path="ca.key",
+                      ca_key_password=b"пароль")
 ```
 
 ---
 
-## Структура проекту
+## Міграція з інших CA
+
+### З OpenSSL
+
+```bash
+openssl x509 -in ca.crt -out ca.pem -outform PEM
+openssl rsa  -in ca.key -out ca-key.pem -outform PEM
+```
+```python
+loader = CAFileLoader(ca_cert_path="ca.pem", ca_key_path="ca-key.pem")
+mgr.factory = CertificateFactory(loader)
+```
+
+### З Easy-RSA / CFSSL
+
+Обидва інструменти виводять стандартні PEM-файли — виконайте кроки міграції з OpenSSL.
+
+---
+
+## Результати бенчмарків
+
+*Linux 6.17, Python 3.11.15, 32-ядерний CPU, NVMe SSD. 5 ітерацій кожна.*
+
+| Операція | Sync | Async |
+|---|---|---|
+| Створення CA (2048-біт) | 0.037 с | 0.067 с |
+| Створення CA (4096-біт) | 0.317 с | 0.411 с |
+| Видача листового сертифіката (2048-біт) | 0.055 с | 0.052 с |
+| Видача листового сертифіката (4096-біт) | 0.476 с | 0.712 с |
+| Генерація CRL | 0.001 с | 0.002 с |
+| Верифікація сертифіката | 0.0003 с | 0.0008 с |
+| Експорт PKCS#12 | 0.0005 с | 0.0006 с |
+
+Час генерації RSA-ключа домінує у часі видачі. Для навантаження >1 000 сертифікатів/год рекомендується PostgreSQL, async API та connection pooling.
+
+---
+
+## Структура проєкту
 
 ```
 tiny_ca/
+├── const.py                        # CertType, ALLOWED_CERT_EXTENSIONS
+├── exc.py                          # всі власні винятки
+├── settings.py                     # DEFAULT_LOGGER
 ├── ca_factory/
-│   ├── factory.py              # CertificateFactory — генерація криптографії
+│   ├── factory.py                  # CertificateFactory — вся крипто-генерація
 │   └── utils/
-│       ├── file_loader.py      # CAFileLoader + протокол ICALoader
-│       ├── afile_loader.py     # AsyncCAFileLoader
-│       ├── life_time.py        # CertLifetime — допоміжні функції вікна дійсності
-│       └── serial.py           # CertSerialParser
+│       ├── file_loader.py          # CAFileLoader + ICALoader Protocol
+│       ├── afile_loader.py         # AsyncCAFileLoader
+│       ├── life_time.py            # CertLifetime
+│       └── serial.py               # CertSerialParser
 ├── db/
-│   ├── base_db.py              # BaseDB ABC
-│   ├── models.py               # ORM-модель CertificateRecord
-│   ├── const.py                # RevokeStatus, CertificateStatus
-│   ├── sync_db_manager.py      # SyncDBHandler + DatabaseManager
-│   └── async_db_manager.py     # AsyncDBHandler + async DatabaseManager
+│   ├── base_db.py                  # BaseDB — 9 абстрактних методів
+│   ├── models.py                   # CertificateRecord ORM-модель
+│   ├── const.py                    # RevokeStatus, CertificateStatus
+│   ├── sync_db_manager.py          # SyncDBHandler
+│   └── async_db_manager.py         # AsyncDBHandler
 ├── managers/
-│   ├── sync_lifecycle_manager.py   # CertLifecycleManager
+│   ├── sync_lifecycle_manager.py   # CertLifecycleManager (20+ операцій)
 │   └── async_lifecycle_manager.py  # AsyncCertLifecycleManager
 ├── models/
-│   └── certtificate.py         # CAConfig, ClientConfig, CertificateInfo
+│   └── certificate.py              # CAConfig, ClientConfig, CertificateDetails
 ├── storage/
-│   ├── base_storage.py         # BaseStorage ABC
-│   ├── const.py                # Аліас типу CryptoObject
-│   ├── local_storage.py        # LocalStorage + _CertSerializer
-│   └── async_local_storage.py  # AsyncLocalStorage
-├── utils/
-│   └── serial_generator.py     # SerialGenerator, SerialWithEncoding, _PrefixRegistry
-├── const.py                    # Enum CertType
-├── exc.py                      # Всі власні винятки
-└── settings.py                 # DEFAULT_LOGGER
+│   ├── base_storage.py             # BaseStorage ABC
+│   ├── const.py                    # Псевдонім типу CryptoObject
+│   ├── local_storage.py            # LocalStorage
+│   └── async_local_storage.py      # AsyncLocalStorage
+└── utils/
+    └── serial_generator.py         # SerialWithEncoding
 ```
+
+---
+
+## Безпека
+
+**Не відкривайте публічні issues** для повідомлень про вразливості безпеки. Напишіть мейнтейнеру на email (див. GitHub-профіль). Підтвердження протягом 48 годин; публічний advisory — лише після виходу виправлення.
+
+---
+
+## Ліцензія
+
+[MIT](LICENSE) © 2025 Denis Shchutskyi
+
+| Залежність | Ліцензія |
+|---|---|
+| cryptography | BSD 3-Clause |
+| SQLAlchemy | MIT |
+| Pydantic | MIT |
+| aiosqlite | MIT |
+| aiofiles | Apache 2.0 |

@@ -38,4 +38,4 @@ __all__ = [
     "ClientConfig",
 ]
 
-__version__ = "0.1.1" # noqa
+__version__ = "0.2.0"  # noqa

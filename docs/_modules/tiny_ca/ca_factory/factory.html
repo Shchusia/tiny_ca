@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.ca_factory.factory - tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca.ca_factory.factory - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -160,7 +160,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -181,7 +181,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -193,13 +193,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/ca_factory.html">ca_factory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/managers.html">Lifecycle Managers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/storage.html">Storage Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/db.html">Database Layer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/models.html">Configuration Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">Exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -263,25 +263,34 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">ipaddress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography</span><span class="w"> </span><span class="kn">import</span> <span class="n">x509</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_backend</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">hashes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">hashes</span><span class="p">,</span> <span class="n">serialization</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.asymmetric</span><span class="w"> </span><span class="kn">import</span> <span class="n">padding</span><span class="p">,</span> <span class="n">rsa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">pkcs12</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.x509.oid</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExtendedKeyUsageOID</span><span class="p">,</span> <span class="n">NameOID</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Row</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="c1"># sqlalchemy.Row is only needed for type annotations in abuild_crl.</span>
+    <span class="c1"># Keeping it behind TYPE_CHECKING means factory.py has zero SQLAlchemy</span>
+    <span class="c1"># runtime dependency — callers that use only the sync path never pay</span>
+    <span class="c1"># the import cost and the module stays a pure-crypto unit.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Row</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateRecord</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateRecord</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..exc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationCertError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..models.certificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateDetails</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_LOGGER</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.serial_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialWithEncoding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertLifetime</span><span class="p">,</span> <span class="n">ICALoader</span>
 
 
 <div class="viewcode-block" id="CertificateFactory">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CertificateFactory</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cryptographic factory for X.509 certificates, CSRs, and CRLs.</span>
@@ -319,7 +328,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="CertificateFactory.__init__">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ca_loader</span><span class="p">:</span> <span class="n">ICALoader</span><span class="p">,</span>
@@ -338,7 +347,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="CertificateFactory.build_self_signed_ca">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_self_signed_ca</span><span class="p">(</span>
         <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Internal CA&quot;</span><span class="p">,</span>
@@ -455,7 +464,7 @@
 
 
 <div class="viewcode-block" id="CertificateFactory.issue_certificate">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">issue_certificate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -571,7 +580,7 @@
 
 
 <div class="viewcode-block" id="CertificateFactory.build_crl">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.build_crl">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.build_crl">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_crl</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">revoked_certs</span><span class="p">:</span> <span class="n">Generator</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
@@ -629,7 +638,7 @@
 
 
 <div class="viewcode-block" id="CertificateFactory.abuild_crl">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abuild_crl</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">revoked_certs</span><span class="p">:</span> <span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">Row</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="kc">None</span><span class="p">],</span>
@@ -663,7 +672,7 @@
 
 
 <div class="viewcode-block" id="CertificateFactory.validate_cert">
-<a class="viewcode-back" href="../../../api/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert">[docs]</a>
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_cert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify that *cert* was issued by this CA, is within its validity window,</span>
@@ -910,7 +919,668 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="CertificateFactory.inspect_certificate">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.inspect_certificate">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inspect_certificate</span><span class="p">(</span><span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateDetails</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract and return a structured, human-readable summary of *cert*.</span>
+
+<span class="sd">        Parses every commonly-used X.509 v3 extension and Subject attribute</span>
+<span class="sd">        into plain Python values wrapped in a :class:`CertificateDetails`</span>
+<span class="sd">        dataclass.  The method never performs cryptographic verification —</span>
+<span class="sd">        use :meth:`validate_cert` for that.  It is therefore safe to call on</span>
+<span class="sd">        certificates from *any* issuer.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The certificate to inspect.  May have been issued by this CA or</span>
+<span class="sd">            by a completely different PKI.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        CertificateDetails</span>
+<span class="sd">            A frozen dataclass with the following fields populated:</span>
+
+<span class="sd">            - ``serial_number`` — raw integer serial.</span>
+<span class="sd">            - ``common_name`` / ``organization`` / ``country`` — first</span>
+<span class="sd">              matching Subject attribute, or ``None`` when absent.</span>
+<span class="sd">            - ``issuer_cn`` — CN from the Issuer field, or ``None``.</span>
+<span class="sd">            - ``not_valid_before`` / ``not_valid_after`` — UTC datetimes.</span>
+<span class="sd">            - ``is_ca`` — ``True`` when ``BasicConstraints.ca`` is ``True``.</span>
+<span class="sd">            - ``san_dns`` / ``san_ip`` — lists from the SAN extension.</span>
+<span class="sd">            - ``key_usage`` — list of enabled ``KeyUsage`` bit names.</span>
+<span class="sd">            - ``extended_key_usage`` — list of EKU OID dotted strings.</span>
+<span class="sd">            - ``fingerprint_sha256`` — colon-separated uppercase hex.</span>
+<span class="sd">            - ``subject_key_identifier`` — hex string or ``None``.</span>
+<span class="sd">            - ``public_key_size`` — RSA key bits or ``None``.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; details = CertificateFactory.inspect_certificate(cert)</span>
+<span class="sd">        &gt;&gt;&gt; print(details.common_name)</span>
+<span class="sd">        &#39;nginx.internal&#39;</span>
+<span class="sd">        &gt;&gt;&gt; print(details.is_ca)</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; print(details.fingerprint_sha256[:8])</span>
+<span class="sd">        &#39;AB:CD:EF&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_attr</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">attrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">attrs</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># ── Subject / Issuer ──────────────────────────────────────────</span>
+        <span class="n">common_name</span> <span class="o">=</span> <span class="n">_attr</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="p">,</span> <span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)</span>
+        <span class="n">organization</span> <span class="o">=</span> <span class="n">_attr</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="p">,</span> <span class="n">NameOID</span><span class="o">.</span><span class="n">ORGANIZATION_NAME</span><span class="p">)</span>
+        <span class="n">country</span> <span class="o">=</span> <span class="n">_attr</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="p">,</span> <span class="n">NameOID</span><span class="o">.</span><span class="n">COUNTRY_NAME</span><span class="p">)</span>
+        <span class="n">issuer_cn</span> <span class="o">=</span> <span class="n">_attr</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">issuer</span><span class="p">,</span> <span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)</span>
+
+        <span class="c1"># ── BasicConstraints ─────────────────────────────────────────</span>
+        <span class="n">is_ca</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">bc</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">BasicConstraints</span><span class="p">)</span>
+            <span class="n">is_ca</span> <span class="o">=</span> <span class="n">bc</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ca</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># ── SubjectAlternativeName ────────────────────────────────────</span>
+        <span class="n">san_dns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">san_ip</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">san_ext</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">SubjectAlternativeName</span>
+            <span class="p">)</span>
+            <span class="n">san_dns</span> <span class="o">=</span> <span class="n">san_ext</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">get_values_for_type</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">DNSName</span><span class="p">)</span>
+            <span class="n">san_ip</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span> <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">san_ext</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">get_values_for_type</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">IPAddress</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># ── KeyUsage ─────────────────────────────────────────────────</span>
+        <span class="n">_KU_BITS</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;digital_signature&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;content_commitment&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;key_encipherment&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;data_encipherment&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;key_agreement&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;key_cert_sign&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;crl_sign&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">key_usage</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ku</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">KeyUsage</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">_KU_BITS</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ku</span><span class="p">,</span> <span class="n">bit</span><span class="p">):</span>
+                        <span class="n">key_usage</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">UnsupportedGeneralNameType</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]  # pragma: no cover</span>
+                    <span class="k">pass</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># ── ExtendedKeyUsage ─────────────────────────────────────────</span>
+        <span class="n">extended_key_usage</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">eku</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">ExtendedKeyUsage</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">extended_key_usage</span> <span class="o">=</span> <span class="p">[</span><span class="n">oid</span><span class="o">.</span><span class="n">dotted_string</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">eku</span><span class="p">]</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># ── Fingerprint ───────────────────────────────────────────────</span>
+        <span class="n">raw_fp</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">fingerprint</span><span class="p">(</span><span class="n">hashes</span><span class="o">.</span><span class="n">SHA256</span><span class="p">())</span>
+        <span class="n">fingerprint_sha256</span> <span class="o">=</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">02X</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">raw_fp</span><span class="p">)</span>
+
+        <span class="c1"># ── SubjectKeyIdentifier ──────────────────────────────────────</span>
+        <span class="n">subject_key_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ski</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">SubjectKeyIdentifier</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">subject_key_identifier</span> <span class="o">=</span> <span class="n">ski</span><span class="o">.</span><span class="n">digest</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># ── Public key size ───────────────────────────────────────────</span>
+        <span class="n">public_key_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">pub</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">public_key</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pub</span><span class="p">,</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPublicKey</span><span class="p">):</span>
+            <span class="n">public_key_size</span> <span class="o">=</span> <span class="n">pub</span><span class="o">.</span><span class="n">key_size</span>
+
+        <span class="k">return</span> <span class="n">CertificateDetails</span><span class="p">(</span>
+            <span class="n">serial_number</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="n">common_name</span><span class="o">=</span><span class="n">common_name</span><span class="p">,</span>
+            <span class="n">organization</span><span class="o">=</span><span class="n">organization</span><span class="p">,</span>
+            <span class="n">country</span><span class="o">=</span><span class="n">country</span><span class="p">,</span>
+            <span class="n">issuer_cn</span><span class="o">=</span><span class="n">issuer_cn</span><span class="p">,</span>
+            <span class="n">not_valid_before</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">not_valid_before_utc</span><span class="p">,</span>
+            <span class="n">not_valid_after</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">not_valid_after_utc</span><span class="p">,</span>
+            <span class="n">is_ca</span><span class="o">=</span><span class="n">is_ca</span><span class="p">,</span>
+            <span class="n">san_dns</span><span class="o">=</span><span class="n">san_dns</span><span class="p">,</span>
+            <span class="n">san_ip</span><span class="o">=</span><span class="n">san_ip</span><span class="p">,</span>
+            <span class="n">key_usage</span><span class="o">=</span><span class="n">key_usage</span><span class="p">,</span>
+            <span class="n">extended_key_usage</span><span class="o">=</span><span class="n">extended_key_usage</span><span class="p">,</span>
+            <span class="n">fingerprint_sha256</span><span class="o">=</span><span class="n">fingerprint_sha256</span><span class="p">,</span>
+            <span class="n">subject_key_identifier</span><span class="o">=</span><span class="n">subject_key_identifier</span><span class="p">,</span>
+            <span class="n">public_key_size</span><span class="o">=</span><span class="n">public_key_size</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Certificate co-signing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="CertificateFactory.export_pkcs12">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.export_pkcs12">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_pkcs12</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
+        <span class="n">private_key</span><span class="p">:</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPrivateKey</span><span class="p">,</span>
+        <span class="n">password</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pack *cert* and *private_key* into a PKCS#12 (PFX) bundle.</span>
+
+<span class="sd">        PKCS#12 is the standard container format accepted by Windows certificate</span>
+<span class="sd">        stores, macOS Keychain, Java keystores, and most browser import dialogs.</span>
+<span class="sd">        The CA certificate is automatically included as the issuer in the chain.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The leaf certificate to export.</span>
+<span class="sd">        private_key : rsa.RSAPrivateKey</span>
+<span class="sd">            The private key corresponding to *cert*&#39;s public key.</span>
+<span class="sd">        password : bytes | None</span>
+<span class="sd">            Optional password to encrypt the PKCS#12 file.  ``None`` produces</span>
+<span class="sd">            an unencrypted bundle (not recommended for production).</span>
+<span class="sd">        name : str | None</span>
+<span class="sd">            Friendly name (alias) embedded in the PKCS#12 bag.  Defaults to</span>
+<span class="sd">            the certificate&#39;s Common Name when ``None``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bytes</span>
+<span class="sd">            Raw DER-encoded PKCS#12 bytes.  Write to a ``.p12`` or ``.pfx``</span>
+<span class="sd">            file, or send as an HTTP response with</span>
+<span class="sd">            ``Content-Type: application/x-pkcs12``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cn_attrs</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">cn_attrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">cn_attrs</span> <span class="k">else</span> <span class="s2">&quot;certificate&quot;</span>
+
+        <span class="n">encryption_algorithm</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">serialization</span><span class="o">.</span><span class="n">BestAvailableEncryption</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">password</span>
+            <span class="k">else</span> <span class="n">serialization</span><span class="o">.</span><span class="n">NoEncryption</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="n">p12_bytes</span> <span class="o">=</span> <span class="n">pkcs12</span><span class="o">.</span><span class="n">serialize_key_and_certificates</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+            <span class="n">key</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span>
+            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">cas</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="p">],</span>
+            <span class="n">encryption_algorithm</span><span class="o">=</span><span class="n">encryption_algorithm</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;PKCS#12 exported: CN=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p12_bytes</span></div>
+
+
+<div class="viewcode-block" id="CertificateFactory.get_cert_chain">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.get_cert_chain">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_cert_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the full certificate chain from *cert* up to the CA root.</span>
+
+<span class="sd">        For a single-level PKI (leaf → root CA) this returns ``[cert, ca_cert]``.</span>
+<span class="sd">        The list is ordered leaf-first, root-last — the same order expected by</span>
+<span class="sd">        nginx ``ssl_certificate``, envoy ``tls_certificates``, and the</span>
+<span class="sd">        ``fullchain.pem`` convention used by Let&#39;s Encrypt.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The leaf (or intermediate) certificate to start the chain from.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list[x509.Certificate]</span>
+<span class="sd">            ``[cert, self._ca.ca_cert]`` — leaf first, CA root last.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Building cert chain for serial=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">cert</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CertificateFactory.renew_certificate">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.renew_certificate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">renew_certificate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">365</span><span class="p">,</span>
+        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Issue a renewal of *cert* with a fresh validity window but the same</span>
+<span class="sd">        Subject, public key, and extensions.</span>
+
+<span class="sd">        Unlike :meth:`rotate_certificate` (which generates a new key pair),</span>
+<span class="sd">        renewal re-uses the existing public key.  This is appropriate when the</span>
+<span class="sd">        private key has not been compromised and the owner simply needs to</span>
+<span class="sd">        extend the validity period.</span>
+
+<span class="sd">        The renewed certificate receives a new serial number generated by</span>
+<span class="sd">        :class:`SerialWithEncoding` so it is distinguishable from the original</span>
+<span class="sd">        in CRLs and audit logs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The certificate to renew.  Its Subject, public key, and all v3</span>
+<span class="sd">            extensions (except AKI, which is updated to point to the current CA)</span>
+<span class="sd">            are copied verbatim into the renewal.</span>
+<span class="sd">        days_valid : int</span>
+<span class="sd">            Number of days the renewed certificate should be valid.</span>
+<span class="sd">            Default: ``365``.</span>
+<span class="sd">        valid_from : datetime.datetime | None</span>
+<span class="sd">            Start of the new validity window.  ``None`` uses the current UTC</span>
+<span class="sd">            time.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        x509.Certificate</span>
+<span class="sd">            A freshly signed certificate with the same identity but a new</span>
+<span class="sd">            validity window and serial number.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        InvalidRangeTimeCertificate</span>
+<span class="sd">            If the computed expiry is already in the past.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">not_before</span><span class="p">,</span> <span class="n">not_after</span> <span class="o">=</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">valid_from</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">)</span>
+
+        <span class="n">cn_attrs</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)</span>
+        <span class="n">cn_raw</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">cn_attrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">cn_attrs</span> <span class="k">else</span> <span class="s2">&quot;renewed&quot;</span>
+        <span class="n">cn_safe</span> <span class="o">=</span> <span class="n">cn_raw</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">new_serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">cn_safe</span><span class="p">,</span>
+            <span class="n">serial_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">builder</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">x509</span><span class="o">.</span><span class="n">CertificateBuilder</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">subject_name</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">issuer_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">public_key</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">public_key</span><span class="p">())</span>
+            <span class="o">.</span><span class="n">serial_number</span><span class="p">(</span><span class="n">new_serial</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">not_valid_before</span><span class="p">(</span><span class="n">not_before</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">not_valid_after</span><span class="p">(</span><span class="n">not_after</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">_skip_oids</span> <span class="o">=</span> <span class="p">{</span><span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="o">.</span><span class="n">oid</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ext</span><span class="o">.</span><span class="n">oid</span> <span class="ow">in</span> <span class="n">_skip_oids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="n">ext</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">critical</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ca_ski</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">SubjectKeyIdentifier</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="o">.</span><span class="n">from_issuer_subject_key_identifier</span><span class="p">(</span><span class="n">ca_ski</span><span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="p">(</span>
+                    <span class="n">key_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">authority_cert_issuer</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">x509</span><span class="o">.</span><span class="n">DirectoryName</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+                    <span class="p">],</span>
+                    <span class="n">authority_cert_serial_number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">renewed</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_key</span><span class="p">,</span> <span class="n">hashes</span><span class="o">.</span><span class="n">SHA256</span><span class="p">(),</span> <span class="n">default_backend</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Certificate renewed: CN=</span><span class="si">%s</span><span class="s2">, old_serial=</span><span class="si">%s</span><span class="s2"> → new_serial=</span><span class="si">%s</span><span class="s2">, valid_until=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">cn_raw</span><span class="p">,</span>
+            <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="n">renewed</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="n">not_after</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">renewed</span></div>
+
+
+<div class="viewcode-block" id="CertificateFactory.issue_intermediate_ca">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.issue_intermediate_ca">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">issue_intermediate_ca</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1825</span><span class="p">,</span>
+        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">path_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">organization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">country</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPrivateKey</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Issue a subordinate (intermediate) CA certificate signed by this CA.</span>
+
+<span class="sd">        The resulting certificate has ``BasicConstraints(ca=True)`` and</span>
+<span class="sd">        ``KeyUsage(key_cert_sign=True, crl_sign=True)`` so it can in turn</span>
+<span class="sd">        sign leaf certificates.  The ``path_length`` constraint limits how</span>
+<span class="sd">        deep the sub-hierarchy can go.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        common_name : str</span>
+<span class="sd">            CN for the intermediate CA Subject.</span>
+<span class="sd">        key_size : int</span>
+<span class="sd">            RSA key size for the intermediate CA key.  Defaults to ``4096``</span>
+<span class="sd">            (recommended for long-lived CA keys).</span>
+<span class="sd">        days_valid : int</span>
+<span class="sd">            Validity in calendar days.  Defaults to ``1825`` (5 years).</span>
+<span class="sd">        valid_from : datetime.datetime | None</span>
+<span class="sd">            Start of the validity window.  ``None`` uses the current UTC time.</span>
+<span class="sd">        path_length : int | None</span>
+<span class="sd">            ``BasicConstraints.path_length`` value.  ``0`` means this</span>
+<span class="sd">            intermediate can only sign leaf certificates (cannot create further</span>
+<span class="sd">            sub-CAs).  ``None`` means unlimited sub-levels.</span>
+<span class="sd">        organization : str | None</span>
+<span class="sd">            O field for the intermediate CA Subject.  Falls back to the parent</span>
+<span class="sd">            CA&#39;s organization when ``None``.</span>
+<span class="sd">        country : str | None</span>
+<span class="sd">            C field.  Falls back to the parent CA&#39;s country when ``None``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[x509.Certificate, rsa.RSAPrivateKey]</span>
+<span class="sd">            ``(intermediate_ca_cert, intermediate_ca_key)``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        InvalidRangeTimeCertificate</span>
+<span class="sd">            If the computed expiry is already in the past.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Issuing intermediate CA: CN=</span><span class="si">%s</span><span class="s2">, path_length=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">common_name</span><span class="p">,</span> <span class="n">path_length</span>
+        <span class="p">)</span>
+
+        <span class="n">private_key</span> <span class="o">=</span> <span class="n">rsa</span><span class="o">.</span><span class="n">generate_private_key</span><span class="p">(</span>
+            <span class="n">public_exponent</span><span class="o">=</span><span class="mi">65537</span><span class="p">,</span>
+            <span class="n">key_size</span><span class="o">=</span><span class="n">key_size</span><span class="p">,</span>
+            <span class="n">backend</span><span class="o">=</span><span class="n">default_backend</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">base_info</span>
+        <span class="n">attrs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">NameAttribute</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: ignore[type-arg]</span>
+        <span class="n">resolved_country</span> <span class="o">=</span> <span class="n">country</span> <span class="ow">or</span> <span class="n">info</span><span class="o">.</span><span class="n">country</span>
+        <span class="n">resolved_org</span> <span class="o">=</span> <span class="n">organization</span> <span class="ow">or</span> <span class="n">info</span><span class="o">.</span><span class="n">organization</span>
+        <span class="k">if</span> <span class="n">resolved_country</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">NameAttribute</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COUNTRY_NAME</span><span class="p">,</span> <span class="n">resolved_country</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">resolved_org</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">NameAttribute</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">ORGANIZATION_NAME</span><span class="p">,</span> <span class="n">resolved_org</span><span class="p">))</span>
+        <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x509</span><span class="o">.</span><span class="n">NameAttribute</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">,</span> <span class="n">common_name</span><span class="p">))</span>
+        <span class="n">subject</span> <span class="o">=</span> <span class="n">x509</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+
+        <span class="n">not_before</span><span class="p">,</span> <span class="n">not_after</span> <span class="o">=</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">valid_from</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">)</span>
+        <span class="n">serial_number</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">common_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">),</span>
+            <span class="n">serial_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">builder</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">x509</span><span class="o">.</span><span class="n">CertificateBuilder</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">subject_name</span><span class="p">(</span><span class="n">subject</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">issuer_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">public_key</span><span class="p">(</span><span class="n">private_key</span><span class="o">.</span><span class="n">public_key</span><span class="p">())</span>
+            <span class="o">.</span><span class="n">serial_number</span><span class="p">(</span><span class="n">serial_number</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">not_valid_before</span><span class="p">(</span><span class="n">not_before</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">not_valid_after</span><span class="p">(</span><span class="n">not_after</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">BasicConstraints</span><span class="p">(</span><span class="n">ca</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">path_length</span><span class="o">=</span><span class="n">path_length</span><span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">KeyUsage</span><span class="p">(</span>
+                    <span class="n">digital_signature</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">key_encipherment</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">content_commitment</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">data_encipherment</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">key_agreement</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">key_cert_sign</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">crl_sign</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">encipher_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">decipher_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">SubjectKeyIdentifier</span><span class="o">.</span><span class="n">from_public_key</span><span class="p">(</span><span class="n">private_key</span><span class="o">.</span><span class="n">public_key</span><span class="p">()),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ca_ski</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">SubjectKeyIdentifier</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="o">.</span><span class="n">from_issuer_subject_key_identifier</span><span class="p">(</span><span class="n">ca_ski</span><span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">pass</span>
+
+        <span class="n">cert</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_key</span><span class="p">,</span> <span class="n">hashes</span><span class="o">.</span><span class="n">SHA256</span><span class="p">(),</span> <span class="n">default_backend</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Intermediate CA issued: CN=</span><span class="si">%s</span><span class="s2">, serial=</span><span class="si">%s</span><span class="s2">, valid_until=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">common_name</span><span class="p">,</span>
+            <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="n">not_after</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cert</span><span class="p">,</span> <span class="n">private_key</span></div>
+
+
+<div class="viewcode-block" id="CertificateFactory.verify_crl">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.verify_crl">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_crl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crl</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateRevocationList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify the signature and validity window of *crl*.</span>
+
+<span class="sd">        Checks that:</span>
+<span class="sd">        1. The CRL was signed by this CA&#39;s private key (issuer match + signature).</span>
+<span class="sd">        2. The CRL&#39;s ``nextUpdate`` timestamp has not yet passed — i.e. the CRL</span>
+<span class="sd">           is still within its declared validity window.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        crl : x509.CertificateRevocationList</span>
+<span class="sd">            The CRL object to verify.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">            Returns silently when all checks pass.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValidationCertError</span>
+<span class="sd">            If the CRL issuer does not match this CA, the signature is invalid,</span>
+<span class="sd">            or the CRL has expired (``nextUpdate`` is in the past).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">crl</span><span class="o">.</span><span class="n">issuer</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationCertError</span><span class="p">(</span><span class="s2">&quot;CRL issuer does not match CA subject.&quot;</span><span class="p">)</span>
+
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">UTC</span><span class="p">)</span>
+        <span class="n">next_update</span> <span class="o">=</span> <span class="n">crl</span><span class="o">.</span><span class="n">next_update_utc</span>
+        <span class="k">if</span> <span class="n">next_update</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">next_update</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationCertError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CRL has expired: nextUpdate=</span><span class="si">{</span><span class="n">next_update</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;now=</span><span class="si">{</span><span class="n">now</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">crl</span><span class="o">.</span><span class="n">is_signature_valid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">public_key</span><span class="p">())</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="n">ValidationCertError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CRL signature verification failed: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CRL verified successfully&quot;</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Certificate co-signing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="CertificateFactory.cosign_certificate">
+<a class="viewcode-back" href="../../../modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.cosign_certificate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cosign_certificate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-sign an existing certificate with this CA&#39;s key and certificate.</span>
+
+<span class="sd">        Creates a new ``x509.Certificate`` that preserves the original</span>
+<span class="sd">        Subject, public key, and all v3 extensions, but replaces:</span>
+
+<span class="sd">        - **Issuer** — set to this CA&#39;s Subject.</span>
+<span class="sd">        - **AuthorityKeyIdentifier** — updated to reflect this CA&#39;s SKI.</span>
+<span class="sd">        - **Serial number** — a fresh serial is generated so the co-signed</span>
+<span class="sd">          certificate is distinguishable from the original in CRLs and logs.</span>
+<span class="sd">        - **Validity window** — optionally overridden via *days_valid* and</span>
+<span class="sd">          *valid_from*; when both are ``None`` the original window is</span>
+<span class="sd">          preserved exactly.</span>
+
+<span class="sd">        The certificate is signed with SHA-256 using ``self._ca.ca_key``.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            This operation does **not** verify that the original certificate</span>
+<span class="sd">            was valid or trusted before co-signing.  Call</span>
+<span class="sd">            :meth:`validate_cert` first if pre-validation is required.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cert : x509.Certificate</span>
+<span class="sd">            The source certificate whose Subject, public key, and extensions</span>
+<span class="sd">            are copied into the co-signed output.</span>
+<span class="sd">        days_valid : int | None</span>
+<span class="sd">            Override the validity duration in calendar days, counted from</span>
+<span class="sd">            *valid_from* (or ``now`` when *valid_from* is also ``None``).</span>
+<span class="sd">            ``None`` preserves the original ``not_valid_before`` /</span>
+<span class="sd">            ``not_valid_after`` window unchanged.</span>
+<span class="sd">        valid_from : datetime.datetime | None</span>
+<span class="sd">            Override the start of the validity window.  Ignored when</span>
+<span class="sd">            *days_valid* is ``None``.  ``None`` + *days_valid* set →</span>
+<span class="sd">            uses the current UTC time as the start.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        x509.Certificate</span>
+<span class="sd">            A new certificate object identical in content to *cert* except</span>
+<span class="sd">            for the issuer, AKI, serial number, and (optionally) validity</span>
+<span class="sd">            window.  Must be persisted by the caller.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        InvalidRangeTimeCertificate</span>
+<span class="sd">            If *days_valid* is provided and the computed expiry is already</span>
+<span class="sd">            in the past.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; cosigned = factory.cosign_certificate(third_party_cert, days_valid=365)</span>
+<span class="sd">        &gt;&gt;&gt; assert cosigned.issuer == factory._ca.ca_cert.subject</span>
+<span class="sd">        &gt;&gt;&gt; assert cosigned.subject == third_party_cert.subject</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Co-signing certificate: CN=</span><span class="si">%s</span><span class="s2">, original_serial=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+                <span class="k">if</span> <span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)</span>
+                <span class="k">else</span> <span class="s2">&quot;&lt;no CN&gt;&quot;</span>
+            <span class="p">),</span>
+            <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ── Validity window ───────────────────────────────────────────</span>
+        <span class="k">if</span> <span class="n">days_valid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">not_before</span><span class="p">,</span> <span class="n">not_after</span> <span class="o">=</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">valid_from</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">not_before</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">not_valid_before_utc</span>
+            <span class="n">not_after</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">not_valid_after_utc</span>
+
+        <span class="c1"># ── Fresh serial number ───────────────────────────────────────</span>
+        <span class="n">cn_attrs</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)</span>
+        <span class="n">cn_raw</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">cn_attrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">cn_attrs</span> <span class="k">else</span> <span class="s2">&quot;cosigned&quot;</span>
+        <span class="n">cn_safe</span> <span class="o">=</span> <span class="n">cn_raw</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">new_serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">cn_safe</span><span class="p">,</span>
+            <span class="n">serial_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ── Rebuild extensions: copy originals, replace AKI ──────────</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">x509</span><span class="o">.</span><span class="n">CertificateBuilder</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">subject_name</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">issuer_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">public_key</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">public_key</span><span class="p">())</span>
+            <span class="o">.</span><span class="n">serial_number</span><span class="p">(</span><span class="n">new_serial</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">not_valid_before</span><span class="p">(</span><span class="n">not_before</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">not_valid_after</span><span class="p">(</span><span class="n">not_after</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Copy every extension from the original certificate, but replace</span>
+        <span class="c1"># AuthorityKeyIdentifier with one derived from *this* CA.</span>
+        <span class="n">_skip</span> <span class="o">=</span> <span class="p">{</span><span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="o">.</span><span class="n">oid</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">cert</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ext</span><span class="o">.</span><span class="n">oid</span> <span class="ow">in</span> <span class="n">_skip</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="n">ext</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">critical</span><span class="p">)</span>
+
+        <span class="c1"># Always add a fresh AKI pointing at this CA.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ca_ski</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get_extension_for_class</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">SubjectKeyIdentifier</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="o">.</span><span class="n">from_issuer_subject_key_identifier</span><span class="p">(</span><span class="n">ca_ski</span><span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">x509</span><span class="o">.</span><span class="n">ExtensionNotFound</span><span class="p">:</span>
+            <span class="c1"># CA has no SKI — fall back to issuer name + serial form.</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span>
+                <span class="n">x509</span><span class="o">.</span><span class="n">AuthorityKeyIdentifier</span><span class="p">(</span>
+                    <span class="n">key_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">authority_cert_issuer</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">x509</span><span class="o">.</span><span class="n">DirectoryName</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="p">)</span>
+                    <span class="p">],</span>
+                    <span class="n">authority_cert_serial_number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">cosigned</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_key</span><span class="p">,</span> <span class="n">hashes</span><span class="o">.</span><span class="n">SHA256</span><span class="p">(),</span> <span class="n">default_backend</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Certificate co-signed: new_serial=</span><span class="si">%s</span><span class="s2">, issuer=</span><span class="si">%s</span><span class="s2">, valid_until=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">cosigned</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">rfc4514_string</span><span class="p">(),</span>
+            <span class="n">not_after</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cosigned</span></div>
+</div>
 
 </pre></div>
         </article>
@@ -944,7 +1614,7 @@
 
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=01f34227"></script>
+</div><script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

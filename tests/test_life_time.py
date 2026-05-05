@@ -190,3 +190,36 @@ class TestValidFromAsync:
             CertLifetime.valid_from_async(cert)
         )
         assert result.tzinfo is UTC
+
+
+# ===========================================================================
+# CertLifetime.normalize_dt
+# ===========================================================================
+
+
+class TestNormalizeDt:
+    def test_naive_datetime_gets_utc_tzinfo(self):
+        """Naive datetime (no tzinfo) must be tagged as UTC."""
+        naive = datetime(2024, 6, 15, 12, 0, 0)
+        assert naive.tzinfo is None
+        result = CertLifetime.normalize_dt(naive)
+        assert result.tzinfo is UTC
+        assert result == naive.replace(tzinfo=UTC)
+
+    def test_aware_datetime_returned_unchanged(self):
+        """Already-aware datetime must pass through without modification."""
+        aware = datetime(2024, 6, 15, 12, 0, 0, tzinfo=UTC)
+        result = CertLifetime.normalize_dt(aware)
+        assert result is aware
+
+    def test_naive_past_datetime(self):
+        """Normalised past datetime must compare correctly to now."""
+        naive_past = datetime(2000, 1, 1, 0, 0, 0)
+        result = CertLifetime.normalize_dt(naive_past)
+        assert result < datetime.now(UTC)
+
+    def test_naive_future_datetime(self):
+        """Normalised future datetime must compare correctly to now."""
+        naive_future = datetime(2099, 1, 1, 0, 0, 0)
+        result = CertLifetime.normalize_dt(naive_future)
+        assert result > datetime.now(UTC)

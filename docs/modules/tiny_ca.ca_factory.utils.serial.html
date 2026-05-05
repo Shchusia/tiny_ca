@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.ca_factory.utils.serial module - tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca.ca_factory.utils.serial module - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -289,22 +289,32 @@ CRL builders, or other low-level X.509 operations.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.serial.CertSerialParser.raw_async">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">raw_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/serial.html#CertSerialParser.raw_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.serial.CertSerialParser.raw_async" title="Link to this definition">¶</a></dt>
-<dd><p>Async-версія <a class="reference internal" href="#tiny_ca.ca_factory.utils.serial.CertSerialParser.raw" title="tiny_ca.ca_factory.utils.serial.CertSerialParser.raw"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw()</span></code></a>.</p>
-<p>Виконує читання в пулі потоків, щоб не блокувати event loop.</p>
+<dd><p>Async version of <a class="reference internal" href="#tiny_ca.ca_factory.utils.serial.CertSerialParser.raw" title="tiny_ca.ca_factory.utils.serial.CertSerialParser.raw"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw()</span></code></a>.</p>
+<p>Contains reading in the thread pool so as not to block the event loop.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – Сертифікат, серійний номер якого потрібно прочитати.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>)</p></li>
+<li><p><strong>Certificate</strong></p></li>
+<li><p><strong>read.</strong> (<em>serial number must be</em>)</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Серійний номер як <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>int</em></p></li>
+<li><p>The serial number is <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>#&gt;&gt;&gt; serial = await CertSerialParser.raw_async(my_cert)
-#&gt;&gt;&gt; record = await db.get_by_serial(serial)</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="k">await</span> <span class="n">CertSerialParser</span><span class="o">.</span><span class="n">raw_async</span><span class="p">(</span><span class="n">my_cert</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">record</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py method">
@@ -348,23 +358,32 @@ the name bits of the serial (may be shorter due to zero-padding).</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.serial.CertSerialParser.typed_async">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">typed_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/serial.html#CertSerialParser.typed_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.serial.CertSerialParser.typed_async" title="Link to this definition">¶</a></dt>
-<dd><p>Async-версія <a class="reference internal" href="#tiny_ca.ca_factory.utils.serial.CertSerialParser.typed" title="tiny_ca.ca_factory.utils.serial.CertSerialParser.typed"><code class="xref py py-meth docutils literal notranslate"><span class="pre">typed()</span></code></a>.</p>
-<p>Декодує серійний номер сертифіката у вбудовані тип та ім’я,
-не блокуючи event loop.</p>
+<dd><p>Async version of <a class="reference internal" href="#tiny_ca.ca_factory.utils.serial.CertSerialParser.typed" title="tiny_ca.ca_factory.utils.serial.CertSerialParser.typed"><code class="xref py py-meth docutils literal notranslate"><span class="pre">typed()</span></code></a>.</p>
+<p>Decodes the serial number of the certificate for the type of name that is installed,
+non-blocking event loop.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – Сертифікат для декодування.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>)</p></li>
+<li><p><strong>decoding.</strong> (<em>Certificate for</em>)</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name_prefix)</span></code></p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType" title="tiny_ca.const.CertType"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertType</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>tuple[CertType | None, str]</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name_prefix)</span></code></p></li>
+</ul>
+</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>#&gt;&gt;&gt; cert_type, name = await CertSerialParser.typed_async(my_cert)
-&gt;&gt;&gt; assert name.startswith(“nginx”)</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cert_type</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="k">await</span> <span class="n">CertSerialParser</span><span class="o">.</span><span class="n">typed_async</span><span class="p">(</span><span class="n">my_cert</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;nginx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </dd></dl>
@@ -427,7 +446,7 @@ the name bits of the serial (may be shorter due to zero-padding).</p></li>
 
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=01f34227"></script>
+</div><script src="../_static/documentation_options.js?v=938c9ccc"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

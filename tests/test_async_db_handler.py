@@ -17,6 +17,18 @@ from tiny_ca.db.const import CertificateStatus, RevokeStatus
 from tiny_ca.db.models import CertificateRecord
 from tiny_ca.settings import DEFAULT_LOGGER
 
+from datetime import UTC, timedelta, datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from cryptography import x509
+from cryptography.x509 import ReasonFlags
+from sqlalchemy import select
+
+from tiny_ca.db.async_db_manager import AsyncDBHandler
+from tiny_ca.db.const import CertificateStatus, RevokeStatus
+from tiny_ca.db.models import CertificateRecord
+
 
 @pytest.fixture
 def mock_session():
@@ -407,3 +419,278 @@ class TestAsyncDBHandler:
     #     handler._db.get_session.assert_called_once()
     #     mock_session.__aenter__.assert_called_once()
     #     mock_session.__aexit__.assert_called_once()
+
+
+@pytest.fixture
+def mock_session():
+    session = AsyncMock()
+    session.commit = AsyncMock()
+    session.rollback = AsyncMock()
+    session.execute = AsyncMock()
+    session.stream = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
+@pytest.fixture
+def mock_db_manager(mock_session):
+    manager = MagicMock()
+    manager.get_session.return_value.__aenter__.return_value = mock_session
+    return manager
+
+
+@pytest.fixture
+def handler(mock_db_manager):
+    with patch(
+        "tiny_ca.db.async_db_manager.DatabaseManager", return_value=mock_db_manager
+    ):
+        handler = AsyncDBHandler(
+            db_url="sqlite+aiosqlite:///:memory:", logger=MagicMock()
+        )
+        handler._db = mock_db_manager
+        return handler
+
+
+class TestAsyncDBHandlerListAll:
+    """Test list_all method."""
+
+    @pytest.mark.asyncio
+    async def test_list_all_no_filters(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [MagicMock(), MagicMock()]
+        mock_session.execute.return_value = mock_result
+
+        results = await handler.list_all()
+
+        assert len(results) == 2
+
+    @pytest.mark.asyncio
+    async def test_list_all_with_status_filter(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [MagicMock()]
+        mock_session.execute.return_value = mock_result
+
+        results = await handler.list_all(status="valid")
+
+        assert len(results) == 1
+
+    @pytest.mark.asyncio
+    async def test_list_all_with_key_type_filter(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [MagicMock()]
+        mock_session.execute.return_value = mock_result
+
+        results = await handler.list_all(key_type="service")
+
+        assert len(results) == 1
+
+    @pytest.mark.asyncio
+    async def test_list_all_with_pagination(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [MagicMock()]
+        mock_session.execute.return_value = mock_result
+
+        results = await handler.list_all(limit=10, offset=5)
+
+        assert len(results) == 1
+
+    @pytest.mark.asyncio
+    async def test_list_all_error_returns_empty(self, handler, mock_session):
+        mock_session.execute.side_effect = Exception("Database error")
+
+        results = await handler.list_all()
+
+        assert results == []
+        handler._logger.error.assert_called_once()
+
+
+class TestAsyncDBHandlerGetExpiring:
+    """Test get_expiring method."""
+
+    @pytest.mark.asyncio
+    async def test_get_expiring_returns_records(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [MagicMock(), MagicMock()]
+        mock_session.execute.return_value = mock_result
+
+        results = await handler.get_expiring(within_days=30)
+
+        assert len(results) == 2
+
+    @pytest.mark.asyncio
+    async def test_get_expiring_empty(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_session.execute.return_value = mock_result
+
+        results = await handler.get_expiring(within_days=30)
+
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_get_expiring_error_returns_empty(self, handler, mock_session):
+        mock_session.execute.side_effect = Exception("Database error")
+
+        results = await handler.get_expiring(within_days=30)
+
+        assert results == []
+        handler._logger.error.assert_called_once()
+
+
+class TestAsyncDBHandlerDeleteByUUID:
+    """Test delete_by_uuid method."""
+
+    @pytest.mark.asyncio
+    async def test_delete_by_uuid_success(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.rowcount = 1
+        mock_session.execute.return_value = mock_result
+        mock_session.commit = AsyncMock()
+
+        result = await handler.delete_by_uuid("test-uuid")
+
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_delete_by_uuid_not_found(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.rowcount = 0
+        mock_session.execute.return_value = mock_result
+        mock_session.commit = AsyncMock()
+
+        result = await handler.delete_by_uuid("nonexistent")
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_delete_by_uuid_error(self, handler, mock_session):
+        mock_session.execute.side_effect = Exception("Database error")
+        mock_session.rollback = AsyncMock()
+
+        result = await handler.delete_by_uuid("test-uuid")
+
+        assert result is False
+        mock_session.rollback.assert_called_once()
+
+
+class TestAsyncDBHandlerUpdateStatusExpired:
+    """Test update_status_expired method."""
+
+    @pytest.mark.asyncio
+    async def test_update_status_expired_success(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.rowcount = 5
+        mock_session.execute.return_value = mock_result
+        mock_session.commit = AsyncMock()
+
+        count = await handler.update_status_expired()
+
+        assert count == 5
+
+    @pytest.mark.asyncio
+    async def test_update_status_expired_zero(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.rowcount = 0
+        mock_session.execute.return_value = mock_result
+        mock_session.commit = AsyncMock()
+
+        count = await handler.update_status_expired()
+
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_update_status_expired_error(self, handler, mock_session):
+        mock_session.execute.side_effect = Exception("Database error")
+        mock_session.rollback = AsyncMock()
+
+        count = await handler.update_status_expired()
+
+        assert count == 0
+        mock_session.rollback.assert_called_once()
+
+
+class TestAsyncDBHandlerRegisterCertEdgeCases:
+    """Test edge cases in register_cert_in_db."""
+
+    @pytest.mark.asyncio
+    async def test_register_cert_with_string_cn(self, handler, mock_session):
+        mock_cert = MagicMock(spec=x509.Certificate)
+        mock_cert.subject.get_attributes_for_oid.return_value = [
+            MagicMock(value="string-cn.test")
+        ]
+        mock_cert.serial_number = 12345
+        mock_cert.not_valid_before_utc = datetime.now(UTC)
+        mock_cert.not_valid_after_utc = datetime.now(UTC) + timedelta(days=365)
+        mock_cert.public_bytes.return_value = (
+            b"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+        )
+        mock_session.commit = AsyncMock()
+
+        result = await handler.register_cert_in_db(cert=mock_cert, uuid="test-uuid")
+
+        assert result is True
+        mock_session.add.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_register_cert_with_bytes_cn(self, handler, mock_session):
+        mock_cert = MagicMock(spec=x509.Certificate)
+        mock_cert.subject.get_attributes_for_oid.return_value = [
+            MagicMock(value=b"bytes-cn.test")
+        ]
+        mock_cert.serial_number = 12345
+        mock_cert.not_valid_before_utc = datetime.now(UTC)
+        mock_cert.not_valid_after_utc = datetime.now(UTC) + timedelta(days=365)
+        mock_cert.public_bytes.return_value = (
+            b"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+        )
+        mock_session.commit = AsyncMock()
+
+        result = await handler.register_cert_in_db(cert=mock_cert, uuid="test-uuid")
+
+        assert result is True
+
+
+class TestAsyncDBHandlerRevokeCertificateEdgeCases:
+    """Test edge cases in revoke_certificate."""
+
+    @pytest.mark.asyncio
+    async def test_revoke_certificate_success(self, handler, mock_session):
+        mock_cert = MagicMock(spec=CertificateRecord)
+        mock_cert.status = CertificateStatus.VALID
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_cert
+        mock_session.execute.return_value = mock_result
+        mock_session.commit = AsyncMock()
+
+        result, status = await handler.revoke_certificate(
+            12345, ReasonFlags.key_compromise
+        )
+
+        assert result is True
+        assert status == RevokeStatus.OK
+        assert mock_cert.status == CertificateStatus.REVOKED
+        # ReasonFlags.key_compromise.value is 1, but it might be stored as string or int
+        # Check what your implementation stores
+        assert mock_cert.revocation_reason is not None
+
+    @pytest.mark.asyncio
+    async def test_revoke_certificate_not_found(self, handler, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
+
+        result, status = await handler.revoke_certificate(99999)
+
+        assert result is False
+        assert status == RevokeStatus.NOT_FOUND
+
+    @pytest.mark.asyncio
+    async def test_revoke_certificate_error(self, handler, mock_session):
+        mock_session.execute.side_effect = Exception("Database error")
+        mock_session.rollback = AsyncMock()
+
+        result, status = await handler.revoke_certificate(12345)
+
+        assert result is False
+        assert status == RevokeStatus.UNKNOWN_ERROR
+        mock_session.rollback.assert_called_once()

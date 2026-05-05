@@ -32,8 +32,11 @@ import os
 from pathlib import Path
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import rsa
 
+from tiny_ca import CertificateRecord
 from tiny_ca.ca_factory import CertificateFactory
+from tiny_ca.ca_factory.utils.life_time import CertLifetime
 from tiny_ca.const import CertType
 from tiny_ca.db.base_db import BaseDB
 from tiny_ca.db.const import CertificateStatus
@@ -43,7 +46,7 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certtificate import CAConfig, ClientConfig
+from tiny_ca.models.certificate import CAConfig, CertificateDetails, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
 
@@ -396,7 +399,9 @@ class CertLifecycleManager:
     # CRL generation
     # ------------------------------------------------------------------
 
-    def generate_crl(self, days_valid: int = 1) -> x509.CertificateRevocationList:
+    def generate_crl(
+        self, cert_path: str | None = None, days_valid: int = 1
+    ) -> x509.CertificateRevocationList:
         """
         Build, sign, and persist a fresh Certificate Revocation List.
 
@@ -434,6 +439,7 @@ class CertLifecycleManager:
         )
         path, _ = self._storage.save_certificate(
             cert=crl,
+            cert_path=cert_path,
             file_name="crl",
             is_overwrite=True,
             is_add_uuid=False,
@@ -475,20 +481,16 @@ class CertLifecycleManager:
 
         cert = self._db.get_by_serial(serial=serial)
         if not cert:
-            self._logger.debug(
-                "Certificate serial=%d not found in DB → UNKNOWN", serial
-            )
             return CertificateStatus.UNKNOWN
-
         if cert.revocation_date:
-            self._logger.debug("Certificate serial=%d is revoked", serial)
             return CertificateStatus.REVOKED
-
         now = datetime.now(UTC)
-        if cert.not_valid_after < now:
-            self._logger.debug("Certificate serial=%d has expired", serial)
-            return CertificateStatus.EXPIRED
 
+        # Normalise: SQLAlchemy stores naive datetimes; make UTC-aware via CertLifetime.
+        not_valid_after = CertLifetime.normalize_dt(cert.not_valid_after)
+
+        if not_valid_after < now:
+            return CertificateStatus.EXPIRED
         return CertificateStatus.VALID
 
     def verify_certificate(self, cert: x509.Certificate) -> bool:
@@ -592,13 +594,174 @@ class CertLifecycleManager:
 
         self.revoke_certificate(serial=serial, reason=x509.ReasonFlags.superseded)
 
-        new_cert, new_key, new_csr = self.issue_certificate(config)
+        new_cert, new_key, new_csr = self.issue_certificate(config, is_overwrite=True)
         self._logger.info(
             "Rotation complete: old serial=%d replaced by serial=%s",
             serial,
             new_cert.serial_number,
         )
         return new_cert, new_key, new_csr
+
+    def inspect_certificate(self, cert: x509.Certificate) -> CertificateDetails:
+        self._require_factory()
+        return self._factory.inspect_certificate(cert)  # type: ignore[union-attr]
+
+    def cosign_certificate(
+        self,
+        cert: x509.Certificate,
+        days_valid: int | None = None,
+        valid_from: datetime | None = None,
+    ) -> x509.Certificate:
+        self._require_factory()
+        return self._factory.cosign_certificate(
+            cert=cert, days_valid=days_valid, valid_from=valid_from
+        )  # type: ignore[union-attr]
+
+    def export_pkcs12(
+        self,
+        cert: x509.Certificate,
+        private_key: rsa.RSAPrivateKey,
+        password: bytes | None = None,
+        name: str | None = None,
+    ) -> bytes:
+        """Pack cert + key into a PKCS#12 bundle. Delegates to CertificateFactory.export_pkcs12."""
+        self._require_factory()
+        return self._factory.export_pkcs12(
+            cert=cert, private_key=private_key, password=password, name=name
+        )  # type: ignore[union-attr]
+
+    def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
+        """Return [cert, ca_cert] chain. Delegates to CertificateFactory.get_cert_chain."""
+        self._require_factory()
+        return self._factory.get_cert_chain(cert)  # type: ignore[union-attr]
+
+    def renew_certificate(
+        self,
+        serial: int,
+        days_valid: int = 365,
+        valid_from: datetime | None = None,
+    ) -> x509.Certificate:
+        """
+        Renew the certificate identified by *serial*: same key, new validity window.
+
+        Fetches the certificate PEM from the database, deserialises it, and
+        delegates to ``CertificateFactory.renew_certificate``.
+
+        Raises
+        ------
+        DBNotInitedError
+            If no ``db_handler`` was provided.
+        CertNotFound
+            If no record exists for *serial*.
+        ValueError
+            If ``self.factory`` has not been initialised.
+        """
+        self._require_db()
+        self._require_factory()
+
+        record = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
+        if record is None:
+            raise CertNotFound()
+
+        cert_obj = x509.load_pem_x509_certificate(record.certificate_pem.encode())
+        renewed = self._factory.renew_certificate(
+            cert=cert_obj, days_valid=days_valid, valid_from=valid_from
+        )  # type: ignore[union-attr]
+        self._logger.info(
+            "Certificate renewed: serial=%d → new_serial=%s",
+            serial,
+            renewed.serial_number,
+        )
+        return renewed
+
+    def issue_intermediate_ca(
+        self,
+        common_name: str,
+        key_size: int = 4096,
+        days_valid: int = 1825,
+        valid_from: datetime = None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+        cert_path: str | None = None,
+        uuid_str: str | None = None,
+    ) -> tuple[x509.Certificate, object]:
+        """
+        Issue a subordinate CA cert signed by this CA and save artefacts.
+
+        Returns (cert, private_key). The cert is NOT registered in the DB
+        automatically — call ``register_cert_in_db`` if persistence is needed.
+        """
+        self._require_factory()
+        cert, key = self._factory.issue_intermediate_ca(  # type: ignore[union-attr]
+            common_name=common_name,
+            key_size=key_size,
+            days_valid=days_valid,
+            valid_from=valid_from,
+            path_length=path_length,
+            organization=organization,
+            country=country,
+        )
+        self._storage.save_certificate(
+            cert=cert,
+            file_name="intermediate_ca",
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=True,
+        )
+        self._storage.save_certificate(
+            cert=key,
+            file_name="intermediate_ca",
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=True,
+        )
+        return cert, key
+
+    def list_certificates(
+        self,
+        status: str | None = None,
+        key_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[CertificateRecord]:
+        """Return paginated certificate records. Requires db_handler."""
+        self._require_db()
+        return self._db.list_all(
+            status=status, key_type=key_type, limit=limit, offset=offset
+        )  # type: ignore[union-attr]
+
+    def get_expiring_soon(self, within_days: int = 30) -> list[CertificateRecord]:
+        """Return VALID certs expiring within *within_days* days. Requires db_handler."""
+        self._require_db()
+        return self._db.get_expiring(within_days=within_days)  # type: ignore[union-attr]
+
+    def delete_certificate(self, serial: int, cert_path: str | None = None) -> bool:
+        """
+        Hard-delete a certificate from the DB and its artefact folder from storage.
+
+        Returns True if the DB row was deleted (storage deletion is best-effort).
+        """
+        self._require_db()
+        record = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
+        if record is None:
+            return False
+        uuid = record.uuid
+        deleted = self._db.delete_by_uuid(uuid=uuid)  # type: ignore[union-attr]
+        if deleted and uuid:
+            # Delete the certificate folder from storage
+            self._storage.delete_certificate_folder(uuid_str=uuid, cert_path=cert_path)
+        return deleted
+
+    def refresh_expired_statuses(self) -> int:
+        """Bulk-mark expired certificates. Returns count of updated rows."""
+        self._require_db()
+        return self._db.update_status_expired()  # type: ignore[union-attr]
+
+    def verify_crl(self, crl: x509.CertificateRevocationList) -> None:
+        """Verify CRL signature and expiry. Delegates to CertificateFactory.verify_crl."""
+        self._require_factory()
+        self._factory.verify_crl(crl)  # type: ignore[union-attr]
 
     # ------------------------------------------------------------------
     # Private helpers

@@ -75,6 +75,18 @@ class _ConcreteDB(BaseDB):
         return
         yield  # make it a generator
 
+    def list_all(self, status=None, key_type=None, limit=100, offset=0):
+        return []
+
+    def get_expiring(self, within_days=30):
+        return []
+
+    def delete_by_uuid(self, uuid):
+        return False
+
+    def update_status_expired(self):
+        return 0
+
 
 class TestConcreteDBSubclass:
     def test_can_instantiate_concrete_subclass(self):
@@ -107,6 +119,24 @@ class TestConcreteDBSubclass:
         gen = db.get_revoked_certificates()
         assert list(gen) == []
 
+    def test_list_all_returns_empty_list(self):
+        db = _ConcreteDB()
+        assert db.list_all() == []
+        assert db.list_all(status="valid", key_type="service", limit=10, offset=5) == []
+
+    def test_get_expiring_returns_empty_list(self):
+        db = _ConcreteDB()
+        assert db.get_expiring() == []
+        assert db.get_expiring(within_days=7) == []
+
+    def test_delete_by_uuid_returns_false(self):
+        db = _ConcreteDB()
+        assert db.delete_by_uuid("some-uuid") is False
+
+    def test_update_status_expired_returns_zero(self):
+        db = _ConcreteDB()
+        assert db.update_status_expired() == 0
+
 
 # ===========================================================================
 # Partial implementation still raises TypeError
@@ -122,8 +152,12 @@ class TestPartialSubclassRaisesTypeError:
             def revoke_certificate(
                 self, serial_number, reason=x509.ReasonFlags.unspecified
             ): ...
+            def get_revoked_certificates(self): ...
+            def list_all(self, status=None, key_type=None, limit=100, offset=0): ...
+            def get_expiring(self, within_days=30): ...
+            def delete_by_uuid(self, uuid): ...
 
-            # get_revoked_certificates intentionally omitted
+            # update_status_expired intentionally omitted
 
         with pytest.raises(TypeError):
             _Partial()  # type: ignore

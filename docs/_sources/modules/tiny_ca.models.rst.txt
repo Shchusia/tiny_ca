@@ -12,4 +12,4 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   tiny_ca.models.certtificate
+   tiny_ca.models.certificate

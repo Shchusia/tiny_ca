@@ -24,7 +24,7 @@ from datetime import UTC, datetime, timedelta
 
 from tiny_ca import CAFileLoader, ICALoader
 from tiny_ca.exc import ErrorLoadCert, IsNotFile, NotExistCertFile, WrongType
-from tiny_ca.models.certtificate import CertificateInfo
+from tiny_ca.models.certificate import CertificateInfo
 
 
 # ---------------------------------------------------------------------------

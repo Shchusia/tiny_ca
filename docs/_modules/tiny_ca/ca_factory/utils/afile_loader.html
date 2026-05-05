@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.ca_factory.utils.afile_loader - tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca.ca_factory.utils.afile_loader - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -160,7 +160,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -181,7 +181,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="../../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -193,13 +193,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/ca_factory.html">ca_factory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/managers.html">Lifecycle Managers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/storage.html">Storage Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/db.html">Database Layer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/models.html">Configuration Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api/exceptions.html">Exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -249,14 +249,14 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">ALLOWED_CERT_EXTENSIONS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.exc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ErrorLoadCert</span><span class="p">,</span> <span class="n">IsNotFile</span><span class="p">,</span> <span class="n">NotExistCertFile</span><span class="p">,</span> <span class="n">WrongType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.models.certtificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.models.certificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateInfo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_LOGGER</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.file_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAFileLoader</span>
 
 
 <div class="viewcode-block" id="AsyncCAFileLoader">
-<a class="viewcode-back" href="../../../../api/ca_factory.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader">[docs]</a>
+<a class="viewcode-back" href="../../../../modules/tiny_ca.ca_factory.utils.afile_loader.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AsyncCAFileLoader</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Loads a CA certificate and private key from PEM files on the local filesystem.</span>
@@ -290,7 +290,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="AsyncCAFileLoader.__init__">
-<a class="viewcode-back" href="../../../../api/ca_factory.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../../modules/tiny_ca.ca_factory.utils.afile_loader.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ca_cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
@@ -316,7 +316,7 @@
 
 
 <div class="viewcode-block" id="AsyncCAFileLoader.create">
-<a class="viewcode-back" href="../../../../api/ca_factory.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader.create">[docs]</a>
+<a class="viewcode-back" href="../../../../modules/tiny_ca.ca_factory.utils.afile_loader.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader.create">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -354,7 +354,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_info</span>
 
 <div class="viewcode-block" id="AsyncCAFileLoader.load">
-<a class="viewcode-back" href="../../../../api/ca_factory.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader.load">[docs]</a>
+<a class="viewcode-back" href="../../../../modules/tiny_ca.ca_factory.utils.afile_loader.html#tiny_ca.ca_factory.utils.afile_loader.AsyncCAFileLoader.load">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="n">ca_cert</span><span class="p">,</span> <span class="n">ca_key</span> <span class="o">=</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span>
@@ -434,7 +434,7 @@
 
     </aside>
   </div>
-</div><script src="../../../../_static/documentation_options.js?v=01f34227"></script>
+</div><script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
     <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>

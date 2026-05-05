@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.ca_factory.utils.serial - tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca.ca_factory.utils.serial - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -160,7 +160,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="../../../../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -181,7 +181,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../../index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="../../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -347,24 +347,24 @@
     <span class="nd">@staticmethod</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">raw_async</span><span class="p">(</span><span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Async-версія :meth:`raw`.</span>
+<span class="sd">        Async version of :meth:`raw`.</span>
 
-<span class="sd">        Виконує читання в пулі потоків, щоб не блокувати event loop.</span>
+<span class="sd">        Contains reading in the thread pool so as not to block the event loop.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        cert : x509.Certificate</span>
-<span class="sd">            Сертифікат, серійний номер якого потрібно прочитати.</span>
+<span class="sd">        Certificate, serial number must be read.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
-<span class="sd">            Серійний номер як ``int``.</span>
+<span class="sd">        The serial number is ``int``.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        #&gt;&gt;&gt; serial = await CertSerialParser.raw_async(my_cert)</span>
-<span class="sd">        #&gt;&gt;&gt; record = await db.get_by_serial(serial)</span>
+<span class="sd">        &gt;&gt;&gt; serial = await CertSerialParser.raw_async(my_cert)</span>
+<span class="sd">        &gt;&gt;&gt; record = await db.get_by_serial(serial)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">CertSerialParser</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span></div>
@@ -375,24 +375,24 @@
     <span class="nd">@staticmethod</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">typed_async</span><span class="p">(</span><span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Async-версія :meth:`typed`.</span>
+<span class="sd">        Async version of :meth:`typed`.</span>
 
-<span class="sd">        Декодує серійний номер сертифіката у вбудовані тип та ім&#39;я,</span>
-<span class="sd">        не блокуючи event loop.</span>
+<span class="sd">        Decodes the serial number of the certificate for the type of name that is installed,</span>
+<span class="sd">        non-blocking event loop.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        cert : x509.Certificate</span>
-<span class="sd">            Сертифікат для декодування.</span>
+<span class="sd">        Certificate for decoding.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        tuple[CertType | None, str]</span>
-<span class="sd">            ``(cert_type, name_prefix)``</span>
+<span class="sd">        ``(cert_type, name_prefix)``</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        #&gt;&gt;&gt; cert_type, name = await CertSerialParser.typed_async(my_cert)</span>
+<span class="sd">        &gt;&gt;&gt; cert_type, name = await CertSerialParser.typed_async(my_cert)</span>
 <span class="sd">        &gt;&gt;&gt; assert name.startswith(&quot;nginx&quot;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
@@ -431,7 +431,7 @@
 
     </aside>
   </div>
-</div><script src="../../../../_static/documentation_options.js?v=01f34227"></script>
+</div><script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
     <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../../_static/scripts/furo.js?v=46bd48cc"></script>

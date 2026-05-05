@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="ca_factory" href="modules/ca_factory.html"><link rel="prev" title="Installation" href="installation.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>Quick Start - tiny_ca 0.1.0 documentation</title>
+        <title>Quick Start - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -172,7 +172,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -182,7 +182,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -234,24 +234,198 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
           <section id="quick-start">
 <h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h1>
-<p>See the README for full examples.  A minimal workflow:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.managers.sync_lifecycle_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertLifecycleManager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.models.certtificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAConfig</span>
+<section id="bootstrap-a-root-ca">
+<h2>1. Bootstrap a Root CA<a class="headerlink" href="#bootstrap-a-root-ca" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.managers.sync_lifecycle_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertLifecycleManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.storage.local_storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalStorage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.db.sync_db_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SyncDBHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.models.certificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAConfig</span>
 
-<span class="n">mgr</span> <span class="o">=</span> <span class="n">CertLifecycleManager</span><span class="p">()</span>
+<span class="n">storage</span> <span class="o">=</span> <span class="n">LocalStorage</span><span class="p">(</span><span class="n">base_folder</span><span class="o">=</span><span class="s2">&quot;./pki&quot;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">SyncDBHandler</span><span class="p">(</span><span class="n">db_url</span><span class="o">=</span><span class="s2">&quot;sqlite:///pki.db&quot;</span><span class="p">)</span>
+<span class="n">mgr</span> <span class="o">=</span> <span class="n">CertLifecycleManager</span><span class="p">(</span><span class="n">storage</span><span class="o">=</span><span class="n">storage</span><span class="p">,</span> <span class="n">db_handler</span><span class="o">=</span><span class="n">db</span><span class="p">)</span>
+
 <span class="n">cert_path</span><span class="p">,</span> <span class="n">key_path</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">create_self_signed_ca</span><span class="p">(</span>
-    <span class="n">CAConfig</span><span class="p">(</span><span class="n">common_name</span><span class="o">=</span><span class="s2">&quot;My CA&quot;</span><span class="p">,</span> <span class="n">organization</span><span class="o">=</span><span class="s2">&quot;ACME&quot;</span><span class="p">,</span> <span class="n">country</span><span class="o">=</span><span class="s2">&quot;UA&quot;</span><span class="p">,</span>
-             <span class="n">key_size</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="mi">3650</span><span class="p">)</span>
+    <span class="n">CAConfig</span><span class="p">(</span>
+        <span class="n">common_name</span><span class="o">=</span><span class="s2">&quot;My Root CA&quot;</span><span class="p">,</span>
+        <span class="n">organization</span><span class="o">=</span><span class="s2">&quot;ACME Corp&quot;</span><span class="p">,</span>
+        <span class="n">country</span><span class="o">=</span><span class="s2">&quot;UA&quot;</span><span class="p">,</span>
+        <span class="n">key_size</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="o">=</span><span class="mi">3650</span><span class="p">,</span>
+    <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This step creates a <strong>self-signed Root CA</strong>.
+Store the private key securely — compromise of this key breaks trust for all issued certificates.</p>
+</div>
+<p>Attach the factory:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.ca_factory.utils.file_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAFileLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.ca_factory.factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateFactory</span>
+
+<span class="n">loader</span> <span class="o">=</span> <span class="n">CAFileLoader</span><span class="p">(</span><span class="n">ca_cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span> <span class="n">ca_key_path</span><span class="o">=</span><span class="n">key_path</span><span class="p">)</span>
+<span class="n">mgr</span><span class="o">.</span><span class="n">factory</span> <span class="o">=</span> <span class="n">CertificateFactory</span><span class="p">(</span><span class="n">loader</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Without attaching a <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code>, the manager <strong>cannot issue certificates</strong>.</p>
+</div>
+</section>
+<section id="issue-a-leaf-certificate">
+<h2>2. Issue a Leaf Certificate<a class="headerlink" href="#issue-a-leaf-certificate" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.models.certificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertType</span>
+
+<span class="n">cert</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">csr</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">issue_certificate</span><span class="p">(</span>
+    <span class="n">ClientConfig</span><span class="p">(</span>
+        <span class="n">common_name</span><span class="o">=</span><span class="s2">&quot;nginx.internal&quot;</span><span class="p">,</span>
+        <span class="n">serial_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">,</span>
+        <span class="n">key_size</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="o">=</span><span class="mi">365</span><span class="p">,</span>
+        <span class="n">is_server_cert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">san_dns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;nginx.internal&quot;</span><span class="p">,</span> <span class="s2">&quot;www.nginx.internal&quot;</span><span class="p">],</span>
+        <span class="n">san_ip</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;192.168.1.10&quot;</span><span class="p">],</span>
+    <span class="p">),</span>
+    <span class="n">cert_path</span><span class="o">=</span><span class="s2">&quot;services&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Subject Alternative Names (SAN) are required by modern TLS clients.
+The Common Name (CN) alone is <strong>not sufficient</strong> for hostname validation.</p>
+</div>
+</section>
+<section id="renew-a-certificate-same-key">
+<h2>3. Renew a Certificate (same key)<a class="headerlink" href="#renew-a-certificate-same-key" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">renewed_cert</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">renew_certificate</span><span class="p">(</span>
+    <span class="n">serial</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+    <span class="n">days_valid</span><span class="o">=</span><span class="mi">365</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Renewal keeps the <strong>same key pair</strong>.
+Use this only if the private key is still secure.</p>
+</div>
+</section>
+<section id="rotate-a-certificate-new-key">
+<h2>4. Rotate a Certificate (new key)<a class="headerlink" href="#rotate-a-certificate-new-key" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">rotate_certificate</span><span class="p">(</span>
+    <span class="n">serial</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">ClientConfig</span><span class="p">(</span>
+        <span class="n">common_name</span><span class="o">=</span><span class="s2">&quot;nginx.internal&quot;</span><span class="p">,</span>
+        <span class="n">serial_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="o">=</span><span class="mi">365</span><span class="p">,</span>
+        <span class="n">is_server_cert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Rotation <strong>revokes the old certificate</strong> automatically.
+Ensure all clients switch to the new certificate before enforcing revocation.</p>
+</div>
+</section>
+<section id="revoke-a-certificate">
+<h2>5. Revoke a Certificate<a class="headerlink" href="#revoke-a-certificate" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cryptography</span><span class="w"> </span><span class="kn">import</span> <span class="n">x509</span>
+
+<span class="n">ok</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span>
+    <span class="n">serial</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">key_compromise</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Revocation is irreversible.
+Once revoked, a certificate should never be trusted again.</p>
+</div>
+</section>
+<section id="generate-and-verify-a-crl">
+<h2>6. Generate and Verify a CRL<a class="headerlink" href="#generate-and-verify-a-crl" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">crl</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">generate_crl</span><span class="p">(</span><span class="n">days_valid</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">mgr</span><span class="o">.</span><span class="n">verify_crl</span><span class="p">(</span><span class="n">crl</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>CRLs must be <strong>periodically regenerated and distributed</strong> to relying parties.</p>
+</div>
+</section>
+<section id="export-pkcs-12">
+<h2>7. Export PKCS#12<a class="headerlink" href="#export-pkcs-12" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p12_bytes</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">export_pkcs12</span><span class="p">(</span>
+    <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+    <span class="n">private_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+    <span class="n">password</span><span class="o">=</span><span class="sa">b</span><span class="s2">&quot;strong-passphrase&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;nginx.internal&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Always protect PKCS#12 bundles with a strong password.
+They contain the <strong>private key in exportable form</strong>.</p>
+</div>
+</section>
+<section id="inspect-a-certificate">
+<h2>8. Inspect a Certificate<a class="headerlink" href="#inspect-a-certificate" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">details</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">inspect_certificate</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">common_name</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">san_dns</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">san_ip</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">fingerprint_sha256</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">public_key_size</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">is_ca</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method returns a <strong>safe, serialisable snapshot</strong> — no raw cryptography objects.</p>
+</div>
+</section>
+<section id="list-and-monitor-certificates">
+<h2>9. List and Monitor Certificates<a class="headerlink" href="#list-and-monitor-certificates" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">records</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">list_certificates</span><span class="p">(</span>
+    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;valid&quot;</span><span class="p">,</span>
+    <span class="n">key_type</span><span class="o">=</span><span class="s2">&quot;service&quot;</span><span class="p">,</span>
+    <span class="n">limit</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">expiring</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">get_expiring_soon</span><span class="p">(</span><span class="n">within_days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">expiring</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">not_valid_after</span><span class="p">)</span>
+
+<span class="n">updated</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">refresh_expired_statuses</span><span class="p">()</span>
+<span class="n">deleted</span> <span class="o">=</span> <span class="n">mgr</span><span class="o">.</span><span class="n">delete_certificate</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Regular monitoring helps prevent <strong>unexpected certificate expiration outages</strong>.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Hard deletion removes both the database record and stored files.
+This action cannot be undone.</p>
+</div>
+</section>
 </section>
 
         </article>
@@ -297,13 +471,40 @@
 
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
 
+
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Quick Start</a><ul>
+<li><a class="reference internal" href="#bootstrap-a-root-ca">1. Bootstrap a Root CA</a></li>
+<li><a class="reference internal" href="#issue-a-leaf-certificate">2. Issue a Leaf Certificate</a></li>
+<li><a class="reference internal" href="#renew-a-certificate-same-key">3. Renew a Certificate (same key)</a></li>
+<li><a class="reference internal" href="#rotate-a-certificate-new-key">4. Rotate a Certificate (new key)</a></li>
+<li><a class="reference internal" href="#revoke-a-certificate">5. Revoke a Certificate</a></li>
+<li><a class="reference internal" href="#generate-and-verify-a-crl">6. Generate and Verify a CRL</a></li>
+<li><a class="reference internal" href="#export-pkcs-12">7. Export PKCS#12</a></li>
+<li><a class="reference internal" href="#inspect-a-certificate">8. Inspect a Certificate</a></li>
+<li><a class="reference internal" href="#list-and-monitor-certificates">9. List and Monitor Certificates</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
 
 
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=01f34227"></script>
+</div><script src="_static/documentation_options.js?v=938c9ccc"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

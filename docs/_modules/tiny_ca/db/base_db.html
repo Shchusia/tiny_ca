@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.db.base_db - tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca.db.base_db - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -160,7 +160,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -181,7 +181,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -422,6 +422,109 @@
 <span class="sd">            Records (or row-like objects) for each revoked certificate that</span>
 <span class="sd">            falls within the implementation&#39;s CRL inclusion window.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseDB.list_all">
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.list_all">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_all</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">key_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a paginated list of certificate records with optional filters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        status : str | None</span>
+<span class="sd">            Filter by lifecycle state (``&quot;valid&quot;``, ``&quot;revoked&quot;``,</span>
+<span class="sd">            ``&quot;expired&quot;``).  ``None`` returns all statuses.</span>
+<span class="sd">        key_type : str | None</span>
+<span class="sd">            Filter by certificate category (``&quot;ca&quot;``, ``&quot;service&quot;``,</span>
+<span class="sd">            ``&quot;device&quot;``, etc.).  ``None`` returns all types.</span>
+<span class="sd">        limit : int</span>
+<span class="sd">            Maximum number of records to return.  Default: ``100``.</span>
+<span class="sd">        offset : int</span>
+<span class="sd">            Number of records to skip (for pagination).  Default: ``0``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list[CertificateRecord]</span>
+<span class="sd">            Matching records ordered by ``id`` descending (newest first).</span>
+<span class="sd">            Returns an empty list on error.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseDB.get_expiring">
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.get_expiring">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_expiring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">within_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return VALID certificates that expire within *within_days* calendar days.</span>
+
+<span class="sd">        Only records with ``status == VALID`` are considered — already-revoked</span>
+<span class="sd">        or expired records are excluded.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        within_days : int</span>
+<span class="sd">            Look-ahead window in calendar days.  Default: ``30``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list[CertificateRecord]</span>
+<span class="sd">            Records ordered by ``not_valid_after`` ascending (soonest first).</span>
+<span class="sd">            Returns an empty list on error.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseDB.delete_by_uuid">
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.delete_by_uuid">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_by_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Permanently delete the certificate record identified by *uuid*.</span>
+
+<span class="sd">        This is a hard delete — the row is removed from the database.  The</span>
+<span class="sd">        caller is responsible for also removing the corresponding filesystem</span>
+<span class="sd">        artefacts via ``BaseStorage.delete_certificate_folder``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        uuid : str</span>
+<span class="sd">            The storage folder UUID that uniquely identifies the certificate.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            ``True`` if a row was found and deleted; ``False`` if no matching</span>
+<span class="sd">            record existed or if a database error occurred.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseDB.update_status_expired">
+<a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.update_status_expired">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_status_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bulk-update all VALID certificates whose ``not_valid_after`` has passed.</span>
+
+<span class="sd">        Sets ``status = &quot;expired&quot;`` for every record where:</span>
+<span class="sd">        - ``status == &quot;valid&quot;``</span>
+<span class="sd">        - ``not_valid_after &lt; now (UTC)``</span>
+
+<span class="sd">        This method is intended to be called periodically by a background task</span>
+<span class="sd">        (e.g. a cron job or an APScheduler job) so that status queries reflect</span>
+<span class="sd">        reality without per-request date comparisons.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            Number of rows updated.  Returns ``0`` on error (after logging).</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 </div>
 
 </pre></div>
@@ -456,7 +559,7 @@
 
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=01f34227"></script>
+</div><script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

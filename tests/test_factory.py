@@ -761,7 +761,6 @@ class TestExportPKCS12:
         assert isinstance(p12_bytes, bytes)
         assert len(p12_bytes) > 0
 
-    # Временно пропустите тест с паролем
     @pytest.mark.skip(reason="PKCS#12 password encryption needs API fix")
     def test_export_pkcs12_with_password(self, factory):
         cert, key, _ = factory.issue_certificate("pkcs12-pwd.test")

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="#"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -245,7 +245,18 @@
 <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#bootstrap-a-root-ca">1. Bootstrap a Root CA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#issue-a-leaf-certificate">2. Issue a Leaf Certificate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#renew-a-certificate-same-key">3. Renew a Certificate (same key)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#rotate-a-certificate-new-key">4. Rotate a Certificate (new key)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#revoke-a-certificate">5. Revoke a Certificate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#generate-and-verify-a-crl">6. Generate and Verify a CRL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#export-pkcs-12">7. Export PKCS#12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#inspect-a-certificate">8. Inspect a Certificate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#list-and-monitor-certificates">9. List and Monitor Certificates</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="modules/ca_factory.html">ca_factory</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/ca_factory.html#module-tiny_ca.ca_factory.factory">CertificateFactory</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/ca_factory.html#module-tiny_ca.ca_factory.utils.file_loader">CAFileLoader</a></li>
@@ -278,17 +289,7 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/utils.html#module-tiny_ca.utils.serial_generator">Serial Number Generator</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="modules/models.html">Configuration Models</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#class-hierarchy">Class hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.BaseCertificateConfig"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.BaseCertificateDataModel"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.CAConfig"><code class="docutils literal notranslate"><span class="pre">CAConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.CertificateDetails"><code class="docutils literal notranslate"><span class="pre">CertificateDetails</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.CertificateInfo"><code class="docutils literal notranslate"><span class="pre">CertificateInfo</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.ClientConfig"><code class="docutils literal notranslate"><span class="pre">ClientConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/models.html#tiny_ca.models.certtificate.CommonNameCertificate"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/models.html">Configuration Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/exceptions.html">Exceptions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/exceptions.html#tiny_ca.exc.CertNotFound"><code class="docutils literal notranslate"><span class="pre">CertNotFound</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/exceptions.html#tiny_ca.exc.CryptoException"><code class="docutils literal notranslate"><span class="pre">CryptoException</span></code></a></li>
@@ -346,7 +347,7 @@
 
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=01f34227"></script>
+</div><script src="_static/documentation_options.js?v=938c9ccc"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.models package - tiny_ca 0.1.0 documentation</title>
+        <title>tiny_ca.models package - tiny_ca 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">tiny_ca 0.1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -182,7 +182,7 @@
 
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
 
-  <span class="sidebar-brand-text">tiny_ca 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
 
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -243,8 +243,8 @@
 <span id="tiny-ca-models-package"></span><h1>tiny_ca.models package<a class="headerlink" href="#module-tiny_ca.models" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.models.CAConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.models.</span></span><span class="sig-name descname"><span class="pre">CAConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/models/certtificate.html#CAConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.models.CAConfig" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig" title="tiny_ca.models.certtificate.BaseCertificateConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a>, <a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel" title="tiny_ca.models.certtificate.BaseCertificateDataModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a></p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.models.</span></span><span class="sig-name descname"><span class="pre">CAConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/models/certificate.html#CAConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.models.CAConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig" title="tiny_ca.models.certificate.BaseCertificateConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a>, <a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel" title="tiny_ca.models.certificate.BaseCertificateDataModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a></p>
 <p>Complete configuration for bootstrapping a self-signed root CA certificate.</p>
 <p>Combines all Subject identity fields (<code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code>) with
 the cryptographic validity parameters (<code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code>).
@@ -293,8 +293,8 @@ validated to form a valid model.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.models.ClientConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.models.</span></span><span class="sig-name descname"><span class="pre">ClientConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/models/certtificate.html#ClientConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.models.ClientConfig" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CommonNameCertificate" title="tiny_ca.models.certtificate.CommonNameCertificate"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a>, <a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig" title="tiny_ca.models.certtificate.BaseCertificateConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a></p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.models.</span></span><span class="sig-name descname"><span class="pre">ClientConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/models/certificate.html#ClientConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.models.ClientConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate" title="tiny_ca.models.certificate.CommonNameCertificate"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a>, <a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig" title="tiny_ca.models.certificate.BaseCertificateConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a></p>
 <p>Configuration for issuing an end-entity (client or server) certificate.</p>
 <p>Passed to <code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_certificate</span></code> via
 <code class="docutils literal notranslate"><span class="pre">config.model_dump(exclude={&quot;name&quot;})</span></code>.</p>
@@ -365,7 +365,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">2048</span
 <dt class="sig sig-object py" id="tiny_ca.models.ClientConfig.serial_type">
 <span class="sig-name descname"><span class="pre">serial_type</span></span><a class="headerlink" href="#tiny_ca.models.ClientConfig.serial_type" title="Link to this definition">¶</a></dt>
 <dd><p>Certificate category used when encoding the serial number.
-Default: <code class="docutils literal notranslate"><span class="pre">CertType.CA</span></code>.</p>
+Default: <code class="docutils literal notranslate"><span class="pre">CertType.SERVICE</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a></p>
@@ -499,90 +499,90 @@ validated to form a valid model.</p>
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tiny_ca.models.certtificate.html">tiny_ca.models.certtificate module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#class-hierarchy">Class hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig.key_size"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig.days_valid"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.days_valid</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig.valid_from"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id0"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.days_valid</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id1"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateConfig.model_config"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id2"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tiny_ca.models.certificate.html">tiny_ca.models.certificate module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#class-hierarchy">Class hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.key_size"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.days_valid"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.days_valid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.valid_from"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id0"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.days_valid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id1"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.model_config"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id2"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel.common_name"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.common_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel.organization"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel.country"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id3"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.BaseCertificateDataModel.model_config"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id4"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.common_name"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.common_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.organization"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.country"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id3"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.model_config"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id4"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CAConfig"><code class="docutils literal notranslate"><span class="pre">CAConfig</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CAConfig.model_config"><code class="docutils literal notranslate"><span class="pre">CAConfig.model_config</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CAConfig"><code class="docutils literal notranslate"><span class="pre">CAConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CAConfig.model_config"><code class="docutils literal notranslate"><span class="pre">CAConfig.model_config</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails"><code class="docutils literal notranslate"><span class="pre">CertificateDetails</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.common_name"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.common_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.country"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.extended_key_usage"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.extended_key_usage</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.fingerprint_sha256"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.fingerprint_sha256</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.is_ca"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.is_ca</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.issuer_cn"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.issuer_cn</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.key_usage"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.key_usage</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.model_config"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.not_valid_after"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.not_valid_after</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.not_valid_before"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.not_valid_before</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.organization"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.organization</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.public_key_size"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.public_key_size</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.san_dns"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.san_dns</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.san_ip"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.san_ip</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.serial_number"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.serial_number</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateDetails.subject_key_identifier"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.subject_key_identifier</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails"><code class="docutils literal notranslate"><span class="pre">CertificateDetails</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.common_name"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.common_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.country"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.extended_key_usage"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.extended_key_usage</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.fingerprint_sha256"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.fingerprint_sha256</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.is_ca"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.is_ca</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.issuer_cn"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.issuer_cn</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.key_usage"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.key_usage</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.model_config"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.not_valid_after"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.not_valid_after</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.not_valid_before"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.not_valid_before</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.organization"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.organization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.public_key_size"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.public_key_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.san_dns"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.san_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.san_ip"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.san_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.serial_number"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.serial_number</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.subject_key_identifier"><code class="docutils literal notranslate"><span class="pre">CertificateDetails.subject_key_identifier</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo"><code class="docutils literal notranslate"><span class="pre">CertificateInfo</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo.organization"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organization</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo.organizational_unit"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organizational_unit</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo.country"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo.state"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo.locality"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id5"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id6"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CertificateInfo.model_config"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id7"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organization</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id8"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organizational_unit</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id9"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo"><code class="docutils literal notranslate"><span class="pre">CertificateInfo</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.organization"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.organizational_unit"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organizational_unit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.country"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.state"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.locality"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id5"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id6"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.model_config"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id7"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id8"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organizational_unit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id9"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig"><code class="docutils literal notranslate"><span class="pre">ClientConfig</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.common_name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.common_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.key_size"><code class="docutils literal notranslate"><span class="pre">ClientConfig.key_size</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.days_valid"><code class="docutils literal notranslate"><span class="pre">ClientConfig.days_valid</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.valid_from"><code class="docutils literal notranslate"><span class="pre">ClientConfig.valid_from</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.serial_type"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.is_client_cert"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.is_server_cert"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.san_dns"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.san_ip"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.email"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id10"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id11"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id12"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.ClientConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ClientConfig.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id13"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id14"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id15"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id16"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig"><code class="docutils literal notranslate"><span class="pre">ClientConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.common_name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.common_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.key_size"><code class="docutils literal notranslate"><span class="pre">ClientConfig.key_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.days_valid"><code class="docutils literal notranslate"><span class="pre">ClientConfig.days_valid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.valid_from"><code class="docutils literal notranslate"><span class="pre">ClientConfig.valid_from</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.serial_type"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.is_client_cert"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.is_server_cert"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.san_dns"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.san_ip"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.email"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id10"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id11"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id12"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ClientConfig.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id13"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id14"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id15"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id16"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CommonNameCertificate"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CommonNameCertificate.common_name"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#id17"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certtificate.html#tiny_ca.models.certtificate.CommonNameCertificate.model_config"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.model_config</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate.common_name"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id17"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate.model_config"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.model_config</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -668,7 +668,7 @@ validated to form a valid model.</p>
 
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=01f34227"></script>
+</div><script src="../_static/documentation_options.js?v=938c9ccc"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

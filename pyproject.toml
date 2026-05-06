@@ -38,10 +38,10 @@ dependencies = [
 ]
 
 [project.urls]
-Repository    = "https://github.com/Shchusia/tiny_ca"
+Repository = "https://github.com/Shchusia/tiny_ca"
 Documentation = "https://shchusia.github.io/tiny_ca/"
 "Bug Tracker" = "https://github.com/Shchusia/tiny_ca/issues"
-Changelog     = "https://github.com/Shchusia/tiny_ca/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/Shchusia/tiny_ca/blob/master/CHANGELOG.md"
 
 # ──────────────────────────────────────────────
 # Optional extras
@@ -192,7 +192,7 @@ ignore_missing_imports = true
 exclude_dirs = ["venv", "tests"]
 exclude = ["/tests", "/venv"]
 nosec = ["B608"]
-skips = ["*/*_test.py", "*/test_*.py", "*/grafana.py","B608"]
+skips = ["*/*_test.py", "*/test_*.py", "*/grafana.py", "B608"]
 
 
 # ──────────────────────────────────────────────

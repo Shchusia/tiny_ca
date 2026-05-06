@@ -1,12 +1,50 @@
 # tiny_ca
 
-[![Python](https://img.shields.io/badge/Python-%3E%3D3.11-informational)](https://github.com/Shchusia/tiny_ca)
+[![Python](https://img.shields.io/pypi/pyversions/tiny-ca)](https://pypi.org/project/tiny-ca/)
 [![PyPI](https://img.shields.io/pypi/v/tiny-ca?color=blue)](https://pypi.org/project/tiny-ca/)
+
 [![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
 [![Docs](https://img.shields.io/badge/Docs-passing-green)](https://shchusia.github.io/tiny_ca/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
 A lightweight, **100%-tested** Python library for managing the full lifecycle of X.509 certificates — from bootstrapping a self-signed root CA to issuing, revoking, rotating, renewing, and co-signing end-entity certificates, generating and verifying CRLs, exporting PKCS#12 bundles, and issuing intermediate CAs — all backed by pluggable sync/async storage and database adapters.
+
+---
+
+## REST API
+
+> Looking for a ready-to-use HTTP server built on **tiny-ca**?
+> Check out **[tiny-ca-gateway](https://github.com/Shchusia/tiny-ca-gateway)** — a framework-agnostic REST API adapter that exposes all 22 certificate lifecycle endpoints with no extra code.
+
+| | |
+|---|---|
+| **GitHub** | [github.com/Shchusia/tiny-ca-gateway](https://github.com/Shchusia/tiny-ca-gateway) |
+| **Integration guide** | [tiny-ca-gateway/blob/master/README.md](https://github.com/Shchusia/tiny-ca-gateway/blob/master/README.md) |
+| **Supported frameworks** | FastAPI · Flask · aiohttp · Django Ninja |
+
+```bash
+pip install "tiny-ca-gateway[fastapi]"   # FastAPI + Uvicorn
+pip install "tiny-ca-gateway[flask]"     # Flask + Gunicorn
+pip install "tiny-ca-gateway[aiohttp]"   # aiohttp
+pip install "tiny-ca-gateway[django]"    # Django + Django Ninja
+```
+
+```python
+# FastAPI — all 22 CA endpoints in 5 lines
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from tiny_ca_gateway.fastapi.lifespan.manager import FastAPILifespanManager
+from tiny_ca_gateway.fastapi.api.v1.ca_routes import router
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await FastAPILifespanManager(common_name="My CA").on_startup()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(router, prefix="/api/v1")
+# → Swagger UI at http://localhost:8000/docs
+```
 
 ---
 

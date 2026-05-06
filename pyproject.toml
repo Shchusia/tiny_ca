@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 # ──────────────────────────────────────────────
 [project]
 name = "tiny-ca"
-version = "0.2.0"
+version = "0.2.1"
 description = "A lightweight, 100%-tested Python library for managing the full lifecycle of X.509 certificates — issuance, revocation, rotation, CRL generation, PKCS#12 export, and more."
 readme = "README.md"
 requires-python = ">=3.11"

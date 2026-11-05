@@ -97,19 +97,19 @@ class TestValidTo:
 
 
 class TestValidFrom:
-    def test_returns_not_valid_after_utc(self):
-        """
-        Note: the implementation has a known bug — valid_from reads
-        not_valid_after_utc instead of not_valid_before_utc.
-        The tests document the actual behaviour so that coverage is 100 %
-        and any intentional fix immediately breaks this test (acts as a
-        regression guard).
-        """
+    def test_returns_not_valid_before_utc(self):
+        """valid_from must read notBefore (it used to read notAfter)."""
         now = datetime.now(UTC)
         cert = _make_cert(now - timedelta(days=1), now + timedelta(days=364))
         result = CertLifetime.valid_from(cert)
-        # Documents current (buggy) behaviour: reads not_valid_after_utc
-        assert result == cert.not_valid_after_utc.replace(tzinfo=UTC)
+        assert result == cert.not_valid_before_utc.replace(tzinfo=UTC)
+        assert result != CertLifetime.valid_to(cert)
+
+    def test_compute_accepts_naive_valid_from_as_utc(self):
+        naive = datetime.now(UTC).replace(tzinfo=None)
+        start, end = CertLifetime.compute(naive, 10)
+        assert start.tzinfo is UTC
+        assert end - start == timedelta(days=10)
 
     def test_tzinfo_is_utc(self):
         now = datetime.now(UTC)
@@ -125,17 +125,13 @@ class TestValidFrom:
 
 class TestComputeAsync:
     def test_async_matches_sync(self):
-        start, end = asyncio.get_event_loop().run_until_complete(
-            CertLifetime.compute_async(days_valid=180)
-        )
+        start, end = asyncio.run(CertLifetime.compute_async(days_valid=180))
         assert (end - start).days == 180
 
-    def test_async_raises_on_past_end(self):
+    async def test_async_raises_on_past_end(self):
         past_start = datetime(2000, 1, 1, tzinfo=UTC)
         with pytest.raises(InvalidRangeTimeCertificate):
-            asyncio.get_event_loop().run_until_complete(
-                CertLifetime.compute_async(valid_from=past_start, days_valid=1)
-            )
+            await CertLifetime.compute_async(valid_from=past_start, days_valid=1)
 
     # def test_async_with_explicit_valid_from(self):
     #     base = datetime(2025, 6, 1, tzinfo=UTC)
@@ -155,17 +151,13 @@ class TestValidToAsync:
     def test_async_returns_same_as_sync(self):
         now = datetime.now(UTC)
         cert = _make_cert(now, now + timedelta(days=365))
-        result = asyncio.get_event_loop().run_until_complete(
-            CertLifetime.valid_to_async(cert)
-        )
+        result = asyncio.run(CertLifetime.valid_to_async(cert))
         assert result == CertLifetime.valid_to(cert)
 
     def test_async_tzinfo_is_utc(self):
         now = datetime.now(UTC)
         cert = _make_cert(now, now + timedelta(days=1))
-        result = asyncio.get_event_loop().run_until_complete(
-            CertLifetime.valid_to_async(cert)
-        )
+        result = asyncio.run(CertLifetime.valid_to_async(cert))
         assert result.tzinfo is UTC
 
 
@@ -178,17 +170,13 @@ class TestValidFromAsync:
     def test_async_returns_same_as_sync(self):
         now = datetime.now(UTC)
         cert = _make_cert(now, now + timedelta(days=365))
-        result = asyncio.get_event_loop().run_until_complete(
-            CertLifetime.valid_from_async(cert)
-        )
+        result = asyncio.run(CertLifetime.valid_from_async(cert))
         assert result == CertLifetime.valid_from(cert)
 
     def test_async_tzinfo_is_utc(self):
         now = datetime.now(UTC)
         cert = _make_cert(now, now + timedelta(days=1))
-        result = asyncio.get_event_loop().run_until_complete(
-            CertLifetime.valid_from_async(cert)
-        )
+        result = asyncio.run(CertLifetime.valid_from_async(cert))
         assert result.tzinfo is UTC
 
 

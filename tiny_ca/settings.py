@@ -1,9 +1,15 @@
-from logging import DEBUG, Formatter, StreamHandler, getLogger
+"""
+Package-wide settings.
+
+``DEFAULT_LOGGER`` follows the standard-library guidance for libraries: it
+gets a ``NullHandler`` and no explicit level, so the application decides
+where (and whether) ``tiny_ca`` log records go.  Configure it as usual, e.g.
+``logging.getLogger("TinyCA").setLevel(logging.DEBUG)``.
+"""
+
+from logging import NullHandler, getLogger
 
 DEFAULT_LOGGER = getLogger("TinyCA")
-DEFAULT_LOGGER.setLevel(DEBUG)
-_console_handler = StreamHandler()
-_formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-_console_handler.setFormatter(_formatter)
-DEFAULT_LOGGER.addHandler(_console_handler)
+DEFAULT_LOGGER.addHandler(NullHandler())
+
 DT_STR_FORMAT = "%Y-%m-%d %H:%M:%S"

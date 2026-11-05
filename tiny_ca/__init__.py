@@ -5,7 +5,7 @@ from .ca_factory import (
     ICALoader,
     SerialWithEncoding,
 )
-from .const import CertType
+from .const import CertType, KeyAlgorithm
 from .db import (
     BaseDB,
     CertificateRecord,
@@ -20,7 +20,6 @@ from .storage import BaseStorage, LocalStorage
 
 __all__ = [
     "CertificateFactory",
-    "CertificateFactory",
     "CertLifetime",
     "ICALoader",
     "CAFileLoader",
@@ -34,8 +33,9 @@ __all__ = [
     "BaseStorage",
     "LocalStorage",
     "CertType",
+    "KeyAlgorithm",
     "CAConfig",
     "ClientConfig",
 ]
 
-__version__ = "0.2.1"  # noqa
+__version__ = "0.3.0"  # noqa

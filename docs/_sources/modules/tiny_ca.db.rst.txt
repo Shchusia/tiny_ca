@@ -17,3 +17,4 @@ Submodules
    tiny_ca.db.const
    tiny_ca.db.models
    tiny_ca.db.sync_db_manager
+   tiny_ca.db.utils

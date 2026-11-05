@@ -23,12 +23,12 @@ from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.bindings._rust import ObjectIdentifier
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 from tiny_ca.const import ALLOWED_CERT_EXTENSIONS
 from tiny_ca.exc import ErrorLoadCert, IsNotFile, NotExistCertFile, WrongType
 from tiny_ca.models.certificate import CertificateInfo
 from tiny_ca.settings import DEFAULT_LOGGER
+from tiny_ca.utils.keys import PRIVATE_KEY_TYPES, PrivateKey
 
 # ---------------------------------------------------------------------------
 # ISP / DIP: minimal interface for CA-material providers
@@ -49,7 +49,7 @@ class ICALoader(Protocol):
     ----------
     ca_cert : x509.Certificate
         The loaded CA certificate object.
-    ca_key : rsa.RSAPrivateKey
+    ca_key : PrivateKey
         The loaded CA private key used for signing.
     base_info : CertificateInfo
         Structured metadata extracted from the CA certificate's Subject field
@@ -60,7 +60,7 @@ class ICALoader(Protocol):
     def ca_cert(self) -> x509.Certificate: ...
 
     @property
-    def ca_key(self) -> rsa.RSAPrivateKey: ...
+    def ca_key(self) -> PrivateKey: ...
 
     @property
     def base_info(self) -> CertificateInfo: ...
@@ -120,13 +120,13 @@ class CAFileLoader:
         return self._ca_cert
 
     @property
-    def ca_key(self) -> rsa.RSAPrivateKey:
+    def ca_key(self) -> PrivateKey:
         """
         The deserialized CA private key.
 
         Returns
         -------
-        rsa.RSAPrivateKey
+        PrivateKey
             The private key loaded from *ca_key_path*.
         """
         return self._ca_key
@@ -219,7 +219,7 @@ class CAFileLoader:
     def _load(
         self,
         password: bytes | None,
-    ) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    ) -> tuple[x509.Certificate, PrivateKey]:
         """
         Read and deserialise the CA certificate and private key from PEM files.
 
@@ -234,7 +234,7 @@ class CAFileLoader:
 
         Returns
         -------
-        tuple[x509.Certificate, rsa.RSAPrivateKey]
+        tuple[x509.Certificate, PrivateKey]
             ``(ca_cert, ca_key)`` ready for use.
 
         Raises
@@ -258,9 +258,12 @@ class CAFileLoader:
             raise ErrorLoadCert(path_to_file=self._ca_key_path, exc=str(exc)) from exc
 
         self._logger.info("CA loaded successfully from %s", self._ca_cert_path)
-        if not isinstance(ca_key, rsa.RSAPrivateKey):
-            raise TypeError("CA key must be RSA")
-        return ca_cert, ca_key
+        if not isinstance(ca_key, PRIVATE_KEY_TYPES):
+            raise TypeError(
+                "CA key must be RSA, ECDSA (P-256 / P-384) or Ed25519, "
+                f"got {type(ca_key).__name__}"
+            )
+        return ca_cert, cast(PrivateKey, ca_key)
 
     def _extract_info(self) -> CertificateInfo:
         """

@@ -233,7 +233,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.db.base_db</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 
 <span class="sd">Abstract base class that defines the contract for all certificate registry</span>
 <span class="sd">database adapters.</span>
@@ -254,7 +254,7 @@
 <span class="sd">      actually need are declared here.</span>
 <span class="sd">DIP : High-level modules (e.g. ``CertLifecycleManager``) depend on ``BaseDB``,</span>
 <span class="sd">      never on ``SyncDBHandler`` or any other concrete implementation.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -271,7 +271,7 @@
 <div class="viewcode-block" id="BaseDB">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseDB</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Abstract contract for the certificate registry database adapter.</span>
 
 <span class="sd">    Defines all operations that the application layer requires from the</span>
@@ -282,13 +282,13 @@
 <span class="sd">    (not raise an exception) when the requested record simply does not exist.</span>
 <span class="sd">    Exceptions are reserved for genuine infrastructure failures (connection</span>
 <span class="sd">    errors, constraint violations, etc.).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="BaseDB.get_by_serial">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.get_by_serial">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_by_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Retrieve a certificate record by its X.509 serial number.</span>
 
 <span class="sd">        Parameters</span>
@@ -303,14 +303,14 @@
 <span class="sd">        CertificateRecord | None</span>
 <span class="sd">            The matching record regardless of its current status (VALID,</span>
 <span class="sd">            REVOKED, EXPIRED), or ``None`` if no record exists for *serial*.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.get_by_name">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.get_by_name">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Retrieve the currently active certificate record for a given Common Name.</span>
 
 <span class="sd">        Implementations must filter to only ``VALID`` records so that the</span>
@@ -327,7 +327,7 @@
 <span class="sd">        CertificateRecord | None</span>
 <span class="sd">            The active VALID record for *common_name*, or ``None`` if no such</span>
 <span class="sd">            record exists.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.register_cert_in_db">
@@ -339,7 +339,7 @@
         <span class="n">uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">key_type</span><span class="p">:</span> <span class="n">CertType</span> <span class="o">=</span> <span class="n">CertType</span><span class="o">.</span><span class="n">DEVICE</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Persist a newly issued certificate to the registry.</span>
 
 <span class="sd">        Creates a new record with ``status=VALID`` populated from the</span>
@@ -363,7 +363,7 @@
 <span class="sd">            ``True`` if the record was persisted successfully;</span>
 <span class="sd">            ``False`` if the operation failed (the implementation must log</span>
 <span class="sd">            the reason and roll back any partial changes).</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.revoke_certificate">
@@ -374,7 +374,7 @@
         <span class="n">serial_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">reason</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span> <span class="o">=</span> <span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">unspecified</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Mark a certificate as revoked and record the reason and timestamp.</span>
 
 <span class="sd">        Implementations must:</span>
@@ -398,14 +398,14 @@
 <span class="sd">            defined (typically a ``RevokeStatus`` enum member).</span>
 <span class="sd">            ``True`` indicates the revocation was committed; ``False`` means it</span>
 <span class="sd">            was not (reason encoded in *status_value*).</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.get_revoked_certificates">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.get_revoked_certificates">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_revoked_certificates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Yield certificate records that should appear in the current CRL.</span>
 
 <span class="sd">        Implementations define their own freshness window (e.g. only records</span>
@@ -420,8 +420,8 @@
 <span class="sd">        ------</span>
 <span class="sd">        CertificateRecord</span>
 <span class="sd">            Records (or row-like objects) for each revoked certificate that</span>
-<span class="sd">            falls within the implementation&#39;s CRL inclusion window.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">            falls within the implementation's CRL inclusion window.</span>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.list_all">
@@ -434,17 +434,17 @@
         <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return a paginated list of certificate records with optional filters.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        status : str | None</span>
-<span class="sd">            Filter by lifecycle state (``&quot;valid&quot;``, ``&quot;revoked&quot;``,</span>
-<span class="sd">            ``&quot;expired&quot;``).  ``None`` returns all statuses.</span>
+<span class="sd">            Filter by lifecycle state (``"valid"``, ``"revoked"``,</span>
+<span class="sd">            ``"expired"``).  ``None`` returns all statuses.</span>
 <span class="sd">        key_type : str | None</span>
-<span class="sd">            Filter by certificate category (``&quot;ca&quot;``, ``&quot;service&quot;``,</span>
-<span class="sd">            ``&quot;device&quot;``, etc.).  ``None`` returns all types.</span>
+<span class="sd">            Filter by certificate category (``"ca"``, ``"service"``,</span>
+<span class="sd">            ``"device"``, etc.).  ``None`` returns all types.</span>
 <span class="sd">        limit : int</span>
 <span class="sd">            Maximum number of records to return.  Default: ``100``.</span>
 <span class="sd">        offset : int</span>
@@ -455,14 +455,14 @@
 <span class="sd">        list[CertificateRecord]</span>
 <span class="sd">            Matching records ordered by ``id`` descending (newest first).</span>
 <span class="sd">            Returns an empty list on error.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.get_expiring">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.get_expiring">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_expiring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">within_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return VALID certificates that expire within *within_days* calendar days.</span>
 
 <span class="sd">        Only records with ``status == VALID`` are considered — already-revoked</span>
@@ -478,14 +478,14 @@
 <span class="sd">        list[CertificateRecord]</span>
 <span class="sd">            Records ordered by ``not_valid_after`` ascending (soonest first).</span>
 <span class="sd">            Returns an empty list on error.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.delete_by_uuid">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.delete_by_uuid">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete_by_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Permanently delete the certificate record identified by *uuid*.</span>
 
 <span class="sd">        This is a hard delete — the row is removed from the database.  The</span>
@@ -502,18 +502,18 @@
 <span class="sd">        bool</span>
 <span class="sd">            ``True`` if a row was found and deleted; ``False`` if no matching</span>
 <span class="sd">            record existed or if a database error occurred.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="BaseDB.update_status_expired">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB.update_status_expired">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_status_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Bulk-update all VALID certificates whose ``not_valid_after`` has passed.</span>
 
-<span class="sd">        Sets ``status = &quot;expired&quot;`` for every record where:</span>
-<span class="sd">        - ``status == &quot;valid&quot;``</span>
+<span class="sd">        Sets ``status = "expired"`` for every record where:</span>
+<span class="sd">        - ``status == "valid"``</span>
 <span class="sd">        - ``not_valid_after &lt; now (UTC)``</span>
 
 <span class="sd">        This method is intended to be called periodically by a background task</span>
@@ -524,7 +524,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
 <span class="sd">            Number of rows updated.  Returns ``0`` on error (after logging).</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 </div>
 
 </pre></div>

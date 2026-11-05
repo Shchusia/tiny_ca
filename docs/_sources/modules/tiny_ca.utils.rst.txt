@@ -12,4 +12,5 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   tiny_ca.utils.keys
    tiny_ca.utils.serial_generator

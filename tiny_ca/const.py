@@ -24,7 +24,7 @@ from enum import Enum
 #: ======= ===========================
 #: Ext     Contents
 #: ======= ===========================
-#: ``.key`` RSA private key (PEM)
+#: ``.key`` Private key (PEM)
 #: ``.pem`` X.509 certificate or CRL (PEM)
 #: ``.csr`` Certificate signing request (PEM)
 #: ======= ===========================
@@ -79,3 +79,30 @@ class CertType(Enum):
     DEVICE = "DEV"
     INTERNAL = "INT"
     CA = "CA"
+
+
+class KeyAlgorithm(Enum):
+    """
+    Public-key algorithm used when generating a new key pair.
+
+    Members
+    -------
+    RSA :
+        RSA with the key length taken from ``key_size`` (2048 / 3072 / 4096).
+    EC_P256 :
+        ECDSA on NIST P-256 (secp256r1), signed with SHA-256.
+    EC_P384 :
+        ECDSA on NIST P-384 (secp384r1), signed with SHA-384.
+    ED25519 :
+        Ed25519 (RFC 8410).  ``key_size`` is ignored.
+
+    Notes
+    -----
+    Ed25519 keys cannot be written in the ``TraditionalOpenSSL`` format, so
+    ``LocalStorage`` transparently stores them as PKCS#8.
+    """
+
+    RSA = "rsa"
+    EC_P256 = "ec-p256"
+    EC_P384 = "ec-p384"
+    ED25519 = "ed25519"

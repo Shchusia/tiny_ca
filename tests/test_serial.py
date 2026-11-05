@@ -128,26 +128,20 @@ class TestTyped:
 
 
 class TestRawAsync:
-    def test_async_returns_same_as_sync(self):
+    async def test_async_returns_same_as_sync(self):
         cert = _make_cert_with_serial(12345)
-        result = asyncio.get_event_loop().run_until_complete(
-            CertSerialParser.raw_async(cert)
-        )
+        result = await CertSerialParser.raw_async(cert)
         assert result == CertSerialParser.raw(cert)
 
     def test_async_result_is_int(self):
         cert = _make_cert_with_serial(0)
-        result = asyncio.get_event_loop().run_until_complete(
-            CertSerialParser.raw_async(cert)
-        )
+        result = asyncio.run(CertSerialParser.raw_async(cert))
         assert type(result) is int
 
     def test_async_large_serial(self):
         big = 2**100
         cert = _make_cert_with_serial(big)
-        result = asyncio.get_event_loop().run_until_complete(
-            CertSerialParser.raw_async(cert)
-        )
+        result = asyncio.run(CertSerialParser.raw_async(cert))
         assert result == big
 
 
@@ -160,21 +154,15 @@ class TestTypedAsync:
     def test_async_returns_same_as_sync(self):
         cert = _real_cert("asyncsvc", CertType.SERVICE)
         sync_result = CertSerialParser.typed(cert)
-        async_result = asyncio.get_event_loop().run_until_complete(
-            CertSerialParser.typed_async(cert)
-        )
+        async_result = asyncio.run(CertSerialParser.typed_async(cert))
         assert async_result == sync_result
 
     def test_async_cert_type_matches(self):
         cert = _real_cert("asyncca", CertType.CA)
-        cert_type, _ = asyncio.get_event_loop().run_until_complete(
-            CertSerialParser.typed_async(cert)
-        )
+        cert_type, _ = asyncio.run(CertSerialParser.typed_async(cert))
         assert cert_type == CertType.CA
 
     def test_async_result_is_tuple(self):
         cert = _real_cert("tuplesvc", CertType.SERVICE)
-        result = asyncio.get_event_loop().run_until_complete(
-            CertSerialParser.typed_async(cert)
-        )
+        result = asyncio.run(CertSerialParser.typed_async(cert))
         assert isinstance(result, tuple) and len(result) == 2

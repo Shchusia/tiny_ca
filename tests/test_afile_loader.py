@@ -10,6 +10,7 @@ Run with:
 from __future__ import annotations
 
 import asyncio
+import sys
 import tempfile
 from pathlib import Path
 
@@ -102,7 +103,7 @@ def pem_dir_encrypted(ca_cert: x509.Certificate, ca_key: rsa.RSAPrivateKey):
 
 
 def run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 # ===========================================================================
@@ -287,7 +288,25 @@ class TestLoadSyncErrors:
         with pytest.raises(ErrorLoadCert):
             run(loader.load())
 
-    def test_non_rsa_key_raises_type_error(self, tmp_path, ca_cert):
+    def test_unsupported_key_type_raises_type_error(self, tmp_path, ca_cert):
+        from cryptography.hazmat.primitives.asymmetric import dsa
+
+        bad_key = dsa.generate_private_key(key_size=2048)
+        cert_file = tmp_path / "ca.pem"
+        key_file = tmp_path / "dsa.pem"
+        cert_file.write_bytes(ca_cert.public_bytes(serialization.Encoding.PEM))
+        key_file.write_bytes(
+            bad_key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption(),
+            )
+        )
+        loader = AsyncCAFileLoader(cert_file, key_file)
+        with pytest.raises(TypeError, match="CA key must be"):
+            run(loader.load())
+
+    def test_ec_key_is_accepted(self, tmp_path, ca_cert):
         from cryptography.hazmat.primitives.asymmetric import ec
 
         ec_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
@@ -302,8 +321,8 @@ class TestLoadSyncErrors:
             )
         )
         loader = AsyncCAFileLoader(cert_file, key_file)
-        with pytest.raises(TypeError, match="RSA"):
-            run(loader.load())
+        run(loader.load())
+        assert isinstance(loader.ca_key, ec.EllipticCurvePrivateKey)
 
 
 # ===========================================================================

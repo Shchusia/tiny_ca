@@ -11,6 +11,18 @@ specialised concern to the appropriate collaborator:
 - File persistence          → ``BaseStorage``
 - Database registration     → ``BaseDB``
 
+Consistency rules
+-----------------
+- Every certificate signed by the CA through this manager (issue, renew,
+  co-sign, intermediate CA, self-signed CA) is registered in the database
+  when one is configured, so it can be revoked and appears in the CRL.
+- CN conflicts are detected *before* anything is written to storage.
+- If registration fails, the artefacts written for the operation are removed
+  and the error is raised — no orphaned private keys on disk.
+- A certificate that is replaced (overwrite, rotation, renewal) is revoked
+  with reason ``superseded``; if that revocation fails, the new certificate
+  is rolled back and ``CertRevocationError`` is raised.
+
 SOLID notes
 -----------
 SRP : ``CertLifecycleManager`` coordinates operations; it contains no
@@ -18,68 +30,78 @@ SRP : ``CertLifecycleManager`` coordinates operations; it contains no
 OCP : New storage backends and database adapters plug in without changing
       this class.
 LSP : ``BaseStorage`` and ``BaseDB`` dependencies are fully substitutable.
-ISP : Interfaces are narrow; callers that only need issuance never interact
-      with revocation internals.
-DIP : All three collaborators are injected at construction time; the manager
-      never instantiates them directly.
+DIP : All three collaborators are injected at construction time.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from logging import Logger
-import os
 from pathlib import Path
+import re
+import warnings
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 from tiny_ca import CertificateRecord
 from tiny_ca.ca_factory import CertificateFactory
 from tiny_ca.ca_factory.utils.life_time import CertLifetime
-from tiny_ca.const import CertType
+from tiny_ca.const import CertType, KeyAlgorithm
 from tiny_ca.db.base_db import BaseDB
-from tiny_ca.db.const import CertificateStatus
+from tiny_ca.db.const import CertificateStatus, RevokeStatus
+from tiny_ca.db.utils import certificate_common_name
 from tiny_ca.exc import (
     CertNotFound,
+    CertRevocationError,
     DBNotInitedError,
+    DBOperationError,
     NotUniqueCertOwner,
     ValidationCertError,
 )
 from tiny_ca.models.certificate import CAConfig, CertificateDetails, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
+from tiny_ca.storage.const import CryptoObject
+from tiny_ca.utils.keys import PrivateKey
+from tiny_ca.utils.serial_generator import SerialWithEncoding
+
+_UNSAFE_FILE_CHARS = re.compile(r"[\\/\x00]")
+
+
+def safe_file_name(text: str, default: str = "cert") -> str:
+    """
+    Derive a storage file basename from a CN.
+
+    Path separators and NUL are replaced with ``_`` and leading dots are
+    stripped, so the result can never point outside the storage folder.
+    """
+    return _UNSAFE_FILE_CHARS.sub("_", text.lower()).lstrip(".") or default
+
+
+def cert_type_from_record(record: CertificateRecord) -> CertType:
+    """``CertType`` stored in *record*, defaulting to ``SERVICE``."""
+    try:
+        return CertType(record.key_type)
+    except ValueError:
+        return CertType.SERVICE
 
 
 class CertLifecycleManager:
     """
     Orchestrates the full lifecycle of X.509 certificates.
 
-    ``CertLifecycleManager`` is the facade that application code interacts with.
-    It coordinates four collaborators through dependency injection:
-
-    - ``CertificateFactory`` — cryptographic generation of certificates and CRLs.
-    - ``BaseStorage``        — persistent storage of PEM/key/CSR/CRL files.
-    - ``BaseDB``             — registration, lookup, revocation, and rotation
-                               records in a relational database.
-    - ``Logger``             — structured operational logging.
-
-    All three external collaborators are optional at construction time, but
-    specific operations will raise ``ValueError`` or ``DBNotInitedError`` if
-    a required collaborator is absent when that operation is invoked.
-
     Parameters
     ----------
-    storage : BaseStorage
-        File storage backend.  Defaults to ``LocalStorage()`` which writes to
-        ``./certs`` relative to the working directory.
+    storage : BaseStorage | None
+        File storage backend.  ``None`` creates a ``LocalStorage()`` writing
+        to ``./certs`` (a new instance per manager).
     factory : CertificateFactory | None
-        Cryptographic factory.  Must be set before calling
-        ``issue_certificate``, ``generate_crl``, or ``verify_certificate``.
-        Can be set after construction via the ``factory`` property setter.
+        Cryptographic factory.  Must be set before issuing, generating CRLs or
+        verifying.  Can be set later via the ``factory`` property.
     db_handler : BaseDB | None
-        Database adapter.  When ``None``, all operations that require
-        persistence (status lookup, revocation, rotation) will raise
+        Database adapter.  When ``None``, operations that require persistence
+        (status lookup, revocation, rotation, renewal) raise
         ``DBNotInitedError``.
     logger : Logger | None
         Logger for operational messages.  Falls back to ``DEFAULT_LOGGER``.
@@ -87,18 +109,19 @@ class CertLifecycleManager:
     Raises
     ------
     TypeError
-        If *storage* is not a ``BaseStorage`` instance.
-    TypeError
-        If *db_handler* is provided but is not a ``BaseDB`` instance.
+        If *storage* is not a ``BaseStorage`` instance, or *db_handler* is
+        provided but is not a ``BaseDB`` instance.
     """
 
     def __init__(
         self,
-        storage: BaseStorage = LocalStorage(),
+        storage: BaseStorage | None = None,
         factory: CertificateFactory | None = None,
         db_handler: BaseDB | None = None,
         logger: Logger | None = None,
     ) -> None:
+        if storage is None:
+            storage = LocalStorage()
         if not isinstance(storage, BaseStorage):
             raise TypeError(
                 f"storage must be a BaseStorage instance, got {type(storage)}"
@@ -119,27 +142,13 @@ class CertLifecycleManager:
 
     @property
     def factory(self) -> CertificateFactory | None:
-        """
-        The active ``CertificateFactory`` used for certificate issuance.
-
-        Returns
-        -------
-        CertificateFactory | None
-            The current factory, or ``None`` if not yet initialised.
-        """
+        """The active ``CertificateFactory`` (``None`` if not yet set)."""
         return self._factory
 
     @factory.setter
     def factory(self, value: CertificateFactory) -> None:
         """
         Replace the active ``CertificateFactory``.
-
-        Useful for rotating to a new CA without recreating the entire manager.
-
-        Parameters
-        ----------
-        value : CertificateFactory
-            New factory instance to use for subsequent issuance operations.
 
         Raises
         ------
@@ -167,72 +176,48 @@ class CertLifecycleManager:
         """
         Generate a self-signed root CA certificate and persist both artefacts.
 
-        Delegates cryptographic generation to
-        ``CertificateFactory.build_self_signed_ca`` and then saves the
-        certificate and private key through the configured ``BaseStorage``.
-        When a ``db_handler`` is present the certificate is also registered in
-        the database.
-
         Parameters
         ----------
         config : CAConfig
-            Pydantic model carrying ``common_name``, ``organization``,
-            ``country``, ``key_size``, and ``days_valid``.
+            CA parameters (CN, organisation, country, key algorithm / size,
+            validity).
         cert_path : str | None
-            Sub-directory under the storage base folder.  ``None`` places the
-            files directly in the base folder.
+            Sub-directory under the storage base folder.
         uuid_str : str | None
-            Explicit UUID for the storage sub-directory.  ``None`` causes the
-            storage layer to generate one automatically.
+            Explicit UUID for the storage sub-directory.
         is_overwrite : bool
-            When ``True``, any existing certificate with the same CN is revoked
-            and its files are deleted before the new one is saved.  When
-            ``False`` (default), ``NotUniqueCertOwner`` is raised if a conflict
-            exists.
+            When ``True``, an existing VALID certificate with the same CN is
+            revoked (``superseded``) and its files are deleted.  When
+            ``False`` (default), ``NotUniqueCertOwner`` is raised *before*
+            anything is written.
 
         Returns
         -------
-        tuple[str, str]
-            ``(path_to_cert_pem, path_to_key_pem)`` as returned by the storage
-            layer.
+        tuple[Path, Path]
+            ``(path_to_cert_pem, path_to_key)``.
         """
         self._logger.info(
             "Creating self-signed CA: CN=%s, overwrite=%s",
             config.common_name,
             is_overwrite,
         )
+        replaced = self._find_conflict(config.common_name, is_overwrite)
 
         certificate, private_key = CertificateFactory.build_self_signed_ca(
             **config.model_dump(), logger=self._logger
         )
-
-        path_to_cert, uuid_str = self._storage.save_certificate(
-            cert=certificate,
+        paths, _ = self._store_and_register(
+            artefacts=[(certificate, "ca"), (private_key, "ca")],
+            certificate=certificate,
+            cert_type=CertType.CA,
             cert_path=cert_path,
-            file_name="ca",
             uuid_str=uuid_str,
             is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=True,
         )
-        path_to_key, uuid_str = self._storage.save_certificate(
-            cert=private_key,
-            cert_path=cert_path,
-            file_name="ca",
-            uuid_str=uuid_str,
-            is_overwrite=is_overwrite,
-        )
-
-        if self._db:
-            self._persist_cert_to_db(
-                common_name=config.common_name,
-                uuid_str=uuid_str,
-                certificate=certificate,
-                cert_type=CertType.CA,
-                cert_path=cert_path,
-                is_overwrite=is_overwrite,
-            )
-
-        self._logger.info("CA saved: cert=%s, key=%s", path_to_cert, path_to_key)
-        return path_to_cert, path_to_key
+        self._logger.info("CA saved: cert=%s, key=%s", paths[0], paths[1])
+        return paths[0], paths[1]
 
     # ------------------------------------------------------------------
     # Certificate issuance
@@ -244,54 +229,43 @@ class CertLifecycleManager:
         cert_path: str | None = None,
         uuid_str: str | None = None,
         is_overwrite: bool = False,
-    ) -> tuple[x509.Certificate, object, x509.CertificateSigningRequest]:
+    ) -> tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]:
         """
-        Issue a new end-entity certificate and persist all three artefacts.
+        Issue a new end-entity certificate and persist all artefacts.
 
-        The method generates the certificate, private key, and CSR via the
-        configured ``CertificateFactory``, then saves each file through
-        ``BaseStorage``.  If a ``db_handler`` is configured the certificate
-        metadata is also written to the database.
-
-        Artefacts written to storage
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        - ``<file_name>.pem``  — the signed certificate.
-        - ``<file_name>.key``  — the private key (unencrypted by default).
-        - ``<file_name>.csr``  — the certificate signing request (for audit).
+        Saves ``<file_name>.pem`` (certificate), ``<file_name>.key`` (private
+        key, mode 0600) and ``<file_name>.csr`` into a dedicated UUID folder,
+        then registers the certificate in the database.
 
         Parameters
         ----------
         config : ClientConfig
-            Pydantic model containing all certificate parameters: ``common_name``,
-            ``serial_type``, ``key_size``, ``days_valid``, ``email``,
-            ``is_server_cert``, ``is_client_cert``, ``san_dns``, ``san_ip``,
-            and an optional ``name`` for the output file basename.
+            Certificate parameters.
         cert_path : str | None
             Sub-directory under the storage base folder.
         uuid_str : str | None
-            Explicit UUID; ``None`` auto-generates one.
+            Explicit UUID for the storage sub-directory.
         is_overwrite : bool
-            Allow replacing an existing certificate with the same CN.
+            Replace an existing VALID certificate with the same CN (it is
+            revoked with reason ``superseded`` and its folder deleted).
 
         Returns
         -------
-        tuple[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]
-            ``(certificate, private_key, csr)`` in-memory objects.
+        tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]
+            ``(certificate, private_key, csr)``.
 
         Raises
         ------
         ValueError
             If ``self.factory`` has not been initialised.
         NotUniqueCertOwner
-            If *is_overwrite* is ``False`` and a certificate with the same CN
-            already exists in the database.
+            If the CN is already in use and *is_overwrite* is ``False``.
+            Nothing is written in that case.
+        DBOperationError
+            If the database cannot be read or the certificate cannot be
+            registered (written artefacts are removed).
         """
-        if self._factory is None:
-            raise ValueError(
-                "factory is not initialised. "
-                "Set CertLifecycleManager.factory before issuing certificates."
-            )
-
+        self._require_factory()
         file_name = self._derive_file_name(config)
         self._logger.info(
             "Issuing certificate: CN=%s, file=%s, overwrite=%s",
@@ -299,50 +273,16 @@ class CertLifecycleManager:
             file_name,
             is_overwrite,
         )
-
-        certificate, private_key, csr = self._factory.issue_certificate(
-            **config.model_dump(exclude={"name"})
-        )
-
-        path_to_cert, uuid_str = self._storage.save_certificate(
-            cert=certificate,
-            cert_path=cert_path,
+        replaced = self._find_conflict(config.common_name, is_overwrite)
+        return self._issue(
+            config,
             file_name=file_name,
+            cert_path=cert_path,
             uuid_str=uuid_str,
             is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=True,
         )
-        path_to_key, uuid_str = self._storage.save_certificate(
-            cert=private_key,
-            cert_path=cert_path,
-            file_name=file_name,
-            uuid_str=uuid_str,
-            is_overwrite=is_overwrite,
-        )
-        path_to_csr, uuid_str = self._storage.save_certificate(
-            cert=csr,
-            cert_path=cert_path,
-            file_name=file_name,
-            uuid_str=uuid_str,
-            is_overwrite=is_overwrite,
-        )
-
-        if self._db:
-            self._persist_cert_to_db(
-                common_name=config.common_name,
-                uuid_str=uuid_str,
-                certificate=certificate,
-                cert_type=config.serial_type,
-                cert_path=cert_path,
-                is_overwrite=is_overwrite,
-            )
-
-        self._logger.info(
-            "Certificate artefacts saved: cert=%s, key=%s, csr=%s",
-            path_to_cert,
-            path_to_key,
-            path_to_csr,
-        )
-        return certificate, private_key, csr
 
     # ------------------------------------------------------------------
     # Revocation
@@ -356,34 +296,24 @@ class CertLifecycleManager:
         """
         Revoke the certificate identified by *serial*.
 
-        Delegates to ``BaseDB.revoke_certificate``.  The record is updated
-        in-place (status → REVOKED, revocation date and reason stored); no
-        file is deleted.  Call ``generate_crl`` afterwards to publish the
-        updated revocation list.
-
-        Parameters
-        ----------
-        serial : int
-            Integer serial number of the certificate to revoke.
-        reason : x509.ReasonFlags
-            RFC 5280 revocation reason code (e.g.
-            ``x509.ReasonFlags.key_compromise``).
+        The record is updated in place (status → REVOKED, date and reason
+        stored).  Call ``generate_crl`` afterwards to publish the change.
 
         Returns
         -------
         bool
-            ``True`` if the revocation was recorded successfully;
-            ``False`` if the operation failed (see logs for details).
+            ``True`` if the revocation was recorded; ``False`` otherwise
+            (see logs for details).
 
         Raises
         ------
         DBNotInitedError
-            If no ``db_handler`` was provided at construction time.
+            If no ``db_handler`` was provided.
         """
         self._require_db()
         self._logger.info("Revoking certificate: serial=%d, reason=%s", serial, reason)
 
-        is_success, status = self._db.revoke_certificate(
+        is_success, status = self._db.revoke_certificate(  # type: ignore[union-attr]
             serial_number=serial, reason=reason
         )
         if not is_success:
@@ -393,38 +323,38 @@ class CertLifecycleManager:
         else:
             self._logger.info("Certificate serial=%d revoked successfully", serial)
 
-        return is_success
+        return bool(is_success)
 
     # ------------------------------------------------------------------
     # CRL generation
     # ------------------------------------------------------------------
 
     def generate_crl(
-        self, cert_path: str | None = None, days_valid: int = 1
+        self,
+        cert_path: str | None = None,
+        days_valid: int = 1,
+        crl_number: int | None = None,
     ) -> x509.CertificateRevocationList:
         """
         Build, sign, and persist a fresh Certificate Revocation List.
 
-        Retrieves all currently-revoked certificates from the database,
-        passes them to ``CertificateFactory.build_crl``, and writes the
-        resulting CRL to storage as ``crl.pem`` (overwriting any previous
-        version — CRLs are always regenerated in-place).
+        Writes ``crl.pem`` to storage (overwriting the previous version).
 
         Parameters
         ----------
+        cert_path : str | None
+            Sub-directory under the storage base folder.
         days_valid : int
-            Number of days until the CRL's ``nextUpdate`` field.  Relying
-            parties will reject the CRL after this point.  Default: ``1``.
-
-        Returns
-        -------
-        x509.CertificateRevocationList
-            The signed CRL object (also persisted to storage).
+            Days until the CRL's ``nextUpdate``.  Default: ``1``.
+        crl_number : int | None
+            Explicit CRL number; ``None`` derives a monotonic one from time.
 
         Raises
         ------
         DBNotInitedError
             If no ``db_handler`` was provided.
+        DBOperationError
+            If revoked certificates cannot be read — no CRL is produced.
         ValueError
             If ``self.factory`` has not been initialised.
         """
@@ -432,10 +362,10 @@ class CertLifecycleManager:
         self._require_factory()
 
         self._logger.info("Generating CRL: days_valid=%d", days_valid)
-        revoked_certs = self._db.get_revoked_certificates()
+        revoked_certs = self._db.get_revoked_certificates()  # type: ignore[union-attr]
 
-        crl = self._factory.build_crl(
-            revoked_certs=revoked_certs, days_valid=days_valid
+        crl = self._factory.build_crl(  # type: ignore[union-attr]
+            revoked_certs=revoked_certs, days_valid=days_valid, crl_number=crl_number
         )
         path, _ = self._storage.save_certificate(
             cert=crl,
@@ -455,62 +385,49 @@ class CertLifecycleManager:
         """
         Determine the current status of the certificate identified by *serial*.
 
-        Looks up the certificate record in the database and evaluates its
-        state in the following priority order:
-        1. Not found  → ``UNKNOWN``
-        2. Revocation date is set → ``REVOKED``
-        3. ``not_valid_after`` is in the past → ``EXPIRED``
-        4. Otherwise → ``VALID``
-
-        Parameters
-        ----------
-        serial : int
-            Integer serial number of the certificate to check.
-
-        Returns
-        -------
-        CertificateStatus
-            One of ``VALID``, ``REVOKED``, ``EXPIRED``, or ``UNKNOWN``.
+        Priority: not found → ``UNKNOWN``; revoked → ``REVOKED``; past
+        ``not_valid_after`` → ``EXPIRED``; otherwise ``VALID``.
 
         Raises
         ------
         DBNotInitedError
             If no ``db_handler`` was provided.
+        DBOperationError
+            If the database cannot be read.
         """
         self._require_db()
 
-        cert = self._db.get_by_serial(serial=serial)
+        cert = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
         if not cert:
             return CertificateStatus.UNKNOWN
-        if cert.revocation_date:
+        if cert.revocation_date or cert.status == CertificateStatus.REVOKED:
             return CertificateStatus.REVOKED
         now = datetime.now(UTC)
-
-        # Normalise: SQLAlchemy stores naive datetimes; make UTC-aware via CertLifetime.
         not_valid_after = CertLifetime.normalize_dt(cert.not_valid_after)
 
         if not_valid_after < now:
             return CertificateStatus.EXPIRED
         return CertificateStatus.VALID
 
-    def verify_certificate(self, cert: x509.Certificate) -> bool:
+    def verify_certificate(
+        self,
+        cert: x509.Certificate,
+        intermediates: Sequence[x509.Certificate] | None = None,
+    ) -> bool:
         """
-        Perform a full verification of *cert*: chain, signature, and revocation.
+        Fully verify *cert*: chain, signature, validity and revocation.
 
-        Combines cryptographic validation (via ``CertificateFactory.validate_cert``)
-        with a database revocation check (via ``get_certificate_status``).
+        Steps
+        ~~~~~
+        1. Cryptographic validation — ``validate_cert`` (issued directly by
+           this CA) or ``validate_chain`` when *intermediates* are given.
+        2. Registry check for every certificate in the path:
+           - ``REVOKED`` anywhere → rejected;
+           - a certificate issued directly by this CA must be registered
+             (``UNKNOWN`` → rejected: it was not issued through this
+             registry, so its revocation status cannot be known).
 
-        Validation steps
-        ~~~~~~~~~~~~~~~~
-        1. Issuer field matches the CA subject.
-        2. Current UTC time is within the validity window.
-        3. Cryptographic signature is valid.
-        4. Certificate is not listed as revoked in the database.
-
-        Parameters
-        ----------
-        cert : x509.Certificate
-            The certificate object to verify.
+        Database errors propagate (fail closed).
 
         Returns
         -------
@@ -521,14 +438,34 @@ class CertLifecycleManager:
         ------
         ValueError
             If ``self.factory`` has not been initialised.
+        DBNotInitedError
+            If no ``db_handler`` was provided.
         ValidationCertError
-            If the certificate fails any cryptographic check or is revoked.
+            If any check fails.
         """
         self._require_factory()
+        self._require_db()
+        factory = self._factory
 
         self._logger.info("Verifying certificate serial=%s", cert.serial_number)
-        self._factory.validate_cert(cert=cert)
+        if intermediates:
+            path = factory.validate_chain(cert, intermediates)
+            root, to_check = path[-1], path[:-1]
+        else:
+            factory.validate_cert(cert=cert)
+            root, to_check = None, [cert]
 
+        for item in to_check:
+            self._check_registry_status(item, root)
+
+        self._logger.info(
+            "Certificate serial=%s verified successfully", cert.serial_number
+        )
+        return True
+
+    def _check_registry_status(
+        self, cert: x509.Certificate, root: x509.Certificate | None
+    ) -> None:
         status = self.get_certificate_status(cert.serial_number)
         if status == CertificateStatus.REVOKED:
             self._logger.warning(
@@ -536,41 +473,34 @@ class CertLifecycleManager:
                 cert.serial_number,
             )
             raise ValidationCertError("Certificate is revoked")
-
-        self._logger.info(
-            "Certificate serial=%s verified successfully", cert.serial_number
-        )
-        return True
+        issued_by_root = root is None or cert.issuer == root.subject
+        if status == CertificateStatus.UNKNOWN and issued_by_root:
+            self._logger.warning(
+                "Verification failed: certificate serial=%s is not registered",
+                cert.serial_number,
+            )
+            raise ValidationCertError(
+                "Certificate is not registered in this CA's registry"
+            )
 
     # ------------------------------------------------------------------
-    # Rotation
+    # Rotation / renewal
     # ------------------------------------------------------------------
 
     def rotate_certificate(
         self,
         serial: int,
         config: ClientConfig,
-    ) -> tuple[x509.Certificate, object, x509.CertificateSigningRequest]:
+        cert_path: str | None = None,
+    ) -> tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]:
         """
-        Revoke an existing certificate and issue a replacement in a single operation.
+        Replace an existing certificate with a newly issued one (new key pair).
 
-        The old certificate is revoked with reason ``superseded`` before the
-        new one is issued.  Both operations are performed against the configured
-        ``db_handler``; if the revocation fails an exception is propagated and
-        the new certificate is not issued.
-
-        Parameters
-        ----------
-        serial : int
-            Serial number of the certificate to replace.
-        config : ClientConfig
-            Parameters for the replacement certificate.  The CN may differ
-            from the original.
-
-        Returns
-        -------
-        tuple[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]
-            ``(new_certificate, new_private_key, new_csr)``.
+        The replacement is issued and registered first; then the old
+        certificate is revoked with reason ``superseded``.  If that revocation
+        fails, the replacement is rolled back and ``CertRevocationError`` is
+        raised, so the caller never ends up with two valid certificates.  The
+        old artefact folder is kept for audit.
 
         Raises
         ------
@@ -578,23 +508,35 @@ class CertLifecycleManager:
             If no ``db_handler`` was provided.
         CertNotFound
             If no certificate with *serial* exists in the database.
+        NotUniqueCertOwner
+            If *config.common_name* belongs to a *different* VALID certificate.
+        CertRevocationError
+            If the old certificate could not be revoked.
         ValueError
             If ``self.factory`` has not been initialised.
         """
         self._require_db()
+        self._require_factory()
 
         self._logger.info(
             "Rotating certificate: serial=%d, new_CN=%s", serial, config.common_name
         )
 
-        existing = self._db.get_by_serial(serial=serial)
+        existing = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
         if not existing:
             self._logger.error("Certificate serial=%d not found for rotation", serial)
             raise CertNotFound()
 
-        self.revoke_certificate(serial=serial, reason=x509.ReasonFlags.superseded)
-
-        new_cert, new_key, new_csr = self.issue_certificate(config, is_overwrite=True)
+        self._find_conflict(config.common_name, is_overwrite=False, exclude=serial)
+        new_cert, new_key, new_csr = self._issue(
+            config,
+            file_name=self._derive_file_name(config),
+            cert_path=cert_path,
+            uuid_str=None,
+            is_overwrite=False,
+            replaced=existing,
+            delete_replaced_folder=False,
+        )
         self._logger.info(
             "Rotation complete: old serial=%d replaced by serial=%s",
             serial,
@@ -602,50 +544,19 @@ class CertLifecycleManager:
         )
         return new_cert, new_key, new_csr
 
-    def inspect_certificate(self, cert: x509.Certificate) -> CertificateDetails:
-        self._require_factory()
-        return self._factory.inspect_certificate(cert)  # type: ignore[union-attr]
-
-    def cosign_certificate(
-        self,
-        cert: x509.Certificate,
-        days_valid: int | None = None,
-        valid_from: datetime | None = None,
-    ) -> x509.Certificate:
-        self._require_factory()
-        return self._factory.cosign_certificate(
-            cert=cert, days_valid=days_valid, valid_from=valid_from
-        )  # type: ignore[union-attr]
-
-    def export_pkcs12(
-        self,
-        cert: x509.Certificate,
-        private_key: rsa.RSAPrivateKey,
-        password: bytes | None = None,
-        name: str | None = None,
-    ) -> bytes:
-        """Pack cert + key into a PKCS#12 bundle. Delegates to CertificateFactory.export_pkcs12."""
-        self._require_factory()
-        return self._factory.export_pkcs12(
-            cert=cert, private_key=private_key, password=password, name=name
-        )  # type: ignore[union-attr]
-
-    def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
-        """Return [cert, ca_cert] chain. Delegates to CertificateFactory.get_cert_chain."""
-        self._require_factory()
-        return self._factory.get_cert_chain(cert)  # type: ignore[union-attr]
-
     def renew_certificate(
         self,
         serial: int,
         days_valid: int = 365,
         valid_from: datetime | None = None,
+        cert_path: str | None = None,
     ) -> x509.Certificate:
         """
-        Renew the certificate identified by *serial*: same key, new validity window.
+        Renew the certificate identified by *serial*: same key, new validity.
 
-        Fetches the certificate PEM from the database, deserialises it, and
-        delegates to ``CertificateFactory.renew_certificate``.
+        The renewed certificate is stored (``.pem`` only — the private key
+        stays in the original folder, which is kept) and registered; the
+        original is then revoked with reason ``superseded``.
 
         Raises
         ------
@@ -653,6 +564,8 @@ class CertLifecycleManager:
             If no ``db_handler`` was provided.
         CertNotFound
             If no record exists for *serial*.
+        CertRevocationError
+            If the original could not be revoked (the renewal is rolled back).
         ValueError
             If ``self.factory`` has not been initialised.
         """
@@ -664,9 +577,21 @@ class CertLifecycleManager:
             raise CertNotFound()
 
         cert_obj = x509.load_pem_x509_certificate(record.certificate_pem.encode())
-        renewed = self._factory.renew_certificate(
+        renewed = self._factory.renew_certificate(  # type: ignore[union-attr]
             cert=cert_obj, days_valid=days_valid, valid_from=valid_from
-        )  # type: ignore[union-attr]
+        )
+        common_name = certificate_common_name(renewed)
+        self._find_conflict(common_name, is_overwrite=False, exclude=serial)
+        self._store_and_register(
+            artefacts=[(renewed, safe_file_name(common_name, "renewed"))],
+            certificate=renewed,
+            cert_type=cert_type_from_record(record),
+            cert_path=cert_path,
+            uuid_str=None,
+            is_overwrite=False,
+            replaced=record,
+            delete_replaced_folder=False,
+        )
         self._logger.info(
             "Certificate renewed: serial=%d → new_serial=%s",
             serial,
@@ -674,25 +599,106 @@ class CertLifecycleManager:
         )
         return renewed
 
+    # ------------------------------------------------------------------
+    # Other factory operations
+    # ------------------------------------------------------------------
+
+    def inspect_certificate(self, cert: x509.Certificate) -> CertificateDetails:
+        """Structured summary of *cert*. Delegates to the factory."""
+        self._require_factory()
+        return self._factory.inspect_certificate(cert)  # type: ignore[union-attr]
+
+    def cosign_certificate(
+        self,
+        cert: x509.Certificate,
+        days_valid: int | None = None,
+        valid_from: datetime | None = None,
+        serial_type: CertType | None = None,
+        cert_path: str | None = None,
+        is_overwrite: bool = False,
+    ) -> x509.Certificate:
+        """
+        Re-sign *cert* with this CA, store the result and register it.
+
+        Registration makes the co-signed certificate revocable and verifiable
+        like any other certificate issued by this CA.
+
+        Raises
+        ------
+        NotUniqueCertOwner
+            If the CN already belongs to a VALID certificate and
+            *is_overwrite* is ``False``.
+        DBOperationError
+            If registration fails.
+        """
+        self._require_factory()
+        cosigned = self._factory.cosign_certificate(  # type: ignore[union-attr]
+            cert=cert,
+            days_valid=days_valid,
+            valid_from=valid_from,
+            serial_type=serial_type,
+        )
+        common_name = certificate_common_name(cosigned)
+        replaced = self._find_conflict(common_name, is_overwrite)
+        cert_type = SerialWithEncoding.parse(cosigned.serial_number)[0]
+        self._store_and_register(
+            artefacts=[(cosigned, safe_file_name(common_name, "cosigned"))],
+            certificate=cosigned,
+            cert_type=cert_type or CertType.SERVICE,
+            cert_path=cert_path,
+            uuid_str=None,
+            is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=True,
+        )
+        return cosigned
+
+    def export_pkcs12(
+        self,
+        cert: x509.Certificate,
+        private_key: PrivateKey,
+        password: bytes | None = None,
+        name: str | None = None,
+    ) -> bytes:
+        """Pack cert + key into a PKCS#12 bundle. Delegates to the factory."""
+        self._require_factory()
+        return self._factory.export_pkcs12(  # type: ignore[union-attr]
+            cert=cert, private_key=private_key, password=password, name=name
+        )
+
+    def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
+        """Return the ``[cert, ca_cert]`` chain. Delegates to the factory."""
+        self._require_factory()
+        return self._factory.get_cert_chain(cert)  # type: ignore[union-attr]
+
     def issue_intermediate_ca(
         self,
         common_name: str,
         key_size: int = 4096,
         days_valid: int = 1825,
-        valid_from: datetime = None,
+        valid_from: datetime | None = None,
         path_length: int | None = 0,
         organization: str | None = None,
         country: str | None = None,
         cert_path: str | None = None,
         uuid_str: str | None = None,
-    ) -> tuple[x509.Certificate, object]:
+        key_algorithm: KeyAlgorithm = KeyAlgorithm.RSA,
+        is_overwrite: bool = False,
+    ) -> tuple[x509.Certificate, PrivateKey]:
         """
-        Issue a subordinate CA cert signed by this CA and save artefacts.
+        Issue a subordinate CA signed by this CA, store it and register it.
 
-        Returns (cert, private_key). The cert is NOT registered in the DB
-        automatically — call ``register_cert_in_db`` if persistence is needed.
+        Certificate and key are saved together in one UUID folder as
+        ``intermediate_ca.pem`` / ``intermediate_ca.key``.  Registration lets
+        the intermediate be revoked through the root's CRL.
+
+        Raises
+        ------
+        NotUniqueCertOwner
+            If the CN is in use and *is_overwrite* is ``False``.
         """
         self._require_factory()
+        replaced = self._find_conflict(common_name, is_overwrite)
         cert, key = self._factory.issue_intermediate_ca(  # type: ignore[union-attr]
             common_name=common_name,
             key_size=key_size,
@@ -701,20 +707,17 @@ class CertLifecycleManager:
             path_length=path_length,
             organization=organization,
             country=country,
+            key_algorithm=key_algorithm,
         )
-        self._storage.save_certificate(
-            cert=cert,
-            file_name="intermediate_ca",
+        self._store_and_register(
+            artefacts=[(cert, "intermediate_ca"), (key, "intermediate_ca")],
+            certificate=cert,
+            cert_type=CertType.CA,
             cert_path=cert_path,
             uuid_str=uuid_str,
-            is_overwrite=True,
-        )
-        self._storage.save_certificate(
-            cert=key,
-            file_name="intermediate_ca",
-            cert_path=cert_path,
-            uuid_str=uuid_str,
-            is_overwrite=True,
+            is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=True,
         )
         return cert, key
 
@@ -727,9 +730,9 @@ class CertLifecycleManager:
     ) -> list[CertificateRecord]:
         """Return paginated certificate records. Requires db_handler."""
         self._require_db()
-        return self._db.list_all(
+        return self._db.list_all(  # type: ignore[union-attr]
             status=status, key_type=key_type, limit=limit, offset=offset
-        )  # type: ignore[union-attr]
+        )
 
     def get_expiring_soon(self, within_days: int = 30) -> list[CertificateRecord]:
         """Return VALID certs expiring within *within_days* days. Requires db_handler."""
@@ -749,9 +752,8 @@ class CertLifecycleManager:
         uuid = record.uuid
         deleted = self._db.delete_by_uuid(uuid=uuid)  # type: ignore[union-attr]
         if deleted and uuid:
-            # Delete the certificate folder from storage
             self._storage.delete_certificate_folder(uuid_str=uuid, cert_path=cert_path)
-        return deleted
+        return bool(deleted)
 
     def refresh_expired_statuses(self) -> int:
         """Bulk-mark expired certificates. Returns count of updated rows."""
@@ -759,7 +761,7 @@ class CertLifecycleManager:
         return self._db.update_status_expired()  # type: ignore[union-attr]
 
     def verify_crl(self, crl: x509.CertificateRevocationList) -> None:
-        """Verify CRL signature and expiry. Delegates to CertificateFactory.verify_crl."""
+        """Verify CRL signature and expiry. Delegates to the factory."""
         self._require_factory()
         self._factory.verify_crl(crl)  # type: ignore[union-attr]
 
@@ -767,117 +769,175 @@ class CertLifecycleManager:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _persist_cert_to_db(
+    def _issue(
+        self,
+        config: ClientConfig,
+        *,
+        file_name: str,
+        cert_path: str | None,
+        uuid_str: str | None,
+        is_overwrite: bool,
+        replaced: CertificateRecord | None,
+        delete_replaced_folder: bool,
+    ) -> tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]:
+        certificate, private_key, csr = self._factory.issue_certificate(  # type: ignore[union-attr]
+            **config.model_dump(exclude={"name"})
+        )
+        paths, _ = self._store_and_register(
+            artefacts=[
+                (certificate, file_name),
+                (private_key, file_name),
+                (csr, file_name),
+            ],
+            certificate=certificate,
+            cert_type=config.serial_type,
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=delete_replaced_folder,
+        )
+        self._logger.info(
+            "Certificate artefacts saved: cert=%s, key=%s, csr=%s", *paths
+        )
+        return certificate, private_key, csr
+
+    def _find_conflict(
         self,
         common_name: str,
-        uuid_str: str,
+        is_overwrite: bool,
+        exclude: int | None = None,
+    ) -> CertificateRecord | None:
+        """
+        Return the VALID record holding *common_name*, if it may be replaced.
+
+        Raises ``NotUniqueCertOwner`` when such a record exists and
+        *is_overwrite* is ``False``.  A record whose serial equals *exclude*
+        is ignored (it is the certificate being rotated / renewed).  Without
+        a database there is nothing to check.
+        """
+        if not self._db:
+            return None
+        existing = self._db.get_by_name(common_name=common_name)
+        if existing is None:
+            return None
+        if exclude is not None and int(existing.serial_number) == exclude:
+            return None
+        if not is_overwrite:
+            self._logger.warning(
+                "Duplicate CN detected: CN=%s is already registered", common_name
+            )
+            raise NotUniqueCertOwner(common_name)
+        return existing
+
+    def _store_and_register(
+        self,
+        *,
+        artefacts: Sequence[tuple[CryptoObject, str]],
         certificate: x509.Certificate,
         cert_type: CertType,
         cert_path: str | None,
+        uuid_str: str | None,
         is_overwrite: bool,
-    ) -> None:
+        replaced: CertificateRecord | None,
+        delete_replaced_folder: bool,
+    ) -> tuple[list[Path], str | None]:
         """
-        Register *certificate* in the database, handling CN conflicts.
+        Persist *artefacts*, register *certificate* and retire *replaced*.
 
-        If a VALID certificate with *common_name* already exists:
-        - *is_overwrite=True*  → the existing cert is revoked (``key_compromise``)
-          and its storage folder is deleted before the new record is inserted.
-        - *is_overwrite=False* → ``NotUniqueCertOwner`` is raised immediately.
-
-        Parameters
-        ----------
-        common_name : str
-            The CN of the certificate being registered.
-        uuid_str : str
-            UUID of the storage folder that holds the artefact files.
-        certificate : x509.Certificate
-            The newly issued certificate object.
-        cert_type : CertType
-            Category of the certificate (CA, SERVICE, DEVICE, etc.).
-        cert_path : str | None
-            Base sub-path used by the storage layer; needed when deleting the
-            old artefact folder on overwrite.
-        is_overwrite : bool
-            Whether to replace an existing certificate with the same CN.
-
-        Raises
-        ------
-        NotUniqueCertOwner
-            If *common_name* is already in use and *is_overwrite* is ``False``.
+        All-or-nothing from the caller's point of view: on any failure the
+        written artefacts (and the new DB row) are removed and the error is
+        re-raised.
         """
-        existing = self._db.get_by_name(common_name=common_name)
-
-        if existing:
-            if not is_overwrite:
-                self._logger.warning(
-                    "Duplicate CN detected: CN=%s is already registered", common_name
+        paths: list[Path] = []
+        effective_uuid = uuid_str
+        try:
+            for obj, name in artefacts:
+                path, effective_uuid = self._storage.save_certificate(
+                    cert=obj,
+                    cert_path=cert_path,
+                    file_name=name,
+                    uuid_str=effective_uuid,
+                    is_overwrite=is_overwrite,
                 )
-                raise NotUniqueCertOwner(common_name)
+                paths.append(path)
+            if self._db and not self._db.register_cert_in_db(
+                cert=certificate, uuid=str(effective_uuid), key_type=cert_type
+            ):
+                raise DBOperationError(
+                    "register_cert_in_db",
+                    f"certificate serial={certificate.serial_number} was not stored",
+                )
+        except Exception:
+            self._discard(paths, effective_uuid, uuid_str is None, cert_path)
+            raise
 
-            self._logger.info(
-                "Overwriting existing certificate: CN=%s (serial=%s)",
-                common_name,
-                existing.serial_number,
+        if replaced is not None and self._db:
+            ok, status = self._db.revoke_certificate(
+                serial_number=int(replaced.serial_number),
+                reason=x509.ReasonFlags.superseded,
             )
-            self.revoke_certificate(
-                serial=int(existing.serial_number),
-                reason=x509.ReasonFlags.key_compromise,
-            )
-            self._storage.delete_certificate_folder(
-                uuid_str=str(existing.uuid), cert_path=cert_path
-            )
+            if not ok and status is not RevokeStatus.NOT_FOUND:
+                self._db.delete_by_uuid(uuid=str(effective_uuid))
+                self._discard(paths, effective_uuid, uuid_str is None, cert_path)
+                raise CertRevocationError(
+                    int(replaced.serial_number), getattr(status, "value", str(status))
+                )
+            if (
+                delete_replaced_folder
+                and replaced.uuid
+                and str(replaced.uuid) != str(effective_uuid)
+            ):
+                self._storage.delete_certificate_folder(
+                    uuid_str=str(replaced.uuid), cert_path=cert_path
+                )
 
-        self._db.register_cert_in_db(
-            cert=certificate,
-            uuid=uuid_str,
-            key_type=cert_type,
-        )
-        self._logger.debug(
-            "Certificate registered in DB: CN=%s, uuid=%s", common_name, uuid_str
-        )
+        if self._db:
+            self._logger.debug(
+                "Certificate registered in DB: serial=%s, uuid=%s",
+                certificate.serial_number,
+                effective_uuid,
+            )
+        return paths, effective_uuid
+
+    def _discard(
+        self,
+        paths: list[Path],
+        uuid_str: str | None,
+        folder_created: bool,
+        cert_path: str | None,
+    ) -> None:
+        """Best-effort removal of artefacts written by a failed operation."""
+        if not paths:
+            return
+        try:
+            if folder_created and uuid_str:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    self._storage.delete_certificate_folder(
+                        uuid_str=uuid_str, cert_path=cert_path
+                    )
+            elif isinstance(self._storage, LocalStorage):
+                for path in paths:
+                    Path(path).unlink(missing_ok=True)
+        except Exception as exc:  # pragma: no cover - best effort
+            self._logger.error("Failed to clean up artefacts %s: %s", paths, exc)
 
     @staticmethod
     def _derive_file_name(config: ClientConfig) -> str:
         """
-        Derive the base filename for the certificate artefacts from *config*.
-
-        Priority: ``config.name`` (explicit name) → ``config.common_name``
-        lowercased with OS path separators replaced by underscores to prevent
-        accidental directory traversal.
-
-        Parameters
-        ----------
-        config : ClientConfig
-            Certificate configuration model.
-
-        Returns
-        -------
-        str
-            Sanitised filename without extension (e.g. ``"my-service"``).
+        Storage basename: ``config.name`` (validated by the model) or the CN
+        made safe by :func:`safe_file_name`.
         """
-        return config.name or config.common_name.lower().replace(os.sep, "_")
+        return config.name or safe_file_name(config.common_name)
 
     def _require_db(self) -> None:
-        """
-        Assert that a database handler is configured.
-
-        Raises
-        ------
-        DBNotInitedError
-            If ``self._db`` is ``None``.
-        """
+        """Raise ``DBNotInitedError`` if no database handler is configured."""
         if not self._db:
             raise DBNotInitedError()
 
     def _require_factory(self) -> None:
-        """
-        Assert that a certificate factory is configured.
-
-        Raises
-        ------
-        ValueError
-            If ``self._factory`` is ``None``.
-        """
+        """Raise ``ValueError`` if no certificate factory is configured."""
         if not self._factory:
             raise ValueError(
                 "factory is not initialised. "

@@ -267,8 +267,8 @@ ISP : <code class="docutils literal notranslate"><span class="pre">SerialWithEnc
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.factory.</span></span><span class="sig-name descname"><span class="pre">CertificateFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.factory.</span></span><span class="sig-name descname"><span class="pre">CertificateFactory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crl_distribution_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ca_issuers_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocsp_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Cryptographic factory for X.509 certificates, CSRs, and CRLs.</p>
 <p><code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> is the single source of all certificate-generation
 logic in the library.  It accepts an <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> at construction time and
@@ -278,8 +278,10 @@ uses the CA certificate and key it provides to sign all issued artefacts.</p>
 <ul class="simple">
 <li><p>Generate self-signed root CA certificates (<code class="docutils literal notranslate"><span class="pre">build_self_signed_ca</span></code>).</p></li>
 <li><p>Issue end-entity certificates signed by the loaded CA (<code class="docutils literal notranslate"><span class="pre">issue_certificate</span></code>).</p></li>
+<li><p>Issue subordinate CA certificates (<code class="docutils literal notranslate"><span class="pre">issue_intermediate_ca</span></code>).</p></li>
 <li><p>Build and sign Certificate Revocation Lists (<code class="docutils literal notranslate"><span class="pre">build_crl</span></code>).</p></li>
-<li><p>Validate an existing certificate against the loaded CA (<code class="docutils literal notranslate"><span class="pre">validate_cert</span></code>).</p></li>
+<li><p>Validate certificates directly (<code class="docutils literal notranslate"><span class="pre">validate_cert</span></code>) or through
+intermediates (<code class="docutils literal notranslate"><span class="pre">validate_chain</span></code>).</p></li>
 </ul>
 </section>
 <section id="out-of-scope">
@@ -295,33 +297,68 @@ uses the CA certificate and key it provides to sign all issued artefacts.</p>
 </dd>
 <dt class="field-even">param ca_loader<span class="colon">:</span></dt>
 <dd class="field-even"><p>Provider of the CA certificate, private key, and base Subject info.
-Must satisfy the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol (see <code class="docutils literal notranslate"><span class="pre">file_loader.py</span></code>).</p>
+Must satisfy the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol (see <code class="docutils literal notranslate"><span class="pre">file_loader.py</span></code>).
+RSA, ECDSA (P-256 / P-384) and Ed25519 CA keys are supported.</p>
 </dd>
 <dt class="field-odd">type ca_loader<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ICALoader</p>
 </dd>
 <dt class="field-even">type logger<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 <dt class="field-odd">param logger<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Logger for operational messages.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>
-when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dd class="field-odd"><p>Logger for operational messages.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>.</p>
 </dd>
 <dt class="field-even">type logger<span class="colon">:</span></dt>
 <dd class="field-even"><p>Logger | None</p>
 </dd>
-<dt class="field-odd">raises TypeError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If <em>ca_loader</em> does not implement the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol.</p>
+<dt class="field-odd">type crl_distribution_points<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">param crl_distribution_points<span class="colon">:</span></dt>
+<dd class="field-even"><p>URLs where this CA publishes its CRL (e.g.
+<code class="docutils literal notranslate"><span class="pre">[&quot;http://pki.example/crl.pem&quot;]</span></code>).  When set, every issued
+certificate gets a <code class="docutils literal notranslate"><span class="pre">CRLDistributionPoints</span></code> extension so relying
+parties can find the CRL.</p>
+</dd>
+<dt class="field-odd">type crl_distribution_points<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence[str] | None</p>
+</dd>
+<dt class="field-even">type ca_issuers_urls<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-odd">param ca_issuers_urls<span class="colon">:</span></dt>
+<dd class="field-odd"><p>URLs where the CA certificate can be downloaded; added as
+<code class="docutils literal notranslate"><span class="pre">caIssuers</span></code> entries of <code class="docutils literal notranslate"><span class="pre">AuthorityInformationAccess</span></code>.</p>
+</dd>
+<dt class="field-even">type ca_issuers_urls<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sequence[str] | None</p>
+</dd>
+<dt class="field-odd">type ocsp_urls<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">param ocsp_urls<span class="colon">:</span></dt>
+<dd class="field-even"><p>OCSP responder URLs; added as <code class="docutils literal notranslate"><span class="pre">OCSP</span></code> entries of
+<code class="docutils literal notranslate"><span class="pre">AuthorityInformationAccess</span></code>.</p>
+</dd>
+<dt class="field-odd">type ocsp_urls<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sequence[str] | None</p>
+</dd>
+<dt class="field-even">raises TypeError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <em>ca_loader</em> does not implement the <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> Protocol.</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crl_distribution_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ca_issuers_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocsp_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ca_loader</strong> (<a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.ICALoader" title="tiny_ca.ca_factory.utils.file_loader.ICALoader"><em>ICALoader</em></a>)</p></li>
-<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>crl_distribution_points</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>ca_issuers_urls</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>ocsp_urls</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -332,15 +369,18 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl">
-<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">abuild_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">revoked_certs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.abuild_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">abuild_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">revoked_certs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crl_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.abuild_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.abuild_crl" title="Link to this definition">¶</a></dt>
+<dd><p>Async counterpart of <a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_crl" title="tiny_ca.ca_factory.factory.CertificateFactory.build_crl"><code class="xref py py-meth docutils literal notranslate"><span class="pre">build_crl()</span></code></a> that consumes an async iterable
+(e.g. <code class="docutils literal notranslate"><span class="pre">AsyncDBHandler.get_revoked_certificates</span></code>).</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRevocationList</span></code></span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>revoked_certs</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.AsyncGenerator" title="(in Python v3.14)"><em>AsyncGenerator</em></a><em>[</em><a class="reference external" href="https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Row" title="(in SQLAlchemy v2.0)"><em>Row</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>revoked_certs</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.AsyncIterable" title="(in Python v3.15)"><em>AsyncIterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a><em>]</em>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>crl_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -348,26 +388,26 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.build_crl">
-<span class="sig-name descname"><span class="pre">build_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">revoked_certs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.build_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_crl" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">revoked_certs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crl_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.build_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_crl" title="Link to this definition">¶</a></dt>
 <dd><p>Build and sign a Certificate Revocation List from the provided records.</p>
-<p>Iterates over <em>revoked_certs</em>, adds each entry to the CRL builder, then
-signs the list with the CA private key.  The resulting CRL is valid from
-the current UTC time until <code class="docutils literal notranslate"><span class="pre">now</span> <span class="pre">+</span> <span class="pre">days_valid</span></code> days.</p>
+<p>The CRL always carries the <code class="docutils literal notranslate"><span class="pre">CRLNumber</span></code> (RFC 5280 §5.2.3, mandatory)
+and <code class="docutils literal notranslate"><span class="pre">AuthorityKeyIdentifier</span></code> extensions.  Each entry includes the
+<code class="docutils literal notranslate"><span class="pre">CRLReason</span></code> entry extension when the stored reason is meaningful
+(<code class="docutils literal notranslate"><span class="pre">unspecified</span></code> is omitted, as RFC 5280 §5.3.1 recommends).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>revoked_certs</strong> (<em>Generator</em><em>[</em><a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><em>CertificateRecord</em></a><em>, </em><em>None</em><em>, </em><em>None</em><em>]</em>) – Iterable of revoked certificate records as returned by
-<code class="docutils literal notranslate"><span class="pre">BaseDB.get_revoked_certificates</span></code>.  Each record must expose
-<code class="docutils literal notranslate"><span class="pre">serial_number</span></code> (castable to <code class="docutils literal notranslate"><span class="pre">int</span></code>) and <code class="docutils literal notranslate"><span class="pre">revocation_date</span></code>
-(a <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object).</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL expires and must be regenerated.
-Typical values are <code class="docutils literal notranslate"><span class="pre">1</span></code> (daily rotation) to <code class="docutils literal notranslate"><span class="pre">7</span></code> (weekly).
-Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>revoked_certs</strong> (<em>Iterable</em>) – Revoked certificate records as returned by
+<code class="docutils literal notranslate"><span class="pre">BaseDB.get_revoked_certificates</span></code> — ORM records, SQLAlchemy rows
+or <code class="docutils literal notranslate"><span class="pre">(serial,</span> <span class="pre">revocation_date[,</span> <span class="pre">reason])</span></code> tuples.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of days until <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code>.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>crl_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>) – Explicit CRL sequence number.  <code class="docutils literal notranslate"><span class="pre">None</span></code> derives a monotonically
+increasing number from the current time in microseconds, so no
+external state is required.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The signed CRL object.  The caller is responsible for persisting it
-to storage via <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code>.</p>
+<dd class="field-even"><p>The signed CRL object.  The caller is responsible for persisting it.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>x509.CertificateRevocationList</p>
@@ -377,7 +417,7 @@ to storage via <code class="docutils literal notranslate"><span class="pre">Base
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">build_self_signed_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Internal</span> <span class="pre">CA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'My</span> <span class="pre">Company'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3650</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.build_self_signed_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">build_self_signed_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Internal</span> <span class="pre">CA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'My</span> <span class="pre">Company'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3650</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">KeyAlgorithm.RSA</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.build_self_signed_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.build_self_signed_ca" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a self-signed root CA certificate and its private key.</p>
 <p>This is a <code class="docutils literal notranslate"><span class="pre">&#64;staticmethod</span></code> — it requires no loaded CA because the
 resulting certificate is its own issuer.  It is typically called once
@@ -389,23 +429,21 @@ during bootstrap to establish the trust anchor for the PKI.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Common Name (CN) for the CA Subject / Issuer fields.
-Default: <code class="docutils literal notranslate"><span class="pre">&quot;Internal</span> <span class="pre">CA&quot;</span></code>.</p></li>
-<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Organization (O) field.  Default: <code class="docutils literal notranslate"><span class="pre">&quot;My</span> <span class="pre">Company&quot;</span></code>.</p></li>
-<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Two-letter ISO 3166-1 alpha-2 country code (C field).
-Default: <code class="docutils literal notranslate"><span class="pre">&quot;UA&quot;</span></code>.</p></li>
-<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – RSA key length in bits.  Use <code class="docutils literal notranslate"><span class="pre">2048</span></code> for standard security or
-<code class="docutils literal notranslate"><span class="pre">4096</span></code> for long-lived roots.  Default: <code class="docutils literal notranslate"><span class="pre">2048</span></code>.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">3650</span></code> (≈10 years).</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity period.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
+<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Common Name (CN) for the CA Subject / Issuer fields.</p></li>
+<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Organization (O) field.</p></li>
+<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Two-letter ISO 3166-1 alpha-2 country code (C field).</p></li>
+<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – RSA key length in bits (ignored for EC / Ed25519).</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">3650</span></code> (≈10 years).</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity period.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
 <li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>) – Optional logger.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>.</p></li>
+<li><p><strong>key_algorithm</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm" title="tiny_ca.KeyAlgorithm"><em>KeyAlgorithm</em></a>) – Algorithm of the CA key pair.  Default: RSA.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key)</span></code> — both must be persisted by the caller.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[x509.Certificate, rsa.RSAPrivateKey]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[x509.Certificate, <a class="reference internal" href="tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey" title="tiny_ca.utils.keys.PrivateKey">PrivateKey</a>]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry date is already in the past.</p>
@@ -415,86 +453,57 @@ Default: <code class="docutils literal notranslate"><span class="pre">&quot;UA&q
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.cosign_certificate">
-<span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.cosign_certificate" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.cosign_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Re-sign an existing certificate with this CA’s key and certificate.</p>
-<p>Creates a new <code class="docutils literal notranslate"><span class="pre">x509.Certificate</span></code> that preserves the original
-Subject, public key, and all v3 extensions, but replaces:</p>
-<ul class="simple">
-<li><p><strong>Issuer</strong> — set to this CA’s Subject.</p></li>
-<li><p><strong>AuthorityKeyIdentifier</strong> — updated to reflect this CA’s SKI.</p></li>
-<li><p><strong>Serial number</strong> — a fresh serial is generated so the co-signed
-certificate is distinguishable from the original in CRLs and logs.</p></li>
-<li><p><strong>Validity window</strong> — optionally overridden via <em>days_valid</em> and
-<em>valid_from</em>; when both are <code class="docutils literal notranslate"><span class="pre">None</span></code> the original window is
-preserved exactly.</p></li>
-</ul>
-<p>The certificate is signed with SHA-256 using <code class="docutils literal notranslate"><span class="pre">self._ca.ca_key</span></code>.</p>
+<p>The new certificate preserves the original Subject, public key and
+v3 extensions, but replaces the Issuer, the issuer-bound extensions
+(AKI, CRL distribution points, AIA) and the serial number.  The
+validity window is preserved unless <em>days_valid</em> is given.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This operation does <strong>not</strong> verify that the original certificate
-was valid or trusted before co-signing.  Call
-<a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert" title="tiny_ca.ca_factory.factory.CertificateFactory.validate_cert"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_cert()</span></code></a> first if pre-validation is required.</p>
+was valid or trusted before co-signing.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The source certificate whose Subject, public key, and extensions
-are copied into the co-signed output.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Override the validity duration in calendar days, counted from
-<em>valid_from</em> (or <code class="docutils literal notranslate"><span class="pre">now</span></code> when <em>valid_from</em> is also <code class="docutils literal notranslate"><span class="pre">None</span></code>).
-<code class="docutils literal notranslate"><span class="pre">None</span></code> preserves the original <code class="docutils literal notranslate"><span class="pre">not_valid_before</span></code> /
-<code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> window unchanged.</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Override the start of the validity window.  Ignored when
-<em>days_valid</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.  <code class="docutils literal notranslate"><span class="pre">None</span></code> + <em>days_valid</em> set →
-uses the current UTC time as the start.</p></li>
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The source certificate.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>) – Override the validity duration; <code class="docutils literal notranslate"><span class="pre">None</span></code> keeps the original window.</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the overridden window (ignored when <em>days_valid</em> is None).</p></li>
+<li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a><em> | </em><em>None</em>) – Serial prefix for the co-signed certificate.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses
+<code class="docutils literal notranslate"><span class="pre">CertType.CA</span></code> for CA certificates and <code class="docutils literal notranslate"><span class="pre">CertType.SERVICE</span></code>
+otherwise.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A new certificate object identical in content to <em>cert</em> except
-for the issuer, AKI, serial number, and (optionally) validity
-window.  Must be persisted by the caller.</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If <em>days_valid</em> is provided and the computed expiry is in the past.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>x509.Certificate</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If <em>days_valid</em> is provided and the computed expiry is already
-    in the past.</p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code></span></p>
 </dd>
 </dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cosigned</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">cosign_certificate</span><span class="p">(</span><span class="n">third_party_cert</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="mi">365</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cosigned</span><span class="o">.</span><span class="n">issuer</span> <span class="o">==</span> <span class="n">factory</span><span class="o">.</span><span class="n">_ca</span><span class="o">.</span><span class="n">ca_cert</span><span class="o">.</span><span class="n">subject</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cosigned</span><span class="o">.</span><span class="n">subject</span> <span class="o">==</span> <span class="n">third_party_cert</span><span class="o">.</span><span class="n">subject</span>
-</pre></div>
-</div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.export_pkcs12">
 <span class="sig-name descname"><span class="pre">export_pkcs12</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">private_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.export_pkcs12"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.export_pkcs12" title="Link to this definition">¶</a></dt>
 <dd><p>Pack <em>cert</em> and <em>private_key</em> into a PKCS#12 (PFX) bundle.</p>
-<p>PKCS#12 is the standard container format accepted by Windows certificate
-stores, macOS Keychain, Java keystores, and most browser import dialogs.
-The CA certificate is automatically included as the issuer in the chain.</p>
+<p>The CA certificate is included as the issuer in the chain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The leaf certificate to export.</p></li>
-<li><p><strong>private_key</strong> (<em>rsa.RSAPrivateKey</em>) – The private key corresponding to <em>cert</em>’s public key.</p></li>
-<li><p><strong>password</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><em>bytes</em></a><em> | </em><em>None</em>) – Optional password to encrypt the PKCS#12 file.  <code class="docutils literal notranslate"><span class="pre">None</span></code> produces
-an unencrypted bundle (not recommended for production).</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Friendly name (alias) embedded in the PKCS#12 bag.  Defaults to
-the certificate’s Common Name when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>private_key</strong> (<a class="reference internal" href="tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey" title="tiny_ca.utils.keys.PrivateKey"><em>PrivateKey</em></a>) – The private key corresponding to <em>cert</em>’s public key.</p></li>
+<li><p><strong>password</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><em>bytes</em></a><em> | </em><em>None</em>) – Password to encrypt the bundle.  <code class="docutils literal notranslate"><span class="pre">None</span></code> produces an unencrypted
+bundle (not recommended for production).</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Friendly name (alias).  Defaults to the certificate’s Common Name.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Raw DER-encoded PKCS#12 bytes.  Write to a <code class="docutils literal notranslate"><span class="pre">.p12</span></code> or <code class="docutils literal notranslate"><span class="pre">.pfx</span></code>
-file, or send as an HTTP response with
-<code class="docutils literal notranslate"><span class="pre">Content-Type:</span> <span class="pre">application/x-pkcs12</span></code>.</p>
+<dd class="field-even"><p>Raw DER-encoded PKCS#12 bytes.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)">bytes</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)">bytes</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -502,20 +511,15 @@ file, or send as an HTTP response with
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.get_cert_chain">
 <span class="sig-name descname"><span class="pre">get_cert_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.get_cert_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.get_cert_chain" title="Link to this definition">¶</a></dt>
-<dd><p>Return the full certificate chain from <em>cert</em> up to the CA root.</p>
-<p>For a single-level PKI (leaf → root CA) this returns <code class="docutils literal notranslate"><span class="pre">[cert,</span> <span class="pre">ca_cert]</span></code>.
-The list is ordered leaf-first, root-last — the same order expected by
-nginx <code class="docutils literal notranslate"><span class="pre">ssl_certificate</span></code>, envoy <code class="docutils literal notranslate"><span class="pre">tls_certificates</span></code>, and the
-<code class="docutils literal notranslate"><span class="pre">fullchain.pem</span></code> convention used by Let’s Encrypt.</p>
+<dd><p>Return the certificate chain from <em>cert</em> up to the CA root.</p>
+<p>For a single-level PKI (leaf → root CA) this returns <code class="docutils literal notranslate"><span class="pre">[cert,</span> <span class="pre">ca_cert]</span></code>
+— leaf first, root last (the <code class="docutils literal notranslate"><span class="pre">fullchain.pem</span></code> convention).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The leaf (or intermediate) certificate to start the chain from.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">[cert,</span> <span class="pre">self._ca.ca_cert]</span></code> — leaf first, CA root last.</p>
-</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[x509.Certificate]</p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cert</strong> (<em>Certificate</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -524,88 +528,61 @@ nginx <code class="docutils literal notranslate"><span class="pre">ssl_certifica
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.inspect_certificate">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">inspect_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.inspect_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.inspect_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Extract and return a structured, human-readable summary of <em>cert</em>.</p>
-<p>Parses every commonly-used X.509 v3 extension and Subject attribute
-into plain Python values wrapped in a <code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateDetails</span></code>
-dataclass.  The method never performs cryptographic verification —
-use <a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert" title="tiny_ca.ca_factory.factory.CertificateFactory.validate_cert"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_cert()</span></code></a> for that.  It is therefore safe to call on
+<p>The method never performs cryptographic verification — use
+<a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert" title="tiny_ca.ca_factory.factory.CertificateFactory.validate_cert"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_cert()</span></code></a> for that.  It is therefore safe to call on
 certificates from <em>any</em> issuer.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to inspect.  May have been issued by this CA or
-by a completely different PKI.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>A frozen dataclass with the following fields populated:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">serial_number</span></code> — raw integer serial.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">common_name</span></code> / <code class="docutils literal notranslate"><span class="pre">organization</span></code> / <code class="docutils literal notranslate"><span class="pre">country</span></code> — first
-matching Subject attribute, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when absent.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">issuer_cn</span></code> — CN from the Issuer field, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">not_valid_before</span></code> / <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> — UTC datetimes.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">is_ca</span></code> — <code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">BasicConstraints.ca</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">san_dns</span></code> / <code class="docutils literal notranslate"><span class="pre">san_ip</span></code> — lists from the SAN extension.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">key_usage</span></code> — list of enabled <code class="docutils literal notranslate"><span class="pre">KeyUsage</span></code> bit names.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">extended_key_usage</span></code> — list of EKU OID dotted strings.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">fingerprint_sha256</span></code> — colon-separated uppercase hex.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">subject_key_identifier</span></code> — hex string or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">public_key_size</span></code> — RSA key bits or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-</ul>
-</p>
-</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails" title="tiny_ca.models.certificate.CertificateDetails">CertificateDetails</a></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails" title="tiny_ca.models.certificate.CertificateDetails"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateDetails</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cert</strong> (<em>Certificate</em>)</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">details</span> <span class="o">=</span> <span class="n">CertificateFactory</span><span class="o">.</span><span class="n">inspect_certificate</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">common_name</span><span class="p">)</span>
-<span class="go">&#39;nginx.internal&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">is_ca</span><span class="p">)</span>
-<span class="go">False</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">details</span><span class="o">.</span><span class="n">fingerprint_sha256</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
-<span class="go">&#39;AB:CD:EF&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">details</span><span class="o">.</span><span class="n">common_name</span>
+<span class="go">'nginx.internal'</span>
 </pre></div>
 </div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate">
-<span class="sig-name descname"><span class="pre">issue_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CertType.SERVICE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_server_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_client_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_dns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.issue_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">issue_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CertType.SERVICE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_server_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_client_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_dns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">san_ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">KeyAlgorithm.RSA</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.issue_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Issue a signed end-entity certificate for the given subject parameters.</p>
 <p>Workflow:
-1. Generate a fresh RSA key pair.
+1. Generate a fresh key pair (<em>key_algorithm</em>).
 2. Build the Subject <code class="docutils literal notranslate"><span class="pre">x509.Name</span></code> from CA base info + <em>common_name</em> / <em>email</em>.
 3. Create a CSR signed with the new private key.
-4. Assemble X.509 extensions (KeyUsage, EKU, SAN, SKI, AKI).
-5. Sign the certificate with the CA key from <code class="docutils literal notranslate"><span class="pre">self._ca</span></code>.</p>
-<p>The Subject inherits <em>country</em> and <em>organization</em> from the CA’s own
-certificate so that all issued certificates share a consistent issuer
-hierarchy.</p>
+4. Assemble X.509 extensions (KeyUsage, EKU, SAN, SKI, AKI and — when</p>
+<blockquote>
+<div><p>configured — CRLDistributionPoints / AuthorityInformationAccess).</p>
+</div></blockquote>
+<ol class="arabic simple" start="5">
+<li><p>Sign the certificate with the CA key from <code class="docutils literal notranslate"><span class="pre">self._ca</span></code>.</p></li>
+</ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Common Name (CN) for the new certificate’s Subject.</p></li>
-<li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category used when encoding the serial number.
-Default: <code class="docutils literal notranslate"><span class="pre">CertType.SERVICE</span></code>.</p></li>
-<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – RSA key length in bits.  Default: <code class="docutils literal notranslate"><span class="pre">2048</span></code>.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">365</span></code>.</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity period.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
-<li><p><strong>email</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Optional email address added as an <code class="docutils literal notranslate"><span class="pre">emailAddress</span></code> Subject attribute.</p></li>
-<li><p><strong>is_server_cert</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds <code class="docutils literal notranslate"><span class="pre">ServerAuth</span></code> to the Extended Key Usage
-extension and includes <em>common_name</em> as a DNS SAN (RFC 2818
-compliance).</p></li>
-<li><p><strong>is_client_cert</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds <code class="docutils literal notranslate"><span class="pre">ClientAuth</span></code> to the Extended Key Usage
-extension.</p></li>
-<li><p><strong>san_dns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Additional DNS names for the Subject Alternative Name extension.</p></li>
-<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – IP addresses (as strings) for the Subject Alternative Name extension.</p></li>
+<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Common Name (CN) for the new certificate’s Subject.</p></li>
+<li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category used when encoding the serial number.</p></li>
+<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – RSA key length in bits (ignored for EC / Ed25519).</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">365</span></code>.</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity period.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
+<li><p><strong>email</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Optional email address added as an <code class="docutils literal notranslate"><span class="pre">emailAddress</span></code> Subject attribute.</p></li>
+<li><p><strong>is_server_cert</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – Adds <code class="docutils literal notranslate"><span class="pre">ServerAuth</span></code> EKU and includes <em>common_name</em> as a DNS SAN.</p></li>
+<li><p><strong>is_client_cert</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – Adds <code class="docutils literal notranslate"><span class="pre">ClientAuth</span></code> EKU.</p></li>
+<li><p><strong>san_dns</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>) – Additional DNS names for the Subject Alternative Name extension.</p></li>
+<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>IPv4Address</em><em> | </em><em>IPv6Address</em><em>] </em><em>| </em><em>None</em>) – IP addresses for the Subject Alternative Name extension.</p></li>
+<li><p><strong>key_algorithm</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm" title="tiny_ca.KeyAlgorithm"><em>KeyAlgorithm</em></a>) – Algorithm of the new key pair.  Default: RSA.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key,</span> <span class="pre">csr)</span></code> — the certificate and key must
-be persisted by the caller; the CSR is returned for audit purposes.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key,</span> <span class="pre">csr)</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[x509.Certificate, <a class="reference internal" href="tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey" title="tiny_ca.utils.keys.PrivateKey">PrivateKey</a>, x509.CertificateSigningRequest]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry date is already in the past.</p>
@@ -615,36 +592,32 @@ be persisted by the caller; the CSR is returned for audit purposes.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.issue_intermediate_ca">
-<span class="sig-name descname"><span class="pre">issue_intermediate_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1825</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.issue_intermediate_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_intermediate_ca" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">issue_intermediate_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1825</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">KeyAlgorithm.RSA</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.issue_intermediate_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_intermediate_ca" title="Link to this definition">¶</a></dt>
 <dd><p>Issue a subordinate (intermediate) CA certificate signed by this CA.</p>
 <p>The resulting certificate has <code class="docutils literal notranslate"><span class="pre">BasicConstraints(ca=True)</span></code> and
-<code class="docutils literal notranslate"><span class="pre">KeyUsage(key_cert_sign=True,</span> <span class="pre">crl_sign=True)</span></code> so it can in turn
-sign leaf certificates.  The <code class="docutils literal notranslate"><span class="pre">path_length</span></code> constraint limits how
-deep the sub-hierarchy can go.</p>
+<code class="docutils literal notranslate"><span class="pre">KeyUsage(key_cert_sign=True,</span> <span class="pre">crl_sign=True)</span></code>.  <code class="docutils literal notranslate"><span class="pre">path_length</span></code>
+limits how deep the sub-hierarchy can go (<code class="docutils literal notranslate"><span class="pre">0</span></code> = may only sign
+leaves, <code class="docutils literal notranslate"><span class="pre">None</span></code> = unlimited).  When configured, the CRL distribution
+point / AIA of this CA are included so the intermediate itself can be
+checked for revocation.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">(intermediate_ca_cert,</span> <span class="pre">intermediate_ca_key)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[x509.Certificate, <a class="reference internal" href="tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey" title="tiny_ca.utils.keys.PrivateKey">PrivateKey</a>]</p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – CN for the intermediate CA Subject.</p></li>
-<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – RSA key size for the intermediate CA key.  Defaults to <code class="docutils literal notranslate"><span class="pre">4096</span></code>
-(recommended for long-lived CA keys).</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Validity in calendar days.  Defaults to <code class="docutils literal notranslate"><span class="pre">1825</span></code> (5 years).</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the validity window.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC time.</p></li>
-<li><p><strong>path_length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">BasicConstraints.path_length</span></code> value.  <code class="docutils literal notranslate"><span class="pre">0</span></code> means this
-intermediate can only sign leaf certificates (cannot create further
-sub-CAs).  <code class="docutils literal notranslate"><span class="pre">None</span></code> means unlimited sub-levels.</p></li>
-<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – O field for the intermediate CA Subject.  Falls back to the parent
-CA’s organization when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
-<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – C field.  Falls back to the parent CA’s country when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>path_length</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>key_algorithm</strong> (<a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.KeyAlgorithm" title="tiny_ca.const.KeyAlgorithm"><em>KeyAlgorithm</em></a>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(intermediate_ca_cert,</span> <span class="pre">intermediate_ca_key)</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[x509.Certificate, rsa.RSAPrivateKey]</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry is already in the past.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -654,34 +627,23 @@ CA’s organization when <code class="docutils literal notranslate"><span class=
 <span class="sig-name descname"><span class="pre">renew_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.renew_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.renew_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Issue a renewal of <em>cert</em> with a fresh validity window but the same
 Subject, public key, and extensions.</p>
-<p>Unlike <code class="xref py py-meth docutils literal notranslate"><span class="pre">rotate_certificate()</span></code> (which generates a new key pair),
-renewal re-uses the existing public key.  This is appropriate when the
-private key has not been compromised and the owner simply needs to
-extend the validity period.</p>
-<p>The renewed certificate receives a new serial number generated by
-<code class="xref py py-class docutils literal notranslate"><span class="pre">SerialWithEncoding</span></code> so it is distinguishable from the original
-in CRLs and audit logs.</p>
+<p>Renewal re-uses the existing public key — appropriate when the key has
+not been compromised.  The renewal receives a new serial number whose
+type prefix is preserved from the original (e.g. a renewed <code class="docutils literal notranslate"><span class="pre">DEVICE</span></code>
+certificate stays <code class="docutils literal notranslate"><span class="pre">DEVICE</span></code>).</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry is already in the past.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code></span></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to renew.  Its Subject, public key, and all v3
-extensions (except AKI, which is updated to point to the current CA)
-are copied verbatim into the renewal.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days the renewed certificate should be valid.
-Default: <code class="docutils literal notranslate"><span class="pre">365</span></code>.</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime.datetime</em></a><em> | </em><em>None</em>) – Start of the new validity window.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the current UTC
-time.</p></li>
+<li><p><strong>cert</strong> (<em>Certificate</em>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A freshly signed certificate with the same identity but a new
-validity window and serial number.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>x509.Certificate</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed expiry is already in the past.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -689,31 +651,50 @@ validity window and serial number.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.validate_cert">
 <span class="sig-name descname"><span class="pre">validate_cert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.validate_cert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert" title="Link to this definition">¶</a></dt>
-<dd><p>Verify that <em>cert</em> was issued by this CA, is within its validity window,
-and carries a cryptographically correct signature.</p>
-<p>Three checks are performed in order:
-1. <strong>Issuer match</strong> — <code class="docutils literal notranslate"><span class="pre">cert.issuer</span></code> must equal the CA’s Subject.
-2. <strong>Validity window</strong> — current UTC time must be between</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">cert.not_valid_before_utc</span></code> and <code class="docutils literal notranslate"><span class="pre">cert.not_valid_after_utc</span></code>.</p>
-</div></blockquote>
-<ol class="arabic simple" start="3">
-<li><p><strong>Signature</strong> — the CA public key is used to verify the certificate
-signature using PKCS#1 v1.5 with the algorithm declared in the cert.</p></li>
-</ol>
+<dd><p>Verify that <em>cert</em> was issued directly by this CA, is within its
+validity window, and carries a cryptographically correct signature.</p>
+<p>Signature verification uses <code class="docutils literal notranslate"><span class="pre">Certificate.verify_directly_issued_by</span></code>
+and therefore works for RSA (PKCS#1 v1.5 and PSS), ECDSA and Ed25519.
+For certificates issued by an intermediate CA use
+<a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_chain" title="tiny_ca.ca_factory.factory.CertificateFactory.validate_chain"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_chain()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><strong>ValidationCertError</strong></a> – If the issuer, validity window or signature check fails.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cert</strong> (<em>Certificate</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.validate_chain">
+<span class="sig-name descname"><span class="pre">validate_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.validate_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_chain" title="Link to this definition">¶</a></dt>
+<dd><p>Validate <em>cert</em> up to this CA, optionally through intermediate CAs.</p>
+<p>For every link the method checks the validity window, the signature,
+that the issuer is a CA (<code class="docutils literal notranslate"><span class="pre">BasicConstraints.ca</span></code> and
+<code class="docutils literal notranslate"><span class="pre">KeyUsage.key_cert_sign</span></code>) and that <code class="docutils literal notranslate"><span class="pre">path_length</span></code> constraints are
+respected.  The chain must terminate at this factory’s CA certificate
+(the trust anchor).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to validate.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The certificate to validate (usually a leaf).</p></li>
+<li><p><strong>intermediates</strong> (<em>Sequence</em><em>[</em><em>x509.Certificate</em><em>]</em>) – Untrusted intermediate CA certificates that may be needed to
+build the path.  Order does not matter.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Returns silently when all checks pass.</p>
+<dd class="field-even"><p>The validated path, leaf first and the CA root last.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)">list</a>[x509.Certificate]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><strong>ValidationCertError</strong></a> – If any of the three checks fails.  The message describes which
-    check failed and includes the relevant values (timestamps, issuer).</p>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><strong>ValidationCertError</strong></a> – If no valid path to the CA exists.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -721,26 +702,17 @@ signature using PKCS#1 v1.5 with the algorithm declared in the cert.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.factory.CertificateFactory.verify_crl">
 <span class="sig-name descname"><span class="pre">verify_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crl</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/factory.html#CertificateFactory.verify_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.factory.CertificateFactory.verify_crl" title="Link to this definition">¶</a></dt>
-<dd><p>Verify the signature and validity window of <em>crl</em>.</p>
-<p>Checks that:
-1. The CRL was signed by this CA’s private key (issuer match + signature).
-2. The CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> timestamp has not yet passed — i.e. the CRL</p>
-<blockquote>
-<div><p>is still within its declared validity window.</p>
-</div></blockquote>
+<dd><p>Verify the issuer, signature and validity window of <em>crl</em>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>crl</strong> (<em>x509.CertificateRevocationList</em>) – The CRL object to verify.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Returns silently when all checks pass.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><strong>ValidationCertError</strong></a> – If the CRL issuer does not match this CA, the signature is invalid,
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><strong>ValidationCertError</strong></a> – If the CRL issuer does not match this CA, the signature is invalid,
     or the CRL has expired (<code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> is in the past).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crl</strong> (<em>CertificateRevocationList</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -751,6 +723,9 @@ signature using PKCS#1 v1.5 with the algorithm declared in the cert.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ca_loader</strong> (<a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.ICALoader" title="tiny_ca.ca_factory.utils.file_loader.ICALoader"><em>ICALoader</em></a>)</p></li>
 <li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>crl_distribution_points</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>ca_issuers_urls</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>ocsp_urls</strong> (<em>Sequence</em><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -810,6 +785,7 @@ signature using PKCS#1 v1.5 with the algorithm declared in the cert.</p></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.issue_intermediate_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_intermediate_ca()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.renew_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.renew_certificate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.validate_chain"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_chain()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.factory.CertificateFactory.verify_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.verify_crl()</span></code></a></li>
 </ul>
 </li>

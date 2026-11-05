@@ -15,6 +15,7 @@ from tiny_ca.const import CertType
 from tiny_ca.db.async_db_manager import AsyncDBHandler, DatabaseManager
 from tiny_ca.db.const import CertificateStatus, RevokeStatus
 from tiny_ca.db.models import CertificateRecord
+from tiny_ca.exc import DBOperationError
 from tiny_ca.settings import DEFAULT_LOGGER
 
 from datetime import UTC, timedelta, datetime
@@ -153,9 +154,10 @@ class TestAsyncDBHandler:
         """Test get_by_serial when database exception occurs."""
         mock_session.execute.side_effect = Exception("Database error")
 
-        result = await handler.get_by_serial(12345)
+        # Fail closed: a DB error must never look like "not found".
+        with pytest.raises(DBOperationError, match="get_by_serial"):
+            await handler.get_by_serial(12345)
 
-        assert result is None
         handler._logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -163,7 +165,7 @@ class TestAsyncDBHandler:
         """Test get_by_name when certificate is found."""
         mock_cert = MagicMock(spec=CertificateRecord)
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_cert
+        mock_result.scalars.return_value.first.return_value = mock_cert
         mock_session.execute.return_value = mock_result
 
         result = await handler.get_by_name("test.example.com")
@@ -177,7 +179,7 @@ class TestAsyncDBHandler:
     async def test_get_by_name_not_found(self, handler, mock_session):
         """Test get_by_name when certificate is not found."""
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
+        mock_result.scalars.return_value.first.return_value = None
         mock_session.execute.return_value = mock_result
 
         result = await handler.get_by_name("test.example.com")
@@ -192,9 +194,9 @@ class TestAsyncDBHandler:
         """Test get_by_name when database exception occurs."""
         mock_session.execute.side_effect = Exception("Database error")
 
-        result = await handler.get_by_name("test.example.com")
+        with pytest.raises(DBOperationError, match="get_by_name"):
+            await handler.get_by_name("test.example.com")
 
-        assert result is None
         handler._logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -495,12 +497,12 @@ class TestAsyncDBHandlerListAll:
         assert len(results) == 1
 
     @pytest.mark.asyncio
-    async def test_list_all_error_returns_empty(self, handler, mock_session):
+    async def test_list_all_error_raises(self, handler, mock_session):
         mock_session.execute.side_effect = Exception("Database error")
 
-        results = await handler.list_all()
+        with pytest.raises(DBOperationError, match="list_all"):
+            await handler.list_all()
 
-        assert results == []
         handler._logger.error.assert_called_once()
 
 
@@ -528,12 +530,12 @@ class TestAsyncDBHandlerGetExpiring:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_get_expiring_error_returns_empty(self, handler, mock_session):
+    async def test_get_expiring_error_raises(self, handler, mock_session):
         mock_session.execute.side_effect = Exception("Database error")
 
-        results = await handler.get_expiring(within_days=30)
+        with pytest.raises(DBOperationError, match="get_expiring"):
+            await handler.get_expiring(within_days=30)
 
-        assert results == []
         handler._logger.error.assert_called_once()
 
 
@@ -603,9 +605,9 @@ class TestAsyncDBHandlerUpdateStatusExpired:
         mock_session.execute.side_effect = Exception("Database error")
         mock_session.rollback = AsyncMock()
 
-        count = await handler.update_status_expired()
+        with pytest.raises(DBOperationError, match="update_status_expired"):
+            await handler.update_status_expired()
 
-        assert count == 0
         mock_session.rollback.assert_called_once()
 
 

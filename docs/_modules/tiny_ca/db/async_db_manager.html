@@ -233,30 +233,36 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.db.async_db_manager</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncGenerator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span></span><span class="sd">"""</span>
+<span class="sd">async_db_manager.py</span>
+
+<span class="sd">Asynchronous SQLAlchemy-backed implementation of the certificate registry</span>
+<span class="sd">(``AsyncDBHandler``).  Behaviour and error policy mirror</span>
+<span class="sd">:class:`tiny_ca.db.sync_db_manager.SyncDBHandler`.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography</span><span class="w"> </span><span class="kn">import</span> <span class="n">x509</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat._oid</span><span class="w"> </span><span class="kn">import</span> <span class="n">NameOID</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">serialization</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Row</span><span class="p">,</span> <span class="n">asc</span><span class="p">,</span> <span class="n">delete</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">select</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">delete</span> <span class="k">as</span> <span class="n">sa_delete</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">update</span> <span class="k">as</span> <span class="n">sa_update</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Row</span><span class="p">,</span> <span class="n">asc</span><span class="p">,</span> <span class="n">delete</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">select</span><span class="p">,</span> <span class="n">update</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span><span class="p">,</span> <span class="n">async_sessionmaker</span><span class="p">,</span> <span class="n">create_async_engine</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.exc</span><span class="w"> </span><span class="kn">import</span> <span class="n">DBOperationError</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_LOGGER</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDB</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateStatus</span><span class="p">,</span> <span class="n">RevokeStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Base</span><span class="p">,</span> <span class="n">CertificateRecord</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_record</span><span class="p">,</span> <span class="n">utc_now_naive</span>
 
 
 <div class="viewcode-block" id="DatabaseManager">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.DatabaseManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DatabaseManager</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Manages the SQLAlchemy engine and ``sessionmaker`` factory.</span>
 
 <span class="sd">    Responsibility: connection lifecycle *only*.  This class creates the</span>
@@ -267,19 +273,19 @@
 <span class="sd">    ----------</span>
 <span class="sd">    db_url : str</span>
 <span class="sd">        SQLAlchemy database URL.  Supports any SQLAlchemy-compatible backend,</span>
-<span class="sd">        e.g. ``&quot;sqlite:///ca.db&quot;`` or</span>
-<span class="sd">        ``&quot;postgresql+psycopg2://user:pass@host/dbname&quot;``.</span>
-<span class="sd">        Default: ``&quot;sqlite:///ca_repository.db&quot;``.</span>
+<span class="sd">        e.g. ``"sqlite:///ca.db"`` or</span>
+<span class="sd">        ``"postgresql+psycopg2://user:pass@host/dbname"``.</span>
+<span class="sd">        Default: ``"sqlite:///ca_repository.db"``.</span>
 <span class="sd">    create_all : bool</span>
 <span class="sd">        When ``True`` (default), calls ``Base.metadata.create_all`` at</span>
 <span class="sd">        construction so the schema is present before the first query.</span>
 <span class="sd">        Set to ``False`` when using Alembic or another migration tool that</span>
 <span class="sd">        manages the schema independently.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="DatabaseManager.__init__">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.DatabaseManager.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sqlite+aiosqlite:///ca_repository.db&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sqlite+aiosqlite:///ca_repository.db"</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="n">create_async_engine</span><span class="p">(</span><span class="n">db_url</span><span class="p">,</span> <span class="n">echo</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">async_session</span> <span class="o">=</span> <span class="n">async_sessionmaker</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">expire_on_commit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="n">AsyncSession</span>
@@ -288,7 +294,8 @@
 
 <div class="viewcode-block" id="DatabaseManager.init_db">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.DatabaseManager.init_db">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create the schema (``Base.metadata.create_all``) if it is missing."""</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span><span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">)</span></div>
 
@@ -304,7 +311,7 @@
 <div class="viewcode-block" id="AsyncDBHandler">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AsyncDBHandler</span><span class="p">(</span><span class="n">BaseDB</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Asynchronous, SQLAlchemy-backed certificate registry.</span>
 
 <span class="sd">    Implements the full ``BaseDB`` contract with explicit, atomic transaction</span>
@@ -325,7 +332,7 @@
 <span class="sd">    logger : Logger | None</span>
 <span class="sd">        Logger for operational and diagnostic messages.</span>
 <span class="sd">        Falls back to ``DEFAULT_LOGGER`` when ``None``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="AsyncDBHandler.__init__">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.__init__">[docs]</a>
@@ -334,85 +341,67 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_db</span> <span class="o">=</span> <span class="n">DatabaseManager</span><span class="p">(</span><span class="n">db_url</span><span class="o">=</span><span class="n">db_url</span><span class="p">)</span></div>
 
 
+    <span class="c1"># Error policy: identical to ``SyncDBHandler`` — read operations raise</span>
+    <span class="c1"># ``DBOperationError`` instead of returning "not found" / "empty".</span>
+
 <div class="viewcode-block" id="AsyncDBHandler.get_by_serial">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.get_by_serial">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_by_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Fetch a single certificate record by its X.509 serial number.</span>
 
-<span class="sd">        The serial is stored as a string in the database (to avoid integer</span>
-<span class="sd">        overflow across all backends); the conversion is handled internally.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        serial : int</span>
-<span class="sd">            Integer serial number to look up.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        CertificateRecord | None</span>
-<span class="sd">            The matching ORM record, or ``None`` if no record exists for</span>
-<span class="sd">            *serial* or if a database error occurs.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the database query fails.</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
                     <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
                 <span class="p">)</span>
-
                 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
                 <span class="n">cert</span><span class="p">:</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;get_by_serial(</span><span class="si">%d</span><span class="s2">) → </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
-
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"get_by_serial(</span><span class="si">%d</span><span class="s2">) → </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">cert</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">&quot;get_by_serial(</span><span class="si">%d</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="s2">"get_by_serial(</span><span class="si">%d</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
                 <span class="p">)</span>
-                <span class="k">return</span> <span class="kc">None</span></div>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span><span class="s2">"get_by_serial"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="AsyncDBHandler.get_by_name">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.get_by_name">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Fetch the active VALID certificate record for the given Common Name.</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Fetch the newest VALID certificate record for the given Common Name.</span>
 
-<span class="sd">        Only records with ``status == CertificateStatus.VALID`` are returned.</span>
-<span class="sd">        Revoked and expired records are ignored so that the caller always</span>
-<span class="sd">        receives the currently-active certificate for a given CN, or ``None``</span>
-<span class="sd">        if no active certificate exists.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        common_name : str</span>
-<span class="sd">            The CN (Common Name) value from the certificate Subject field.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        CertificateRecord | None</span>
-<span class="sd">            The matching VALID record, or ``None`` if absent or on DB error.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the database query fails.</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">common_name</span> <span class="o">==</span> <span class="n">common_name</span><span class="p">,</span>
-                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">VALID</span><span class="p">,</span>
+                <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">select</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                        <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">common_name</span> <span class="o">==</span> <span class="n">common_name</span><span class="p">,</span>
+                        <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">VALID</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">desc</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+                    <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
                 <span class="p">)</span>
-
                 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-                <span class="n">cert</span><span class="p">:</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;get_by_name(</span><span class="si">%r</span><span class="s2">) → </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">common_name</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>
+                <span class="n">cert</span><span class="p">:</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"get_by_name(</span><span class="si">%r</span><span class="s2">) → </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">common_name</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">cert</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">&quot;get_by_name(</span><span class="si">%r</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">common_name</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="s2">"get_by_name(</span><span class="si">%r</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">common_name</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
                 <span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span></div>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span><span class="s2">"get_by_name"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="AsyncDBHandler.register_cert_in_db">
@@ -423,66 +412,23 @@
         <span class="n">uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">key_type</span><span class="p">:</span> <span class="n">CertType</span> <span class="o">=</span> <span class="n">CertType</span><span class="o">.</span><span class="n">DEVICE</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Persist a newly issued certificate to the registry.</span>
-
-<span class="sd">        Creates a new ``CertificateRecord`` row with ``status=VALID`` from the</span>
-<span class="sd">        metadata and PEM encoding of *cert*.  The full PEM is stored so the</span>
-<span class="sd">        certificate can be reconstructed independently of the filesystem.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        cert : x509.Certificate</span>
-<span class="sd">            The issued X.509 certificate.  Its Subject must contain at least</span>
-<span class="sd">            one ``commonName`` (CN) attribute.</span>
-<span class="sd">        uuid : str</span>
-<span class="sd">            UUID string that identifies the storage folder holding the</span>
-<span class="sd">            corresponding ``.pem``, ``.key``, and ``.csr`` files.</span>
-<span class="sd">        key_type : CertType</span>
-<span class="sd">            Certificate category.  Stored as its ``str`` value (e.g.</span>
-<span class="sd">            ``&quot;device&quot;``).  Default: ``CertType.DEVICE``.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        bool</span>
-<span class="sd">            ``True`` if the record was committed successfully;</span>
-<span class="sd">            ``False`` if the operation was rolled back due to an error</span>
-<span class="sd">            (e.g. duplicate serial, constraint violation).</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        IndexError</span>
-<span class="sd">            Re-raised if the certificate contains no CN attribute, indicating</span>
-<span class="sd">            a malformed certificate that should not be stored.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
+<span class="sd">            ``True`` on commit, ``False`` on rollback (logged).  Callers must</span>
+<span class="sd">            check the result.</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">common_name</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">get_attributes_for_oid</span><span class="p">(</span><span class="n">NameOID</span><span class="o">.</span><span class="n">COMMON_NAME</span><span class="p">)[</span>
-                    <span class="mi">0</span>
-                <span class="p">]</span><span class="o">.</span><span class="n">value</span>
-                <span class="n">common_name</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">common_name</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">common_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-                    <span class="k">else</span> <span class="n">common_name</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">new_cert</span> <span class="o">=</span> <span class="n">CertificateRecord</span><span class="p">(</span>
-                    <span class="n">serial_number</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">),</span>
-                    <span class="n">common_name</span><span class="o">=</span><span class="n">common_name</span><span class="p">,</span>
-                    <span class="n">not_valid_before</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">not_valid_before_utc</span><span class="p">,</span>
-                    <span class="n">not_valid_after</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">not_valid_after_utc</span><span class="p">,</span>
-                    <span class="n">certificate_pem</span><span class="o">=</span><span class="n">cert</span><span class="o">.</span><span class="n">public_bytes</span><span class="p">(</span>
-                        <span class="n">serialization</span><span class="o">.</span><span class="n">Encoding</span><span class="o">.</span><span class="n">PEM</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
-                    <span class="n">status</span><span class="o">=</span><span class="n">CertificateStatus</span><span class="o">.</span><span class="n">VALID</span><span class="p">,</span>
-                    <span class="n">key_type</span><span class="o">=</span><span class="n">key_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                    <span class="n">uuid</span><span class="o">=</span><span class="n">uuid</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_cert</span><span class="p">)</span>
+                <span class="n">record</span> <span class="o">=</span> <span class="n">build_record</span><span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">key_type</span><span class="p">)</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;Certificate registered: CN=</span><span class="si">%r</span><span class="s2">, serial=</span><span class="si">%s</span><span class="s2">, uuid=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">common_name</span><span class="p">,</span>
+                    <span class="s2">"Certificate registered: CN=</span><span class="si">%r</span><span class="s2">, serial=</span><span class="si">%s</span><span class="s2">, uuid=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="n">record</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span>
                     <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
                     <span class="n">uuid</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -490,7 +436,7 @@
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">&quot;register_cert_in_db failed (serial=</span><span class="si">%s</span><span class="s2">): </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">"register_cert_in_db failed (serial=</span><span class="si">%s</span><span class="s2">): </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
                     <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
                     <span class="n">exc</span><span class="p">,</span>
                     <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -505,66 +451,44 @@
         <span class="n">serial_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">reason</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span> <span class="o">=</span> <span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">unspecified</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">RevokeStatus</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Mark a certificate as revoked and record the reason and timestamp.</span>
-
-<span class="sd">        Looks up the certificate by *serial_number* filtered to</span>
-<span class="sd">        ``status == VALID`` — already-revoked or unknown serials are treated</span>
-<span class="sd">        as not found.  On success the record is updated in-place:</span>
-<span class="sd">        - ``status``            → ``CertificateStatus.REVOKED``</span>
-<span class="sd">        - ``revocation_reason`` → integer value of *reason*</span>
-<span class="sd">        - ``revocation_date``   → current UTC timestamp</span>
-
-<span class="sd">        The change is committed atomically; a rollback is performed on any</span>
-<span class="sd">        unexpected error.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        serial_number : int</span>
-<span class="sd">            Serial number of the certificate to revoke.</span>
-<span class="sd">        reason : x509.ReasonFlags</span>
-<span class="sd">            RFC 5280 §5.3.1 revocation reason code.</span>
-<span class="sd">            Default: ``x509.ReasonFlags.unspecified`` (code 0).</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Mark a VALID certificate as revoked and record the reason and timestamp.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        tuple[bool, RevokeStatus]</span>
-<span class="sd">            ``(True,  RevokeStatus.OK)``            — revocation committed.</span>
-<span class="sd">            ``(False, RevokeStatus.NOT_FOUND)``     — no VALID cert with that serial.</span>
-<span class="sd">            ``(False, RevokeStatus.UNKNOWN_ERROR)`` — unexpected internal error.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
+<span class="sd">            ``(True, OK)``, ``(False, NOT_FOUND)`` or ``(False, UNKNOWN_ERROR)``.</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
                     <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">serial_number</span><span class="p">),</span>
                     <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">VALID</span><span class="p">,</span>
                 <span class="p">)</span>
-
                 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
                 <span class="n">cert</span><span class="p">:</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar_one_or_none</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;get_by_serial(</span><span class="si">%d</span><span class="s2">) → </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial_number</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
 
                 <span class="k">if</span> <span class="n">cert</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="s2">&quot;revoke_certificate: no VALID record found for serial=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">"revoke_certificate: no VALID record found for serial=</span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span>
                         <span class="n">serial_number</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">RevokeStatus</span><span class="o">.</span><span class="n">NOT_FOUND</span>
+
                 <span class="n">cert</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">REVOKED</span>
-                <span class="n">cert</span><span class="o">.</span><span class="n">revocation_reason</span> <span class="o">=</span> <span class="n">reason</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">reason</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>  <span class="c1"># type: ignore</span>
-                <span class="n">cert</span><span class="o">.</span><span class="n">revocation_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="n">cert</span><span class="o">.</span><span class="n">revocation_reason</span> <span class="o">=</span> <span class="n">reason</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">cert</span><span class="o">.</span><span class="n">revocation_date</span> <span class="o">=</span> <span class="n">utc_now_naive</span><span class="p">()</span>
 
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;Certificate revoked: serial=</span><span class="si">%d</span><span class="s2">, reason=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial_number</span><span class="p">,</span> <span class="n">reason</span>
+                    <span class="s2">"Certificate revoked: serial=</span><span class="si">%d</span><span class="s2">, reason=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">serial_number</span><span class="p">,</span> <span class="n">reason</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">RevokeStatus</span><span class="o">.</span><span class="n">OK</span>
 
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">&quot;revoke_certificate(</span><span class="si">%d</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="s2">"revoke_certificate(</span><span class="si">%d</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
                     <span class="n">serial_number</span><span class="p">,</span>
                     <span class="n">exc</span><span class="p">,</span>
                     <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -576,54 +500,38 @@
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.get_revoked_certificates">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_revoked_certificates</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="bp">self</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">Row</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Yield revoked certificate rows relevant for the current CRL window.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">Row</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Yield every revoked certificate that has not yet expired.</span>
 
-<span class="sd">        A record is included when **all** of the following conditions hold:</span>
+<span class="sd">        There is no age cut-off on the revocation date (RFC 5280 §3.3): a</span>
+<span class="sd">        revoked certificate stays on the CRL until its own ``notAfter``.</span>
 
-<span class="sd">        1. ``revocation_date`` is not ``NULL`` — the certificate was actually revoked.</span>
-<span class="sd">        2. ``not_valid_after &gt; now`` — the certificate has not yet expired; expired</span>
-<span class="sd">           certificates need not appear in a CRL because relying parties will</span>
-<span class="sd">           reject them regardless.</span>
-<span class="sd">        3. ``revocation_date &gt; now - 365 days`` — the revocation is recent enough</span>
-<span class="sd">           to be relevant.  This prevents unbounded CRL growth from very old</span>
-<span class="sd">           entries that no relying party could still encounter.</span>
-
-<span class="sd">        Only three columns are selected (``serial_number``, ``revocation_date``,</span>
-<span class="sd">        ``revocation_reason``) to minimise data transfer; callers must not</span>
-<span class="sd">        access other ``CertificateRecord`` attributes on the yielded rows.</span>
-
-<span class="sd">        Yields</span>
+<span class="sd">        Raises</span>
 <span class="sd">        ------</span>
-<span class="sd">        CertificateRecord</span>
-<span class="sd">            SQLAlchemy ``Row`` objects with ``serial_number``,</span>
-<span class="sd">            ``revocation_date``, and ``revocation_reason`` attributes.</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">        All rows are fetched in a single query before yielding begins.  The</span>
-<span class="sd">        session is closed in the ``finally`` block; do not use the yielded</span>
-<span class="sd">        rows after the generator has been exhausted or abandoned.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
-        <span class="n">cutoff</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">365</span><span class="p">)</span>
-
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the query fails at any point — the caller must not publish a</span>
+<span class="sd">            CRL built from a partial result.</span>
+<span class="sd">        """</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">utc_now_naive</span><span class="p">()</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
-            <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span>
-                <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
-                <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_date</span><span class="p">,</span>
-                <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_reason</span><span class="p">,</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_date</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
-                <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">not_valid_after</span> <span class="o">&gt;</span> <span class="n">now</span><span class="p">,</span>
-                <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_date</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
-
-            <span class="k">async</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">row</span></div>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span>
+                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_date</span><span class="p">,</span>
+                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_reason</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">revocation_date</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
+                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">not_valid_after</span> <span class="o">&gt;</span> <span class="n">now</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+                <span class="k">async</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">row</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">"get_revoked_certificates failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span><span class="s2">"get_revoked_certificates"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="AsyncDBHandler.list_all">
@@ -635,26 +543,14 @@
         <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return a paginated list of certificate records with optional filters.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        status : str | None</span>
-<span class="sd">            Filter by lifecycle state.  ``None`` returns all statuses.</span>
-<span class="sd">        key_type : str | None</span>
-<span class="sd">            Filter by certificate category.  ``None`` returns all types.</span>
-<span class="sd">        limit : int</span>
-<span class="sd">            Maximum records to return.  Default: ``100``.</span>
-<span class="sd">        offset : int</span>
-<span class="sd">            Records to skip (pagination).  Default: ``0``.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        list[CertificateRecord]</span>
-<span class="sd">            Records ordered by ``id`` descending.  Empty list on error.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the query fails.</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span>
@@ -670,35 +566,29 @@
                 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
                 <span class="n">rows</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;list_all(status=</span><span class="si">%r</span><span class="s2">, key_type=</span><span class="si">%r</span><span class="s2">) → </span><span class="si">%d</span><span class="s2"> rows&quot;</span><span class="p">,</span>
+                    <span class="s2">"list_all(status=</span><span class="si">%r</span><span class="s2">, key_type=</span><span class="si">%r</span><span class="s2">) → </span><span class="si">%d</span><span class="s2"> rows"</span><span class="p">,</span>
                     <span class="n">status</span><span class="p">,</span>
                     <span class="n">key_type</span><span class="p">,</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;list_all failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">return</span> <span class="p">[]</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"list_all failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span><span class="s2">"list_all"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="AsyncDBHandler.get_expiring">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.get_expiring">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_expiring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">within_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>  <span class="c1"># type: ignore[override]</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return VALID certificates expiring within *within_days* calendar days.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        within_days : int</span>
-<span class="sd">            Look-ahead window in days.  Default: ``30``.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        list[CertificateRecord]</span>
-<span class="sd">            Records ordered by ``not_valid_after`` ascending.  Empty list on error.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the query fails.</span>
+<span class="sd">        """</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">utc_now_naive</span><span class="p">()</span>
         <span class="n">cutoff</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">within_days</span><span class="p">)</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -714,45 +604,37 @@
                 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
                 <span class="n">rows</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;get_expiring(within_days=</span><span class="si">%d</span><span class="s2">) → </span><span class="si">%d</span><span class="s2"> rows&quot;</span><span class="p">,</span> <span class="n">within_days</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+                    <span class="s2">"get_expiring(within_days=</span><span class="si">%d</span><span class="s2">) → </span><span class="si">%d</span><span class="s2"> rows"</span><span class="p">,</span> <span class="n">within_days</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;get_expiring failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">return</span> <span class="p">[]</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"get_expiring failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span><span class="s2">"get_expiring"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
 <div class="viewcode-block" id="AsyncDBHandler.delete_by_uuid">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.delete_by_uuid">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_by_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uuid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Permanently delete the certificate record identified by *uuid*.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        uuid : str</span>
-<span class="sd">            Storage folder UUID of the certificate to delete.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        bool</span>
-<span class="sd">            ``True`` if a row was deleted; ``False`` otherwise.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
+<span class="sd">            ``True`` if a row was deleted; ``False`` otherwise (errors logged).</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">stmt</span> <span class="o">=</span> <span class="n">sa_delete</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                    <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">uuid</span> <span class="o">==</span> <span class="n">uuid</span>
-                <span class="p">)</span>
+                <span class="n">stmt</span> <span class="o">=</span> <span class="n">delete</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="o">.</span><span class="n">uuid</span> <span class="o">==</span> <span class="n">uuid</span><span class="p">)</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
                 <span class="n">deleted</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;delete_by_uuid(</span><span class="si">%r</span><span class="s2">) → deleted=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">deleted</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"delete_by_uuid(</span><span class="si">%r</span><span class="s2">) → deleted=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">deleted</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">deleted</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">&quot;delete_by_uuid(</span><span class="si">%r</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="s2">"delete_by_uuid(</span><span class="si">%r</span><span class="s2">) failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">uuid</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="kc">False</span></div>
 
@@ -760,20 +642,19 @@
 <div class="viewcode-block" id="AsyncDBHandler.update_status_expired">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.async_db_manager.html#tiny_ca.db.async_db_manager.AsyncDBHandler.update_status_expired">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_status_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Bulk-set status=expired for all VALID certs whose validity has passed.</span>
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Number of rows updated.  ``0`` on error.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the update fails (the transaction is rolled back).</span>
+<span class="sd">        """</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">utc_now_naive</span><span class="p">()</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">sa_update</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span>
+                    <span class="n">update</span><span class="p">(</span><span class="n">CertificateRecord</span><span class="p">)</span>
                     <span class="o">.</span><span class="n">where</span><span class="p">(</span>
                         <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">VALID</span><span class="p">,</span>
                         <span class="n">CertificateRecord</span><span class="o">.</span><span class="n">not_valid_after</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">,</span>
@@ -784,15 +665,15 @@
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
                 <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">rowcount</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;update_status_expired: </span><span class="si">%d</span><span class="s2"> rows marked expired&quot;</span><span class="p">,</span> <span class="n">count</span>
+                    <span class="s2">"update_status_expired: </span><span class="si">%d</span><span class="s2"> rows marked expired"</span><span class="p">,</span> <span class="n">count</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="n">count</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">&quot;update_status_expired failed: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="s2">"update_status_expired failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
                 <span class="p">)</span>
-                <span class="k">return</span> <span class="mi">0</span></div>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span><span class="s2">"update_status_expired"</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 </div>
 
 </pre></div>

@@ -11,7 +11,7 @@ Two implementations are provided:
                              authoritative in-process registry is acceptable.
 
 - ``SerialWithEncoding``   — stateless generator that encodes a short name
-                             prefix and a random UUID fragment into a single
+                             prefix and 64 bits of CSPRNG output into a single
                              integer.  No shared state; safe for concurrent use.
 
 SOLID compliance
@@ -31,8 +31,8 @@ DIP : ``CertificateFactory`` (and other consumers) depend on ``ISerialGenerator`
 
 from __future__ import annotations
 
+import secrets
 from typing import Protocol, runtime_checkable
-import uuid
 
 from tiny_ca.const import CertType
 
@@ -320,7 +320,7 @@ class SerialGenerator:
 class SerialWithEncoding:
     """
     Stateless serial-number generator that encodes a short name prefix and
-    a UUID-derived random fragment into a single integer.
+    64 bits of CSPRNG output into a single integer.
 
     Serial number layout
     ::
@@ -331,10 +331,16 @@ class SerialWithEncoding:
     X.509 allows up to 20 bytes / 160 bits per RFC 5280 §4.1.2.2).
 
     - **prefix**       — 2-byte ASCII code from :class:`_PrefixRegistry`.
-    - **encoded name** — up to 4 ASCII characters packed into 32 bits
-                         (little-endian byte order, zero-padded).
-    - **random**       — lower 64 bits of a fresh ``uuid.uuid4()`` ensuring
-                         global uniqueness without shared state.
+    - **encoded name** — up to 10 ASCII characters packed into 80 bits
+                         (little-endian byte order, zero-padded).  Non-ASCII
+                         characters are stored as ``"?"`` so that every
+                         character occupies exactly one byte.
+    - **random**       — 64 bits from :func:`secrets.randbits` (meets the
+                         CA/Browser Forum "≥ 64 bits of CSPRNG output" rule).
+
+    The 16-bit prefixes are all printable ASCII (< 0x80), so the top bit of
+    the 160-bit value is always zero and the DER encoding fits the 20-octet
+    limit of RFC 5280 §4.1.2.2 without a padding byte.
 
     Because no mutable state is kept, this class is safe to use from multiple
     threads or processes simultaneously.
@@ -342,15 +348,15 @@ class SerialWithEncoding:
     Class Attributes
     ----------------
     RANDOM_BITS : int
-        Number of bits reserved for the random (UUID) portion. Default: ``64``.
+        Number of bits reserved for the random portion. Default: ``64``.
     NAME_BITS : int
-        Number of bits reserved for the encoded name portion. Default: ``32``
-        (4 bytes × 8 bits).
+        Number of bits reserved for the encoded name portion. Default: ``80``
+        (10 bytes × 8 bits).
     MAX_NAME_LENGTH : int
-        Maximum number of ASCII characters that can be encoded. Default: ``4``.
+        Maximum number of ASCII characters that can be encoded. Default: ``10``.
     """
 
-    #: Bit-width of the random (UUID) segment.
+    #: Bit-width of the random segment.
     RANDOM_BITS: int = 64
 
     #: Bit-width of the encoded-name segment (10 ASCII chars × 8 bits).
@@ -369,13 +375,13 @@ class SerialWithEncoding:
         Generate a globally unique serial number for *name* and *serial_type*.
 
         Only the first :attr:`MAX_NAME_LENGTH` characters of *name* are encoded;
-        uniqueness is guaranteed by the UUID random segment, not by the name.
+        uniqueness is provided by the random segment, not by the name.
 
         Parameters
         ----------
         name : str
-            Human-readable identifier.  Only the first 4 ASCII characters are
-            embedded; the remainder is ignored (not hashed or truncated with loss).
+            Human-readable identifier.  Only the first 10 characters are
+            embedded; non-ASCII characters become ``"?"``.
         serial_type : CertType
             Certificate category; determines the 2-byte prefix.
 
@@ -394,11 +400,11 @@ class SerialWithEncoding:
         >>> serial = SerialWithEncoding.generate("nginx", CertType.SERVICE)
         >>> cert_type, name = SerialWithEncoding.parse(serial)
         >>> assert cert_type == CertType.SERVICE
-        >>> assert name == "ngin"  # only first 4 chars are stored
+        >>> assert name == "nginx"
         """
         prefix: int = _PrefixRegistry.prefix_for(serial_type)
-        encoded_name: int = cls._encode_name(name[: cls.MAX_NAME_LENGTH])
-        random_part: int = uuid.uuid4().int & cls._random_mask()
+        encoded_name: int = cls._encode_name(cls._to_ascii(name)[: cls.MAX_NAME_LENGTH])
+        random_part: int = secrets.randbits(cls.RANDOM_BITS)
 
         serial: int = (
             (prefix << (cls.NAME_BITS + cls.RANDOM_BITS))
@@ -420,7 +426,7 @@ class SerialWithEncoding:
         Returns
         -------
         tuple[CertType | None, str]
-            ``(cert_type, name_prefix)`` where *name_prefix* is the up-to-4-char
+            ``(cert_type, name_prefix)`` where *name_prefix* is the up-to-10-char
             string recovered from the encoded-name segment.
             *cert_type* is ``None`` if the prefix is unrecognised.
 
@@ -429,7 +435,7 @@ class SerialWithEncoding:
         >>> serial = SerialWithEncoding.generate("ca-root", CertType.CA)
         >>> cert_type, name = SerialWithEncoding.parse(serial)
         >>> assert cert_type == CertType.CA
-        >>> assert name == "ca-r"
+        >>> assert name == "ca-root"
         """
         random_part: int = serial & cls._random_mask()  # noqa: F841 — kept for clarity
         encoded_name: int = (serial >> cls.RANDOM_BITS) & cls._name_mask()
@@ -443,6 +449,16 @@ class SerialWithEncoding:
     # ------------------------------------------------------------------
     # Private encoding helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _to_ascii(text: str) -> str:
+        """
+        Replace every non-ASCII character of *text* with ``"?"``.
+
+        Guarantees that each character fits in one byte, so it can never
+        overflow into the neighbouring prefix / random segments.
+        """
+        return text.encode("ascii", errors="replace").decode("ascii")
 
     @classmethod
     def _encode_name(cls, text: str) -> int:
@@ -465,8 +481,11 @@ class SerialWithEncoding:
         Raises
         ------
         ValueError
-            If *text* is longer than :attr:`MAX_NAME_LENGTH`.
+            If *text* is longer than :attr:`MAX_NAME_LENGTH` or contains
+            non-ASCII characters.
         """
+        if not text.isascii():
+            raise ValueError("Name must be ASCII; use _to_ascii() first.")
         if len(text) > cls.MAX_NAME_LENGTH:
             raise ValueError(
                 f"Name too long: {len(text)} chars > {cls.MAX_NAME_LENGTH} max. "

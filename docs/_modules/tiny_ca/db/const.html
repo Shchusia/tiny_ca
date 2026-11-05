@@ -233,7 +233,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.db.const</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">db/const.py</span>
 
 <span class="sd">Shared constants for the database layer.</span>
@@ -242,7 +242,7 @@
 <span class="sd">possible outcomes of a certificate revocation attempt.  Keeping it in a</span>
 <span class="sd">dedicated module prevents circular imports between ``base_db``, the ORM</span>
 <span class="sd">models, and the concrete handler implementations.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -252,7 +252,7 @@
 <div class="viewcode-block" id="RevokeStatus">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.const.html#tiny_ca.db.const.RevokeStatus">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RevokeStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Enumerated outcomes for a certificate revocation attempt.</span>
 
 <span class="sd">    Used as the second element of the ``(bool, RevokeStatus)`` tuple returned</span>
@@ -280,27 +280,27 @@
 <span class="sd">    &gt;&gt;&gt; success, status = db.revoke_certificate(serial=12345, reason=ReasonFlags.key_compromise)</span>
 <span class="sd">    &gt;&gt;&gt; if not success:</span>
 <span class="sd">    ...     if status == RevokeStatus.NOT_FOUND:</span>
-<span class="sd">    ...         logger.warning(&quot;Certificate not found&quot;)</span>
+<span class="sd">    ...         logger.warning("Certificate not found")</span>
 <span class="sd">    ...     else:</span>
-<span class="sd">    ...         logger.error(&quot;Internal revocation error&quot;)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ...         logger.error("Internal revocation error")</span>
+<span class="sd">    """</span>
 
     <span class="n">NOT_FOUND</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;The certificate was not revoked because there is no valid certificate &quot;</span>
-        <span class="s2">&quot;with the specified serial number.&quot;</span>
+        <span class="s2">"The certificate was not revoked because there is no valid certificate "</span>
+        <span class="s2">"with the specified serial number."</span>
     <span class="p">)</span>
     <span class="n">UNKNOWN_ERROR</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;The certificate was not revoked due to an internal error. &quot;</span>
-        <span class="s2">&quot;Please review the service logs.&quot;</span>
+        <span class="s2">"The certificate was not revoked due to an internal error. "</span>
+        <span class="s2">"Please review the service logs."</span>
     <span class="p">)</span>
-    <span class="n">OK</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span></div>
+    <span class="n">OK</span> <span class="o">=</span> <span class="s2">"success"</span></div>
 
 
 
 <div class="viewcode-block" id="CertificateStatus">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.const.html#tiny_ca.db.const.CertificateStatus">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CertificateStatus</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Lifecycle state of a certificate record in the registry.</span>
 
 <span class="sd">    Stored as a lowercase string in the ``status`` column of</span>
@@ -317,19 +317,19 @@
 <span class="sd">        The ``revocation_date`` and ``revocation_reason`` columns on the</span>
 <span class="sd">        corresponding ``CertificateRecord`` row must be non-null.</span>
 <span class="sd">    EXPIRED :</span>
-<span class="sd">        The certificate&#39;s ``not_valid_after`` date has passed.  This status</span>
+<span class="sd">        The certificate's ``not_valid_after`` date has passed.  This status</span>
 <span class="sd">        may be set by a background job; alternatively, callers can detect</span>
 <span class="sd">        expiry by comparing ``not_valid_after`` to the current time.</span>
 <span class="sd">    UNKNOWN :</span>
 <span class="sd">        The status could not be determined, typically because no record was</span>
 <span class="sd">        found for the requested serial number.  Used as a safe sentinel value</span>
 <span class="sd">        by ``CertLifecycleManager.get_certificate_status``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">VALID</span> <span class="o">=</span> <span class="s2">&quot;valid&quot;</span>
-    <span class="n">REVOKED</span> <span class="o">=</span> <span class="s2">&quot;revoked&quot;</span>
-    <span class="n">EXPIRED</span> <span class="o">=</span> <span class="s2">&quot;expired&quot;</span>
-    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span></div>
+    <span class="n">VALID</span> <span class="o">=</span> <span class="s2">"valid"</span>
+    <span class="n">REVOKED</span> <span class="o">=</span> <span class="s2">"revoked"</span>
+    <span class="n">EXPIRED</span> <span class="o">=</span> <span class="s2">"expired"</span>
+    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="s2">"unknown"</span></div>
 
 </pre></div>
         </article>

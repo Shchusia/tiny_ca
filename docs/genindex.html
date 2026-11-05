@@ -281,13 +281,19 @@
 </li>
           <li><a href="modules/exceptions.html#tiny_ca.exc.CertNotFound.__init__">(tiny_ca.exc.CertNotFound method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.CertNotFound.__init__">[1]</a>
 </li>
+          <li><a href="modules/exceptions.html#tiny_ca.exc.CertRevocationError.__init__">(tiny_ca.exc.CertRevocationError method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.CertRevocationError.__init__">[1]</a>
+</li>
           <li><a href="modules/exceptions.html#tiny_ca.exc.CryptoException.__init__">(tiny_ca.exc.CryptoException method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.CryptoException.__init__">[1]</a>
 </li>
           <li><a href="modules/exceptions.html#tiny_ca.exc.DBNotInitedError.__init__">(tiny_ca.exc.DBNotInitedError method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError.__init__">[1]</a>
 </li>
+          <li><a href="modules/exceptions.html#tiny_ca.exc.DBOperationError.__init__">(tiny_ca.exc.DBOperationError method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.DBOperationError.__init__">[1]</a>
+</li>
           <li><a href="modules/exceptions.html#tiny_ca.exc.ErrorLoadCert.__init__">(tiny_ca.exc.ErrorLoadCert method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.ErrorLoadCert.__init__">[1]</a>
 </li>
           <li><a href="modules/exceptions.html#tiny_ca.exc.FileAlreadyExists.__init__">(tiny_ca.exc.FileAlreadyExists method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists.__init__">[1]</a>
+</li>
+          <li><a href="modules/exceptions.html#tiny_ca.exc.InvalidPathError.__init__">(tiny_ca.exc.InvalidPathError method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.InvalidPathError.__init__">[1]</a>
 </li>
           <li><a href="modules/exceptions.html#tiny_ca.exc.InvalidRangeTimeCertificate.__init__">(tiny_ca.exc.InvalidRangeTimeCertificate method)</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate.__init__">[1]</a>
 </li>
@@ -390,8 +396,6 @@
 </li>
         <li><a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel">BaseCertificateDataModel (class in tiny_ca.models.certificate)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="modules/tiny_ca.html#tiny_ca.BaseDB">BaseDB (class in tiny_ca)</a>
 
         <ul>
@@ -400,6 +404,8 @@
           <li><a href="modules/db.html#tiny_ca.db.base_db.BaseDB">(class in tiny_ca.db.base_db)</a>, <a href="modules/tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB">[1]</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="modules/tiny_ca.html#tiny_ca.BaseStorage">BaseStorage (class in tiny_ca)</a>
 
         <ul>
@@ -416,6 +422,8 @@
           <li><a href="modules/tiny_ca.html#tiny_ca.CertificateFactory.build_crl">(tiny_ca.CertificateFactory method)</a>
 </li>
         </ul></li>
+        <li><a href="modules/tiny_ca.db.utils.html#tiny_ca.db.utils.build_record">build_record() (in module tiny_ca.db.utils)</a>
+</li>
         <li><a href="modules/tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.build_self_signed_ca">build_self_signed_ca() (tiny_ca.ca_factory.CertificateFactory static method)</a>
 
         <ul>
@@ -496,6 +504,10 @@
           <li><a href="modules/ca_factory.html#tiny_ca.ca_factory.utils.file_loader.CAFileLoader">(class in tiny_ca.ca_factory.utils.file_loader)</a>, <a href="modules/tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.CAFileLoader">[1]</a>
 </li>
         </ul></li>
+        <li><a href="modules/managers.html#tiny_ca.managers.sync_lifecycle_manager.cert_type_from_record">cert_type_from_record() (in module tiny_ca.managers.sync_lifecycle_manager)</a>, <a href="modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.cert_type_from_record">[1]</a>
+</li>
+        <li><a href="modules/tiny_ca.db.utils.html#tiny_ca.db.utils.certificate_common_name">certificate_common_name() (in module tiny_ca.db.utils)</a>
+</li>
         <li><a href="modules/tiny_ca.html#tiny_ca.CertificateRecord.certificate_pem">certificate_pem (tiny_ca.CertificateRecord attribute)</a>
 
         <ul>
@@ -551,6 +563,8 @@
 </li>
         </ul></li>
         <li><a href="modules/exceptions.html#tiny_ca.exc.CertNotFound">CertNotFound</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.CertNotFound">[1]</a>
+</li>
+        <li><a href="modules/exceptions.html#tiny_ca.exc.CertRevocationError">CertRevocationError</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.CertRevocationError">[1]</a>
 </li>
         <li><a href="modules/ca_factory.html#tiny_ca.ca_factory.utils.serial.CertSerialParser">CertSerialParser (class in tiny_ca.ca_factory.utils.serial)</a>, <a href="modules/tiny_ca.ca_factory.utils.serial.html#tiny_ca.ca_factory.utils.serial.CertSerialParser">[1]</a>
 </li>
@@ -672,6 +686,8 @@
         </ul></li>
         <li><a href="modules/exceptions.html#tiny_ca.exc.DBNotInitedError">DBNotInitedError</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError">[1]</a>
 </li>
+        <li><a href="modules/exceptions.html#tiny_ca.exc.DBOperationError">DBOperationError</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.DBOperationError">[1]</a>
+</li>
         <li><a href="modules/tiny_ca.html#tiny_ca.BaseDB.delete_by_uuid">delete_by_uuid() (tiny_ca.BaseDB method)</a>
 
         <ul>
@@ -728,6 +744,24 @@
   <h2>E</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="modules/tiny_ca.const.html#tiny_ca.const.KeyAlgorithm.EC_P256">EC_P256 (tiny_ca.const.KeyAlgorithm attribute)</a>
+
+        <ul>
+          <li><a href="modules/tiny_ca.html#tiny_ca.KeyAlgorithm.EC_P256">(tiny_ca.KeyAlgorithm attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="modules/tiny_ca.const.html#tiny_ca.const.KeyAlgorithm.EC_P384">EC_P384 (tiny_ca.const.KeyAlgorithm attribute)</a>
+
+        <ul>
+          <li><a href="modules/tiny_ca.html#tiny_ca.KeyAlgorithm.EC_P384">(tiny_ca.KeyAlgorithm attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="modules/tiny_ca.const.html#tiny_ca.const.KeyAlgorithm.ED25519">ED25519 (tiny_ca.const.KeyAlgorithm attribute)</a>
+
+        <ul>
+          <li><a href="modules/tiny_ca.html#tiny_ca.KeyAlgorithm.ED25519">(tiny_ca.KeyAlgorithm attribute)</a>
+</li>
+        </ul></li>
         <li><a href="modules/tiny_ca.html#id0">email (tiny_ca.ClientConfig attribute)</a>, <a href="modules/tiny_ca.html#tiny_ca.ClientConfig.email">[1]</a>
 
         <ul>
@@ -738,6 +772,8 @@
         </ul></li>
         <li><a href="modules/exceptions.html#tiny_ca.exc.ErrorLoadCert">ErrorLoadCert</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.ErrorLoadCert">[1]</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="modules/tiny_ca.html#tiny_ca.CertificateStatus.EXPIRED">EXPIRED (tiny_ca.CertificateStatus attribute)</a>
 
         <ul>
@@ -746,8 +782,6 @@
           <li><a href="modules/db.html#tiny_ca.db.const.CertificateStatus.EXPIRED">(tiny_ca.db.const.CertificateStatus attribute)</a>, <a href="modules/tiny_ca.db.const.html#tiny_ca.db.const.CertificateStatus.EXPIRED">[1]</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="modules/tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.export_pkcs12">export_pkcs12() (tiny_ca.ca_factory.CertificateFactory method)</a>
 
         <ul>
@@ -816,6 +850,8 @@
           <li><a href="modules/managers.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl">(tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager method)</a>, <a href="modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl">[1]</a>
 </li>
         </ul></li>
+        <li><a href="modules/tiny_ca.utils.keys.html#tiny_ca.utils.keys.generate_private_key">generate_private_key() (in module tiny_ca.utils.keys)</a>
+</li>
         <li><a href="modules/tiny_ca.html#tiny_ca.BaseDB.get_by_name">get_by_name() (tiny_ca.BaseDB method)</a>
 
         <ul>
@@ -964,6 +1000,8 @@
           <li><a href="modules/tiny_ca.const.html#tiny_ca.const.CertType.INTERNAL">(tiny_ca.const.CertType attribute)</a>
 </li>
         </ul></li>
+        <li><a href="modules/exceptions.html#tiny_ca.exc.InvalidPathError">InvalidPathError</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.InvalidPathError">[1]</a>
+</li>
         <li><a href="modules/exceptions.html#tiny_ca.exc.InvalidRangeTimeCertificate">InvalidRangeTimeCertificate</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate">[1]</a>
 </li>
         <li><a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.is_ca">is_ca (tiny_ca.models.certificate.CertificateDetails attribute)</a>
@@ -1028,6 +1066,8 @@
   <h2>K</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.key_algorithm">key_algorithm (tiny_ca.models.certificate.BaseCertificateConfig attribute)</a>
+</li>
         <li><a href="modules/tiny_ca.html#tiny_ca.ClientConfig.key_size">key_size (tiny_ca.ClientConfig attribute)</a>
 
         <ul>
@@ -1050,6 +1090,12 @@
         </ul></li>
         <li><a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.key_usage">key_usage (tiny_ca.models.certificate.CertificateDetails attribute)</a>
 </li>
+        <li><a href="modules/tiny_ca.html#tiny_ca.KeyAlgorithm">KeyAlgorithm (class in tiny_ca)</a>
+
+        <ul>
+          <li><a href="modules/tiny_ca.const.html#tiny_ca.const.KeyAlgorithm">(class in tiny_ca.const)</a>
+</li>
+        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -1174,6 +1220,8 @@
 </li>
           <li><a href="modules/db.html#module-tiny_ca.db.sync_db_manager">tiny_ca.db.sync_db_manager</a>, <a href="modules/tiny_ca.db.sync_db_manager.html#module-tiny_ca.db.sync_db_manager">[1]</a>
 </li>
+          <li><a href="modules/tiny_ca.db.utils.html#module-tiny_ca.db.utils">tiny_ca.db.utils</a>
+</li>
           <li><a href="modules/exceptions.html#module-tiny_ca.exc">tiny_ca.exc</a>, <a href="modules/tiny_ca.exc.html#module-tiny_ca.exc">[1]</a>
 </li>
           <li><a href="modules/tiny_ca.managers.html#module-tiny_ca.managers">tiny_ca.managers</a>
@@ -1199,6 +1247,8 @@
           <li><a href="modules/storage.html#module-tiny_ca.storage.local_storage">tiny_ca.storage.local_storage</a>, <a href="modules/tiny_ca.storage.local_storage.html#module-tiny_ca.storage.local_storage">[1]</a>
 </li>
           <li><a href="modules/tiny_ca.utils.html#module-tiny_ca.utils">tiny_ca.utils</a>
+</li>
+          <li><a href="modules/tiny_ca.utils.keys.html#module-tiny_ca.utils.keys">tiny_ca.utils.keys</a>
 </li>
           <li><a href="modules/tiny_ca.utils.serial_generator.html#module-tiny_ca.utils.serial_generator">tiny_ca.utils.serial_generator</a>, <a href="modules/utils.html#module-tiny_ca.utils.serial_generator">[1]</a>
 </li>
@@ -1323,9 +1373,23 @@
           <li><a href="modules/tiny_ca.utils.serial_generator.html#tiny_ca.utils.serial_generator.SerialWithEncoding.parse">(tiny_ca.utils.serial_generator.SerialWithEncoding class method)</a>, <a href="modules/utils.html#tiny_ca.utils.serial_generator.SerialWithEncoding.parse">[1]</a>
 </li>
         </ul></li>
+        <li><a href="modules/storage.html#tiny_ca.storage.const.PRIVATE_FILE_MODE">PRIVATE_FILE_MODE (in module tiny_ca.storage.const)</a>, <a href="modules/tiny_ca.storage.const.html#tiny_ca.storage.const.PRIVATE_FILE_MODE">[1]</a>
+</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="modules/tiny_ca.utils.keys.html#tiny_ca.utils.keys.PRIVATE_KEY_TYPES">PRIVATE_KEY_TYPES (in module tiny_ca.utils.keys)</a>
+</li>
+        <li><a href="modules/tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey">PrivateKey (in module tiny_ca.utils.keys)</a>
+</li>
+        <li><a href="modules/storage.html#tiny_ca.storage.const.PUBLIC_FILE_MODE">PUBLIC_FILE_MODE (in module tiny_ca.storage.const)</a>, <a href="modules/tiny_ca.storage.const.html#tiny_ca.storage.const.PUBLIC_FILE_MODE">[1]</a>
+</li>
+        <li><a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.public_key_algorithm">public_key_algorithm (tiny_ca.models.certificate.CertificateDetails attribute)</a>
+</li>
+        <li><a href="modules/tiny_ca.utils.keys.html#tiny_ca.utils.keys.public_key_info">public_key_info() (in module tiny_ca.utils.keys)</a>
+</li>
         <li><a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails.public_key_size">public_key_size (tiny_ca.models.certificate.CertificateDetails attribute)</a>
+</li>
+        <li><a href="modules/tiny_ca.utils.keys.html#tiny_ca.utils.keys.PublicKey">PublicKey (in module tiny_ca.utils.keys)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -1451,6 +1515,12 @@
           <li><a href="modules/managers.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.rotate_certificate">(tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager method)</a>, <a href="modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.rotate_certificate">[1]</a>
 </li>
         </ul></li>
+        <li><a href="modules/tiny_ca.const.html#tiny_ca.const.KeyAlgorithm.RSA">RSA (tiny_ca.const.KeyAlgorithm attribute)</a>
+
+        <ul>
+          <li><a href="modules/tiny_ca.html#tiny_ca.KeyAlgorithm.RSA">(tiny_ca.KeyAlgorithm attribute)</a>
+</li>
+        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -1459,6 +1529,8 @@
   <h2>S</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="modules/managers.html#tiny_ca.managers.sync_lifecycle_manager.safe_file_name">safe_file_name() (in module tiny_ca.managers.sync_lifecycle_manager)</a>, <a href="modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.safe_file_name">[1]</a>
+</li>
         <li><a href="modules/tiny_ca.html#id5">san_dns (tiny_ca.ClientConfig attribute)</a>, <a href="modules/tiny_ca.html#tiny_ca.ClientConfig.san_dns">[1]</a>
 
         <ul>
@@ -1534,6 +1606,8 @@
 </li>
         </ul></li>
         <li><a href="modules/db.html#tiny_ca.db.sync_db_manager.DatabaseManager.session">session() (tiny_ca.db.sync_db_manager.DatabaseManager method)</a>, <a href="modules/tiny_ca.db.sync_db_manager.html#tiny_ca.db.sync_db_manager.DatabaseManager.session">[1]</a>
+</li>
+        <li><a href="modules/tiny_ca.utils.keys.html#tiny_ca.utils.keys.signing_hash">signing_hash() (in module tiny_ca.utils.keys)</a>
 </li>
         <li><a href="modules/tiny_ca.models.certificate.html#id9">state (tiny_ca.models.certificate.CertificateInfo attribute)</a>, <a href="modules/tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.state">[1]</a>
 </li>
@@ -1674,6 +1748,13 @@
           <li><a href="modules/db.html#module-tiny_ca.db.sync_db_manager">module</a>, <a href="modules/tiny_ca.db.sync_db_manager.html#module-tiny_ca.db.sync_db_manager">[1]</a>
 </li>
         </ul></li>
+        <li>
+    tiny_ca.db.utils
+
+        <ul>
+          <li><a href="modules/tiny_ca.db.utils.html#module-tiny_ca.db.utils">module</a>
+</li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li>
@@ -1768,6 +1849,13 @@
 </li>
         </ul></li>
         <li>
+    tiny_ca.utils.keys
+
+        <ul>
+          <li><a href="modules/tiny_ca.utils.keys.html#module-tiny_ca.utils.keys">module</a>
+</li>
+        </ul></li>
+        <li>
     tiny_ca.utils.serial_generator
 
         <ul>
@@ -1826,6 +1914,10 @@
           <li><a href="modules/tiny_ca.const.html#tiny_ca.const.CertType.USER">(tiny_ca.const.CertType attribute)</a>
 </li>
         </ul></li>
+        <li><a href="modules/tiny_ca.db.utils.html#tiny_ca.db.utils.utc_naive">utc_naive() (in module tiny_ca.db.utils)</a>
+</li>
+        <li><a href="modules/tiny_ca.db.utils.html#tiny_ca.db.utils.utc_now_naive">utc_now_naive() (in module tiny_ca.db.utils)</a>
+</li>
         <li><a href="modules/tiny_ca.html#tiny_ca.CertificateRecord.uuid">uuid (tiny_ca.CertificateRecord attribute)</a>
 
         <ul>
@@ -1908,6 +2000,14 @@
           <li><a href="modules/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert">(tiny_ca.ca_factory.factory.CertificateFactory method)</a>, <a href="modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.validate_cert">[1]</a>
 </li>
           <li><a href="modules/tiny_ca.html#tiny_ca.CertificateFactory.validate_cert">(tiny_ca.CertificateFactory method)</a>
+</li>
+        </ul></li>
+        <li><a href="modules/tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory.validate_chain">validate_chain() (tiny_ca.ca_factory.CertificateFactory method)</a>
+
+        <ul>
+          <li><a href="modules/ca_factory.html#tiny_ca.ca_factory.factory.CertificateFactory.validate_chain">(tiny_ca.ca_factory.factory.CertificateFactory method)</a>, <a href="modules/tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory.validate_chain">[1]</a>
+</li>
+          <li><a href="modules/tiny_ca.html#tiny_ca.CertificateFactory.validate_chain">(tiny_ca.CertificateFactory method)</a>
 </li>
         </ul></li>
         <li><a href="modules/exceptions.html#tiny_ca.exc.ValidationCertError">ValidationCertError</a>, <a href="modules/tiny_ca.exc.html#tiny_ca.exc.ValidationCertError">[1]</a>

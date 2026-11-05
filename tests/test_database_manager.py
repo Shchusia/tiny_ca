@@ -24,10 +24,14 @@ class TestDatabaseManager:
         assert isinstance(manager.async_session, async_sessionmaker)
 
     def test_init_custom_db_url(self):
-        """Test initialization with custom database URL."""
+        from sqlalchemy.engine import make_url
+
         custom_url = "sqlite+aiosqlite:///:memory:"
         manager = DatabaseManager(db_url=custom_url)
-        assert str(manager.engine.url) == custom_url
+        expected = make_url(custom_url)
+        actual = manager.engine.url
+        assert actual.drivername == expected.drivername
+        assert actual.database == expected.database
 
     def test_get_session(self, db_manager):
         """Test get_session returns an AsyncSession instance."""

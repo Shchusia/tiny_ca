@@ -26,10 +26,21 @@ Class hierarchy
 from __future__ import annotations
 
 from datetime import datetime
+import re
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, IPvAnyAddress
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    IPvAnyAddress,
+    field_validator,
+)
 
-from tiny_ca.const import CertType
+from tiny_ca.const import CertType, KeyAlgorithm
+
+#: Allowed characters for an explicit storage file basename.
+_SAFE_FILE_NAME = re.compile(r"^[\w.\-]+$")
 
 # ---------------------------------------------------------------------------
 # Reusable base fragments
@@ -115,7 +126,12 @@ class BaseCertificateConfig(BaseModel):
 
     key_size: int = Field(
         default=2048,
-        description="RSA key length in bits (2048 or 4096).",
+        ge=2048,
+        description="RSA key length in bits (2048 or 4096). Ignored for EC / Ed25519.",
+    )
+    key_algorithm: KeyAlgorithm = Field(
+        default=KeyAlgorithm.RSA,
+        description="Key pair algorithm: RSA, ECDSA P-256 / P-384 or Ed25519.",
     )
     days_valid: int = Field(
         default=3650,
@@ -240,9 +256,24 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
         description=(
             "Explicit output file basename for storage artefacts. "
             "Excluded from model_dump calls to the factory. "
-            "None causes the storage layer to derive the name from common_name."
+            "None causes the storage layer to derive the name from common_name. "
+            "Only letters, digits, '.', '-' and '_' are allowed; it must not "
+            "start with a dot."
         ),
     )
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, value: str | None) -> str | None:
+        """Reject file names that could escape the storage directory."""
+        if value is None:
+            return value
+        if not _SAFE_FILE_NAME.fullmatch(value) or value.startswith("."):
+            raise ValueError(
+                "name may contain only letters, digits, '.', '-' and '_' "
+                "and must not start with '.'"
+            )
+        return value
 
 
 # ---------------------------------------------------------------------------
@@ -370,5 +401,11 @@ class CertificateDetails(BaseModel):
     )
 
     public_key_size: int | None = Field(
-        default=None, description="RSA key size in bits (None for non-RSA keys)."
+        default=None,
+        description="Key size in bits (RSA modulus / EC curve / 256 for Ed25519).",
+    )
+
+    public_key_algorithm: str | None = Field(
+        default=None,
+        description="Public key algorithm: 'rsa', 'ec-<curve>' or 'ed25519'.",
     )

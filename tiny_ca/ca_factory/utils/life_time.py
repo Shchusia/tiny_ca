@@ -74,7 +74,9 @@ class CertLifetime:
         >>> assert (end - start).days == 90
         """
         now = datetime.now(UTC)
-        start = valid_from or now
+        # A naive *valid_from* is interpreted as UTC (comparing naive and
+        # aware datetimes would raise TypeError).
+        start = CertLifetime.normalize_dt(valid_from) if valid_from else now
         end = start + timedelta(days=days_valid)
         if end < now:
             raise InvalidRangeTimeCertificate(valid_from=start, valid_to=end, now=now)
@@ -154,7 +156,7 @@ class CertLifetime:
             ``cert.not_valid_before_utc`` with ``tzinfo`` explicitly set to
             ``timezone.utc``.
         """
-        return cert.not_valid_after_utc.replace(tzinfo=UTC)
+        return cert.not_valid_before_utc.replace(tzinfo=UTC)
 
     @staticmethod
     async def compute_async(

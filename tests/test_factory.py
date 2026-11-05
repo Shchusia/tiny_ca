@@ -216,7 +216,7 @@ def factory(ca_loader: ICALoader) -> CertificateFactory:
 
 
 def run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 def _make_revoked_record(serial: int, date: datetime.datetime):
@@ -1020,8 +1020,8 @@ class TestInspectCertificate:
         leaf = _make_leaf(ca_cert, ca_key)
         assert factory.inspect_certificate(leaf).public_key_size == 2048
 
-    def test_non_rsa_key_size_is_none(self, factory, ca_cert, ca_key):
-        """EC public key → public_key_size should be None."""
+    def test_ec_key_size_reported(self, factory, ca_cert, ca_key):
+        """EC public key → curve size and algorithm name are reported."""
         ec_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         now = datetime.datetime.now(datetime.UTC)
         subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ec.svc")])
@@ -1035,7 +1035,9 @@ class TestInspectCertificate:
             .not_valid_after(now + datetime.timedelta(days=365))
             .sign(ca_key, hashes.SHA256(), default_backend())
         )
-        assert factory.inspect_certificate(ec_cert).public_key_size is None
+        details = factory.inspect_certificate(ec_cert)
+        assert details.public_key_size == 256
+        assert details.public_key_algorithm == "ec-secp256r1"
 
     # ── serial_number passthrough ─────────────────────────────────────────
 

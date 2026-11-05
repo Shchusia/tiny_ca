@@ -250,7 +250,7 @@ models, and the concrete handler implementations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.db.const.CertificateStatus">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.db.const.</span></span><span class="sig-name descname"><span class="pre">CertificateStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/const.html#CertificateStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.const.CertificateStatus" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.StrEnum" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StrEnum</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.StrEnum" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">StrEnum</span></code></a></p>
 <p>Lifecycle state of a certificate record in the registry.</p>
 <p>Stored as a lowercase string in the <code class="docutils literal notranslate"><span class="pre">status</span></code> column of
 <code class="docutils literal notranslate"><span class="pre">CertificateRecord</span></code> so the value is human-readable in raw SQL output.</p>
@@ -300,7 +300,7 @@ by <code class="docutils literal notranslate"><span class="pre">CertLifecycleMan
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.db.const.RevokeStatus">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.db.const.</span></span><span class="sig-name descname"><span class="pre">RevokeStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/const.html#RevokeStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.const.RevokeStatus" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
 <p>Enumerated outcomes for a certificate revocation attempt.</p>
 <p>Used as the second element of the <code class="docutils literal notranslate"><span class="pre">(bool,</span> <span class="pre">RevokeStatus)</span></code> tuple returned
 by <code class="docutils literal notranslate"><span class="pre">BaseDB.revoke_certificate</span></code> implementations.  The boolean indicates
@@ -326,9 +326,9 @@ provided <code class="docutils literal notranslate"><span class="pre">revocation
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">success</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="mi">12345</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">key_compromise</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">RevokeStatus</span><span class="o">.</span><span class="n">NOT_FOUND</span><span class="p">:</span>
-<span class="gp">... </span>        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Certificate not found&quot;</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Certificate not found"</span><span class="p">)</span>
 <span class="gp">... </span>    <span class="k">else</span><span class="p">:</span>
-<span class="gp">... </span>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Internal revocation error&quot;</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Internal revocation error"</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py attribute">

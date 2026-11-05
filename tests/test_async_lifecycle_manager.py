@@ -45,7 +45,7 @@ from tiny_ca.storage.async_local_storage import AsyncLocalStorage
 
 
 def run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 @pytest.fixture(scope="module")

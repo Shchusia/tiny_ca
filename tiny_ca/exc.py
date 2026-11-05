@@ -102,3 +102,36 @@ class CertNotFound(CryptoException):
         message = "Certificate not found"
         super().__init__(message)
         self.message = message
+
+
+class DBOperationError(CryptoException):
+    """
+    Raised when the certificate registry cannot be read or written.
+
+    Database failures are never converted into "not found" / "empty" results:
+    for a CA that would mean treating a revoked certificate as valid or
+    publishing an empty CRL (fail-open).
+    """
+
+    def __init__(self, operation: str, exc: BaseException | str) -> None:
+        message = f"Database operation `{operation}` failed: {exc}"
+        super().__init__(message)
+        self.message = message
+
+
+class CertRevocationError(CryptoException):
+    """Raised when a revocation that an operation depends on did not succeed."""
+
+    def __init__(self, serial: int, reason: str) -> None:
+        message = f"Failed to revoke certificate serial={serial}: {reason}"
+        super().__init__(message)
+        self.message = message
+
+
+class InvalidPathError(CryptoException, ValueError):
+    """Raised when a storage path component would escape the storage root."""
+
+    def __init__(self, value: str) -> None:
+        message = f"Unsafe path component `{value}`"
+        super().__init__(message)
+        self.message = message

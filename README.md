@@ -76,14 +76,16 @@ app.include_router(router, prefix="/api/v1")
 |---|---|
 | **CA bootstrap** | Self-signed root CA and intermediate (sub) CA with configurable `path_length` |
 | **Issuance** | Leaf certificates with SANs (DNS + IP), EKU (Server/Client Auth), email attribute |
-| **Lifecycle** | Revoke (RFC 5280 reasons), renew (same key), rotate (new key), hard-delete |
-| **CRL** | Build, sign, and verify Certificate Revocation Lists with configurable validity |
+| **Key algorithms** | RSA (2048+), ECDSA P-256 / P-384, Ed25519 — for the CA and for leaves |
+| **Lifecycle** | Revoke (RFC 5280 reasons), renew (same key), rotate (new key), hard-delete — every CA-signed certificate is registered, so it can always be revoked |
+| **CRL** | RFC 5280 CRLs with `CRLNumber`, AKI and per-entry reason codes; optional CRL Distribution Points / AIA in issued certificates |
+| **Validation** | Direct (`validate_cert`) or through intermediates (`validate_chain`, with `BasicConstraints` / `pathLen` checks); registry check is fail-closed |
 | **Inspection** | Structured `CertificateDetails` snapshot from any `x509.Certificate` — fully serialisable |
 | **Export** | PKCS#12 (`.p12`/`.pfx`) bundles with full CA chain |
 | **Co-signing** | Re-sign third-party certificates under your CA, preserving Subject and extensions |
 | **Chain** | Build `[leaf, ca]` fullchain ready for nginx, Apache, or Envoy |
 | **Monitoring** | List certs with filters, find expiring-soon, bulk-expire stale records |
-| **Storage** | `LocalStorage` (sync) and `AsyncLocalStorage` (async, aiofiles) with UUID-based isolation |
+| **Storage** | `LocalStorage` (sync) and `AsyncLocalStorage` (async) with UUID-based isolation, `0600` private keys and path-traversal protection |
 | **Database** | `SyncDBHandler` (SQLAlchemy) and `AsyncDBHandler` (aiosqlite) — SQLite, PostgreSQL, MySQL |
 | **API parity** | `CertLifecycleManager` and `AsyncCertLifecycleManager` are feature-identical |
 | **Serial numbers** | `SerialWithEncoding` — 160-bit RFC 5280-compliant, type-prefixed, name-encoded |
@@ -95,7 +97,7 @@ app.include_router(router, prefix="/api/v1")
 
 - **Python** 3.11 or higher
 - **Core:** `cryptography >= 46`, `sqlalchemy >= 2`, `pydantic >= 2`
-- **Async extras:** `aiofiles`, `aiosqlite`
+- **Async extras:** `aiosqlite`
 - **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)
 - **MySQL:** `pymysql` (sync) / `aiomysql` (async)
 
@@ -116,7 +118,7 @@ CertLifecycleManager / AsyncCertLifecycleManager   ← application entry-point
         │
         ├── BaseStorage (ABC)
         │       ├── LocalStorage                    ← sync filesystem (UUID-isolated)
-        │       └── AsyncLocalStorage               ← async filesystem (aiofiles)
+        │       └── AsyncLocalStorage               ← async filesystem (worker threads)
         │
         └── BaseDB (ABC)
                 ├── SyncDBHandler                   ← SQLAlchemy sync
@@ -160,7 +162,13 @@ from tiny_ca.storage.local_storage import LocalStorage
 from tiny_ca.db.sync_db_manager import SyncDBHandler
 from tiny_ca.models.certificate import CAConfig
 
-storage = LocalStorage(base_folder="./pki")
+from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+
+# Private keys are always written with mode 0600; encrypt them at rest too.
+storage = LocalStorage(
+    base_folder="./pki",
+    base_encryption_algorithm=BestAvailableEncryption(b"key-passphrase"),
+)
 db = SyncDBHandler(db_url="sqlite:///pki.db")
 mgr = CertLifecycleManager(storage=storage, db_handler=db)
 
@@ -176,9 +184,18 @@ Attach the factory so the manager can issue certificates:
 from tiny_ca.ca_factory.utils.file_loader import CAFileLoader
 from tiny_ca.ca_factory.factory import CertificateFactory
 
-loader = CAFileLoader(ca_cert_path=cert_path, ca_key_path=key_path)
-mgr.factory = CertificateFactory(loader)
+loader = CAFileLoader(ca_cert_path=cert_path, ca_key_path=key_path,
+                      ca_key_password=b"key-passphrase")
+mgr.factory = CertificateFactory(
+    loader,
+    # Optional: tell relying parties where to find the CRL / CA certificate.
+    crl_distribution_points=["http://pki.example/crl.pem"],
+    ca_issuers_urls=["http://pki.example/ca.pem"],
+)
 ```
+
+`CAConfig` / `ClientConfig` accept `key_algorithm=KeyAlgorithm.EC_P256`
+(also `EC_P384`, `ED25519`, default `RSA`) — see [Configuration Models](#configuration-models).
 
 ### 2. Issue a Leaf Certificate
 
@@ -203,7 +220,9 @@ cert, key, csr = mgr.issue_certificate(
 ### 3. Renew a Certificate (same key)
 
 Keeps the existing public key — only validity window and serial number change.
-Use when the key has **not** been compromised.
+Use when the key has **not** been compromised.  The renewed certificate is
+stored and registered (so it can be revoked); the original is revoked with
+reason `superseded`.  The private key stays in the original folder.
 
 ```python
 renewed = mgr.renew_certificate(serial=cert.serial_number, days_valid=365)
@@ -211,7 +230,9 @@ renewed = mgr.renew_certificate(serial=cert.serial_number, days_valid=365)
 
 ### 4. Rotate a Certificate (new key)
 
-Atomically revokes the old cert and issues a replacement with a fresh key pair.
+Issues a replacement with a fresh key pair, then revokes the old cert
+(`superseded`).  If the old cert cannot be revoked, the replacement is rolled
+back and `CertRevocationError` is raised.
 
 ```python
 new_cert, new_key, new_csr = mgr.rotate_certificate(
@@ -236,6 +257,10 @@ crl = mgr.generate_crl(days_valid=7)   # written to <base_folder>/crl.pem
 mgr.verify_crl(crl)                     # raises ValidationCertError on failure
 ```
 
+Revoked certificates stay on the CRL until they expire.  If the database
+cannot be read, `generate_crl` raises `DBOperationError` and the previous
+`crl.pem` is left untouched — an empty CRL is never published.
+
 ### 7. Issue an Intermediate CA
 
 ```python
@@ -244,6 +269,10 @@ sub_ca_cert, sub_ca_key = mgr.issue_intermediate_ca(
     path_length=0, organization="ACME Corp", country="UA",
     cert_path="intermediate",
 )
+
+# The intermediate is registered (revocable via the root's CRL).  Verify a
+# leaf issued by it through the chain:
+mgr.verify_certificate(leaf_cert, intermediates=[sub_ca_cert])
 ```
 
 ### 8. Export PKCS#12
@@ -261,6 +290,7 @@ with open("nginx.p12", "wb") as f:
 from cryptography import x509
 third_party = x509.load_pem_x509_certificate(open("partner.pem", "rb").read())
 cosigned = mgr.cosign_certificate(cert=third_party, days_valid=365)
+# stored + registered like any other certificate issued by this CA
 ```
 
 ### 10. Inspect a Certificate
@@ -345,7 +375,8 @@ python examples/acomplete_example.py
 | `common_name` | `str` | `"Internal CA"` | CA Common Name (CN) |
 | `organization` | `str` | `"My Company"` | Organization (O) |
 | `country` | `str` | `"UA"` | Two-letter ISO 3166-1 alpha-2 code |
-| `key_size` | `int` | `2048` | RSA key length in bits |
+| `key_size` | `int` | `2048` | RSA key length in bits (≥ 2048; ignored for EC / Ed25519) |
+| `key_algorithm` | `KeyAlgorithm` | `RSA` | `RSA`, `EC_P256`, `EC_P384` or `ED25519` |
 | `days_valid` | `int` | `3650` | Validity period in days |
 | `valid_from` | `datetime \| None` | `None` | Explicit UTC start; `None` = now |
 
@@ -355,14 +386,15 @@ python examples/acomplete_example.py
 |---|---|---|---|
 | `common_name` | `str` | — | Certificate CN |
 | `serial_type` | `CertType` | `SERVICE` | Certificate category |
-| `key_size` | `int` | `2048` | RSA key length |
+| `key_size` | `int` | `2048` | RSA key length (≥ 2048; ignored for EC / Ed25519) |
+| `key_algorithm` | `KeyAlgorithm` | `RSA` | `RSA`, `EC_P256`, `EC_P384` or `ED25519` |
 | `days_valid` | `int` | `3650` | Validity period |
 | `email` | `EmailStr \| None` | `None` | `emailAddress` Subject attribute |
 | `is_server_cert` | `bool` | `True` | Adds ServerAuth EKU + CN as DNS SAN |
 | `is_client_cert` | `bool` | `False` | Adds ClientAuth EKU |
 | `san_dns` | `list[str] \| None` | `None` | Extra DNS Subject Alternative Names |
 | `san_ip` | `list[str] \| None` | `None` | IP address SANs |
-| `name` | `str \| None` | `None` | Override output file base name |
+| `name` | `str \| None` | `None` | Override output file base name (letters, digits, `.`, `-`, `_`; no leading dot) |
 
 ### `CertType`
 
@@ -389,14 +421,23 @@ storage = LocalStorage(base_folder="./pki")
 ./pki/
 └── [cert_path/]
     └── <uuid>/
-        ├── nginx.pem    ← x509.Certificate
-        ├── nginx.key    ← RSA private key
-        └── nginx.csr    ← CSR
+        ├── nginx.pem    ← x509.Certificate        (0644)
+        ├── nginx.key    ← private key             (0600)
+        └── nginx.csr    ← CSR                     (0644)
 ```
+
+- Private keys are written with mode `0600`.  They are **unencrypted unless**
+  `base_encryption_algorithm=BestAvailableEncryption(password)` is passed — a
+  warning is logged once per storage instance otherwise.
+- `file_name`, `cert_path` and `uuid_str` are validated: absolute paths, `..`
+  segments and backslashes raise `InvalidPathError`.
+- Without `is_overwrite=True` files are created with `O_EXCL`, so an existing
+  file is never replaced.
 
 ### `AsyncLocalStorage` (async)
 
-Drop-in async replacement — same constructor, same layout, all I/O via `aiofiles`.
+Drop-in async replacement — same constructor, same layout and the same
+security properties; blocking I/O runs in worker threads.
 
 ---
 
@@ -427,6 +468,13 @@ await db._db.init_db()
 | `delete_by_uuid(uuid)` | Hard-delete a record |
 | `update_status_expired()` | Bulk-mark stale VALID records as EXPIRED |
 
+Read methods (and `update_status_expired`) raise `DBOperationError` on any
+database failure instead of returning `None` / an empty list — a CA must fail
+closed.  `register_cert_in_db` returns `False` on failure; the managers turn
+that into `DBOperationError` and remove the artefacts they wrote.  Datetimes
+are stored as naive UTC (`DateTime` columns without time zone), which keeps
+PostgreSQL / asyncpg happy.
+
 ---
 
 ## Serial Number Encoding
@@ -436,7 +484,7 @@ await db._db.init_db()
 ```
 ┌──────────────┬──────────────────────┬────────────────────┐
 │  16-bit type │  80-bit name         │  64-bit random     │
-│  prefix      │  (up to 10 chars)    │  (UUID fragment)   │
+│  prefix      │  (up to 10 chars)    │  (secrets.randbits)│
 └──────────────┴──────────────────────┴────────────────────┘
 ```
 
@@ -448,6 +496,10 @@ serial = SerialWithEncoding.generate("nginx", CertType.SERVICE)
 cert_type, name = SerialWithEncoding.parse(serial)
 # cert_type == CertType.SERVICE, name == "nginx"
 ```
+
+Non-ASCII characters are stored as `?`, so a Cyrillic CN can never overflow
+into the type prefix.  The top bit is always zero, so the DER encoding fits the
+20-octet limit of RFC 5280.
 
 ---
 
@@ -465,6 +517,9 @@ cert_type, name = SerialWithEncoding.parse(serial)
 | `IsNotFile` | CA PEM path is a directory | Provide a file, not a directory |
 | `WrongType` | Unsupported file extension | Use `.pem`, `.key`, or `.csr` |
 | `ErrorLoadCert` | PEM deserialisation failed | Check file format and integrity |
+| `DBOperationError` | Registry could not be read / written | Check the database; nothing was trusted or published |
+| `CertRevocationError` | Rotation/renewal could not revoke the old cert | Retry; the replacement was rolled back |
+| `InvalidPathError` | Storage path would escape `base_folder` | Use plain names / relative sub-paths |
 
 ---
 
@@ -474,7 +529,16 @@ cert_type, name = SerialWithEncoding.parse(serial)
 Yes — load it with `CAFileLoader` or `AsyncCAFileLoader`.
 
 **What's the difference between `renew` and `rotate`?**
-`renew` keeps the key pair and extends validity. `rotate` generates a new key and revokes the old cert.
+`renew` keeps the key pair and extends validity. `rotate` generates a new key. Both revoke the old cert with reason `superseded`.
+
+**Why does `verify_certificate` reject a certificate signed by my CA?**
+Since 0.3.0 a certificate issued directly by the CA must also be present in the
+registry — otherwise its revocation status is unknown.  Certificates created
+with older versions via `renew` / `cosign` were not registered; re-issue them.
+
+**How do I see the library's logs?**
+`tiny_ca` only attaches a `NullHandler`; configure the `"TinyCA"` logger in your
+application, e.g. `logging.getLogger("TinyCA").setLevel(logging.INFO)`.
 
 **How do I schedule CRL regeneration?**
 Use APScheduler or any cron solution:
@@ -582,4 +646,3 @@ Do **not** open public issues for security vulnerabilities. Email the maintainer
 | SQLAlchemy | MIT |
 | Pydantic | MIT |
 | aiosqlite | MIT |
-| aiofiles | Apache 2.0 |

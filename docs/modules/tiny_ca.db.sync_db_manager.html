@@ -270,7 +270,7 @@ Neither class knows about the other’s internal details.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.db.sync_db_manager.DatabaseManager">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.db.sync_db_manager.</span></span><span class="sig-name descname"><span class="pre">DatabaseManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sqlite:///ca_repository.db'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#DatabaseManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.DatabaseManager" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Manages the SQLAlchemy engine and <code class="docutils literal notranslate"><span class="pre">sessionmaker</span></code> factory.</p>
 <p>Responsibility: connection lifecycle <em>only</em>.  This class creates the
 engine, optionally initialises the schema, and hands out new <code class="docutils literal notranslate"><span class="pre">Session</span></code>
@@ -278,11 +278,11 @@ objects on request.  It performs no queries and contains no domain logic.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – SQLAlchemy database URL.  Supports any SQLAlchemy-compatible backend,
+<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – SQLAlchemy database URL.  Supports any SQLAlchemy-compatible backend,
 e.g. <code class="docutils literal notranslate"><span class="pre">&quot;sqlite:///ca.db&quot;</span></code> or
 <code class="docutils literal notranslate"><span class="pre">&quot;postgresql+psycopg2://user:pass&#64;host/dbname&quot;</span></code>.
 Default: <code class="docutils literal notranslate"><span class="pre">&quot;sqlite:///ca_repository.db&quot;</span></code>.</p></li>
-<li><p><strong>create_all</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), calls <code class="docutils literal notranslate"><span class="pre">Base.metadata.create_all</span></code> at
+<li><p><strong>create_all</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), calls <code class="docutils literal notranslate"><span class="pre">Base.metadata.create_all</span></code> at
 construction so the schema is present before the first query.
 Set to <code class="docutils literal notranslate"><span class="pre">False</span></code> when using Alembic or another migration tool that
 manages the schema independently.</p></li>
@@ -295,8 +295,8 @@ manages the schema independently.</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>create_all</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>create_all</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -353,7 +353,7 @@ partial writes are never visible to other readers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – SQLAlchemy database URL forwarded to <code class="docutils literal notranslate"><span class="pre">DatabaseManager</span></code>.</p></li>
+<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – SQLAlchemy database URL forwarded to <code class="docutils literal notranslate"><span class="pre">DatabaseManager</span></code>.</p></li>
 <li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>) – Logger for operational and diagnostic messages.
 Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code> when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
@@ -365,8 +365,8 @@ Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAU
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>db_url</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -380,14 +380,15 @@ Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAU
 <span class="sig-name descname"><span class="pre">delete_by_uuid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uuid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.delete_by_uuid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.delete_by_uuid" title="Link to this definition">¶</a></dt>
 <dd><p>Permanently delete the certificate record identified by <em>uuid</em>.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if a row was deleted; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise (including errors,
+which are logged).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>uuid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Storage folder UUID of the certificate to delete.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if a row was deleted; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+<dd class="field-odd"><p><strong>uuid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -396,19 +397,17 @@ Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAU
 <dt class="sig sig-object py" id="tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_name">
 <span class="sig-name descname"><span class="pre">get_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.get_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_name" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the active VALID certificate record for the given Common Name.</p>
-<p>Only records with <code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">==</span> <span class="pre">CertificateStatus.VALID</span></code> are returned.
-Revoked and expired records are ignored so that the caller always
-receives the currently-active certificate for a given CN, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
-if no active certificate exists.</p>
+<p>If several VALID records share the CN (e.g. created by an older
+version of the library), the most recently inserted one is returned.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the database query fails.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The CN (Common Name) value from the certificate Subject field.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The matching VALID record, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if absent or on DB error.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a> | None</p>
+<dd class="field-odd"><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -417,18 +416,18 @@ if no active certificate exists.</p>
 <dt class="sig sig-object py" id="tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_serial">
 <span class="sig-name descname"><span class="pre">get_by_serial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.get_by_serial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.get_by_serial" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch a single certificate record by its X.509 serial number.</p>
-<p>The serial is stored as a string in the database (to avoid integer
-overflow across all backends); the conversion is handled internally.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer serial number to look up.</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The matching record, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no record exists for <em>serial</em>.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The matching ORM record, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no record exists for
-<em>serial</em> or if a database error occurs.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a> | None</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a> | None</p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the database query fails.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -438,14 +437,14 @@ overflow across all backends); the conversion is handled internally.</p>
 <span class="sig-name descname"><span class="pre">get_expiring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">within_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.get_expiring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.get_expiring" title="Link to this definition">¶</a></dt>
 <dd><p>Return VALID certificates expiring within <em>within_days</em> calendar days.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the query fails.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>]</span></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>within_days</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Look-ahead window in days.  Default: <code class="docutils literal notranslate"><span class="pre">30</span></code>.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Records ordered by <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> ascending.  Empty list on error.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a>]</p>
+<dd class="field-odd"><p><strong>within_days</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -453,36 +452,22 @@ overflow across all backends); the conversion is handled internally.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.db.sync_db_manager.SyncDBHandler.get_revoked_certificates">
 <span class="sig-name descname"><span class="pre">get_revoked_certificates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.get_revoked_certificates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.get_revoked_certificates" title="Link to this definition">¶</a></dt>
-<dd><p>Yield revoked certificate rows relevant for the current CRL window.</p>
-<p>A record is included when <strong>all</strong> of the following conditions hold:</p>
-<ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">revocation_date</span></code> is not <code class="docutils literal notranslate"><span class="pre">NULL</span></code> — the certificate was actually revoked.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">not_valid_after</span> <span class="pre">&gt;</span> <span class="pre">now</span></code> — the certificate has not yet expired; expired
-certificates need not appear in a CRL because relying parties will
-reject them regardless.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">revocation_date</span> <span class="pre">&gt;</span> <span class="pre">now</span> <span class="pre">-</span> <span class="pre">365</span> <span class="pre">days</span></code> — the revocation is recent enough
-to be relevant.  This prevents unbounded CRL growth from very old
-entries that no relying party could still encounter.</p></li>
-</ol>
-<p>Only three columns are selected (<code class="docutils literal notranslate"><span class="pre">serial_number</span></code>, <code class="docutils literal notranslate"><span class="pre">revocation_date</span></code>,
-<code class="docutils literal notranslate"><span class="pre">revocation_reason</span></code>) to minimise data transfer; callers must not
-access other <code class="docutils literal notranslate"><span class="pre">CertificateRecord</span></code> attributes on the yielded rows.</p>
+<dd><p>Yield every revoked certificate that has not yet expired.</p>
+<p>A revoked certificate stays on the CRL until its own <code class="docutils literal notranslate"><span class="pre">notAfter</span></code>
+passes (RFC 5280 §3.3) — there is <strong>no</strong> age cut-off on the
+revocation date, otherwise a long-lived certificate revoked long ago
+would silently become trusted again.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>CertificateRecord</em> – SQLAlchemy <code class="docutils literal notranslate"><span class="pre">Row</span></code> objects with <code class="docutils literal notranslate"><span class="pre">serial_number</span></code>,
-<code class="docutils literal notranslate"><span class="pre">revocation_date</span></code>, and <code class="docutils literal notranslate"><span class="pre">revocation_reason</span></code> attributes.</p>
+<dd class="field-odd"><p><em>Row</em> – SQLAlchemy rows with <code class="docutils literal notranslate"><span class="pre">serial_number</span></code>, <code class="docutils literal notranslate"><span class="pre">revocation_date</span></code> and
+<code class="docutils literal notranslate"><span class="pre">revocation_reason</span></code> attributes.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Generator" title="(in Python v3.14)"><em>Generator</em></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><em>CertificateRecord</em></a>, None, None]</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the query fails.  The CRL must not be built from a partial or
+    empty result in that case.</p>
 </dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>All rows are fetched in a single query before yielding begins.  The
-session is closed in the <code class="docutils literal notranslate"><span class="pre">finally</span></code> block; do not use the yielded
-rows after the generator has been exhausted or abandoned.</p>
-<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Generator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Generator" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -492,19 +477,22 @@ rows after the generator has been exhausted or abandoned.</p>
 <span class="sig-name descname"><span class="pre">list_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.list_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.list_all" title="Link to this definition">¶</a></dt>
 <dd><p>Return a paginated list of certificate records with optional filters.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>status</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Filter by lifecycle state.  <code class="docutils literal notranslate"><span class="pre">None</span></code> returns all statuses.</p></li>
-<li><p><strong>key_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Filter by certificate category.  <code class="docutils literal notranslate"><span class="pre">None</span></code> returns all types.</p></li>
-<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum number of records to return.  Default: <code class="docutils literal notranslate"><span class="pre">100</span></code>.</p></li>
-<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of records to skip (pagination).  Default: <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Records ordered by <code class="docutils literal notranslate"><span class="pre">id</span></code> descending.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)">list</a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a>]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the query fails.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>key_type</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Records ordered by <code class="docutils literal notranslate"><span class="pre">id</span></code> descending.  Empty list on error.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord">CertificateRecord</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -513,31 +501,25 @@ rows after the generator has been exhausted or abandoned.</p>
 <dt class="sig sig-object py" id="tiny_ca.db.sync_db_manager.SyncDBHandler.register_cert_in_db">
 <span class="sig-name descname"><span class="pre">register_cert_in_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CertType.DEVICE</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.register_cert_in_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.register_cert_in_db" title="Link to this definition">¶</a></dt>
 <dd><p>Persist a newly issued certificate to the registry.</p>
-<p>Creates a new <code class="docutils literal notranslate"><span class="pre">CertificateRecord</span></code> row with <code class="docutils literal notranslate"><span class="pre">status=VALID</span></code> from the
-metadata and PEM encoding of <em>cert</em>.  The full PEM is stored so the
-certificate can be reconstructed independently of the filesystem.</p>
+<p>Creates a new <code class="docutils literal notranslate"><span class="pre">CertificateRecord</span></code> row with <code class="docutils literal notranslate"><span class="pre">status=VALID</span></code>.  When
+the Subject has no CN, the RFC 4514 Subject string is stored as
+<code class="docutils literal notranslate"><span class="pre">common_name</span></code>.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the record was committed; <code class="docutils literal notranslate"><span class="pre">False</span></code> if the operation
+was rolled back (e.g. duplicate serial or UUID).  Callers must
+check the result — <code class="docutils literal notranslate"><span class="pre">CertLifecycleManager</span></code> raises
+<code class="docutils literal notranslate"><span class="pre">DBOperationError</span></code> on <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cert</strong> (<em>x509.Certificate</em>) – The issued X.509 certificate.  Its Subject must contain at least
-one <code class="docutils literal notranslate"><span class="pre">commonName</span></code> (CN) attribute.</p></li>
-<li><p><strong>uuid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – UUID string that identifies the storage folder holding the
-corresponding <code class="docutils literal notranslate"><span class="pre">.pem</span></code>, <code class="docutils literal notranslate"><span class="pre">.key</span></code>, and <code class="docutils literal notranslate"><span class="pre">.csr</span></code> files.</p></li>
-<li><p><strong>key_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category.  Stored as its <code class="docutils literal notranslate"><span class="pre">str</span></code> value (e.g.
-<code class="docutils literal notranslate"><span class="pre">&quot;device&quot;</span></code>).  Default: <code class="docutils literal notranslate"><span class="pre">CertType.DEVICE</span></code>.</p></li>
+<li><p><strong>cert</strong> (<em>Certificate</em>)</p></li>
+<li><p><strong>uuid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>key_type</strong> (<a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType" title="tiny_ca.const.CertType"><em>CertType</em></a>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the record was committed successfully;
-<code class="docutils literal notranslate"><span class="pre">False</span></code> if the operation was rolled back due to an error
-(e.g. duplicate serial, constraint violation).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#IndexError" title="(in Python v3.14)"><strong>IndexError</strong></a> – Re-raised if the certificate contains no CN attribute, indicating
-    a malformed certificate that should not be stored.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -545,30 +527,21 @@ corresponding <code class="docutils literal notranslate"><span class="pre">.pem<
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.db.sync_db_manager.SyncDBHandler.revoke_certificate">
 <span class="sig-name descname"><span class="pre">revoke_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial_number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;ReasonFlags.unspecified:</span> <span class="pre">'unspecified'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/db/sync_db_manager.html#SyncDBHandler.revoke_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.db.sync_db_manager.SyncDBHandler.revoke_certificate" title="Link to this definition">¶</a></dt>
-<dd><p>Mark a certificate as revoked and record the reason and timestamp.</p>
-<p>Looks up the certificate by <em>serial_number</em> filtered to
-<code class="docutils literal notranslate"><span class="pre">status</span> <span class="pre">==</span> <span class="pre">VALID</span></code> — already-revoked or unknown serials are treated
-as not found.  On success the record is updated in-place:
-- <code class="docutils literal notranslate"><span class="pre">status</span></code>            → <code class="docutils literal notranslate"><span class="pre">CertificateStatus.REVOKED</span></code>
-- <code class="docutils literal notranslate"><span class="pre">revocation_reason</span></code> → integer value of <em>reason</em>
-- <code class="docutils literal notranslate"><span class="pre">revocation_date</span></code>   → current UTC timestamp</p>
-<p>The change is committed atomically; a rollback is performed on any
-unexpected error.</p>
+<dd><p>Mark a VALID certificate as revoked and record the reason and timestamp.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>serial_number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Serial number of the certificate to revoke.</p></li>
-<li><p><strong>reason</strong> (<em>x509.ReasonFlags</em>) – RFC 5280 §5.3.1 revocation reason code.
-Default: <code class="docutils literal notranslate"><span class="pre">x509.ReasonFlags.unspecified</span></code> (code 0).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(True,</span>&#160; <span class="pre">RevokeStatus.OK)</span></code>            — revocation committed.
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">(True,</span>&#160; <span class="pre">RevokeStatus.OK)</span></code>            — revocation committed.
 <code class="docutils literal notranslate"><span class="pre">(False,</span> <span class="pre">RevokeStatus.NOT_FOUND)</span></code>     — no VALID cert with that serial.
 <code class="docutils literal notranslate"><span class="pre">(False,</span> <span class="pre">RevokeStatus.UNKNOWN_ERROR)</span></code> — unexpected internal error.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a>, <a class="reference internal" href="tiny_ca.db.const.html#tiny_ca.db.const.RevokeStatus" title="tiny_ca.db.const.RevokeStatus">RevokeStatus</a>]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a>, <a class="reference internal" href="tiny_ca.db.const.html#tiny_ca.db.const.RevokeStatus" title="tiny_ca.db.const.RevokeStatus">RevokeStatus</a>]</p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>serial_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>reason</strong> (<a class="reference external" href="https://cryptography.io/en/latest/x509/reference/#cryptography.x509.ReasonFlags" title="(in Cryptography v51.0.0-dev1)"><em>ReasonFlags</em></a>)</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -579,10 +552,13 @@ Default: <code class="docutils literal notranslate"><span class="pre">x509.Reaso
 <dd><p>Bulk-set status=expired for all VALID certs whose validity has passed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number of rows updated.  <code class="docutils literal notranslate"><span class="pre">0</span></code> on error.</p>
+<dd class="field-odd"><p>Number of rows updated.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the update fails (the transaction is rolled back).</p>
 </dd>
 </dl>
 </dd></dl>

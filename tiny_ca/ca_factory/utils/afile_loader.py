@@ -10,12 +10,12 @@ from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.bindings._rust import ObjectIdentifier
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 from tiny_ca.const import ALLOWED_CERT_EXTENSIONS
 from tiny_ca.exc import ErrorLoadCert, IsNotFile, NotExistCertFile, WrongType
 from tiny_ca.models.certificate import CertificateInfo
 from tiny_ca.settings import DEFAULT_LOGGER
+from tiny_ca.utils.keys import PRIVATE_KEY_TYPES, PrivateKey
 
 from .file_loader import CAFileLoader
 
@@ -72,7 +72,7 @@ class AsyncCAFileLoader:
             )
 
         self._ca_cert: x509.Certificate | None = None
-        self._ca_key: rsa.RSAPrivateKey | None = None
+        self._ca_key: PrivateKey | None = None
         self._base_info: CertificateInfo | None = None
 
     @classmethod
@@ -99,7 +99,7 @@ class AsyncCAFileLoader:
         return self._ca_cert
 
     @property
-    def ca_key(self) -> rsa.RSAPrivateKey:
+    def ca_key(self) -> PrivateKey:
         if self._ca_key is None:
             raise RuntimeError("Call 'await loader.load()' before accessing ca_key.")
         return self._ca_key
@@ -120,7 +120,7 @@ class AsyncCAFileLoader:
         self._ca_key = ca_key
         self._base_info = self._extract_info()
 
-    def _load_sync(self) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    def _load_sync(self) -> tuple[x509.Certificate, PrivateKey]:
 
         try:
             with open(self._ca_cert_path, "rb") as fh:
@@ -137,9 +137,12 @@ class AsyncCAFileLoader:
             raise ErrorLoadCert(path_to_file=self._ca_key_path, exc=str(exc)) from exc
 
         self._logger.info("CA loaded successfully from %s", self._ca_cert_path)
-        if not isinstance(ca_key, rsa.RSAPrivateKey):
-            raise TypeError("CA key must be RSA")
-        return ca_cert, ca_key
+        if not isinstance(ca_key, PRIVATE_KEY_TYPES):
+            raise TypeError(
+                "CA key must be RSA, ECDSA (P-256 / P-384) or Ed25519, "
+                f"got {type(ca_key).__name__}"
+            )
+        return ca_cert, cast(PrivateKey, ca_key)
 
     def _extract_info(self) -> CertificateInfo:
         # assert self._ca_cert is not None

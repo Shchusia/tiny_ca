@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 # ──────────────────────────────────────────────
 [project]
 name = "tiny-ca"
-version = "0.2.1"
+version = "0.3.0"
 description = "A lightweight, 100%-tested Python library for managing the full lifecycle of X.509 certificates — issuance, revocation, rotation, CRL generation, PKCS#12 export, and more."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
     "cryptography>=46.0.0",
     "pydantic[email]>=2.12.0",
-    "sqlalchemy>=2.0.0",
+    "sqlalchemy[asyncio]>=2.0.0",
 ]
 
 [project.urls]
@@ -48,9 +48,7 @@ Changelog = "https://github.com/Shchusia/tiny_ca/blob/master/CHANGELOG.md"
 # ──────────────────────────────────────────────
 [project.optional-dependencies]
 async = [
-    "aiofiles>=25.1.0",
     "aiosqlite>=0.22.0",
-    "types-aiofiles>=25.1.0",
 ]
 postgres = [
     "psycopg2-binary>=2.9.0",
@@ -138,7 +136,7 @@ fixable = ["ALL"]
 unfixable = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["your_package"]
+known-first-party = ["tiny_ca"]
 force-sort-within-sections = true
 
 [tool.ruff.lint.per-file-ignores]
@@ -201,3 +199,4 @@ skips = ["*/*_test.py", "*/test_*.py", "*/grafana.py", "B608"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+asyncio_mode = "auto"

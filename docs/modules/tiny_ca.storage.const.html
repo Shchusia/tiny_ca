@@ -242,14 +242,13 @@
           <section id="module-tiny_ca.storage.const">
 <span id="tiny-ca-storage-const-module"></span><h1>tiny_ca.storage.const module<a class="headerlink" href="#module-tiny_ca.storage.const" title="Link to this heading">¶</a></h1>
 <p>storage/const.py</p>
-<p>Shared type aliases for the storage layer.</p>
+<p>Shared type aliases and constants for the storage layer.</p>
 <p>Exports <code class="docutils literal notranslate"><span class="pre">CryptoObject</span></code>, a union type alias covering every cryptographic
 object that <code class="docutils literal notranslate"><span class="pre">BaseStorage.save_certificate</span></code> is capable of serialising and
-persisting.  Declaring it once here prevents duplication across
-<code class="docutils literal notranslate"><span class="pre">base_storage.py</span></code>, <code class="docutils literal notranslate"><span class="pre">local_storage.py</span></code>, and any future storage backends.</p>
+persisting, plus the POSIX permissions used for written files.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="tiny_ca.storage.const.CryptoObject">
-<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">CryptoObject</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">cryptography.hazmat.bindings._rust.x509.Certificate</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateRevocationList</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey</span></span><a class="headerlink" href="#tiny_ca.storage.const.CryptoObject" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">CryptoObject</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">cryptography.hazmat.bindings._rust.x509.Certificate</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateRevocationList</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey</span></span><a class="headerlink" href="#tiny_ca.storage.const.CryptoObject" title="Link to this definition">¶</a></dt>
 <dd><p>Union of all cryptographic object types accepted by the storage layer.</p>
 <div class="table-wrapper docutils container">
 <table class="docutils align-default">
@@ -265,21 +264,30 @@ persisting.  Declaring it once here prevents duplication across
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">x509.CertificateRevocationList</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.pem</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CertificateSigningRequest</span></code> (Rust)</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x509.CertificateSigningRequest</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.csr</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rsa.RSAPrivateKey</span></code></p></td>
+<tr class="row-odd"><td><p>RSA / EC / Ed25519 private key</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.key</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rsa.RSAPublicKey</span></code></p></td>
+<tr class="row-even"><td><p>RSA / EC / Ed25519 public key</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.pub</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>The internal Rust-backed <code class="docutils literal notranslate"><span class="pre">CertificateSigningRequest</span></code> type is included
-because the <code class="docutils literal notranslate"><span class="pre">cryptography</span></code> library exposes CSR objects through its Rust
-bindings rather than a pure-Python class.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="tiny_ca.storage.const.PRIVATE_FILE_MODE">
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">PRIVATE_FILE_MODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">384</span></span><a class="headerlink" href="#tiny_ca.storage.const.PRIVATE_FILE_MODE" title="Link to this definition">¶</a></dt>
+<dd><p>POSIX permissions for private key files (owner read/write only).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="tiny_ca.storage.const.PUBLIC_FILE_MODE">
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">PUBLIC_FILE_MODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">420</span></span><a class="headerlink" href="#tiny_ca.storage.const.PUBLIC_FILE_MODE" title="Link to this definition">¶</a></dt>
+<dd><p>POSIX permissions for public artefacts (certificates, CSRs, CRLs).</p>
 </dd></dl>
 
 </section>
@@ -323,6 +331,8 @@ bindings rather than a pure-Python class.</p>
             <ul>
 <li><a class="reference internal" href="#">tiny_ca.storage.const module</a><ul>
 <li><a class="reference internal" href="#tiny_ca.storage.const.CryptoObject"><code class="docutils literal notranslate"><span class="pre">CryptoObject</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.storage.const.PRIVATE_FILE_MODE"><code class="docutils literal notranslate"><span class="pre">PRIVATE_FILE_MODE</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.storage.const.PUBLIC_FILE_MODE"><code class="docutils literal notranslate"><span class="pre">PUBLIC_FILE_MODE</span></code></a></li>
 </ul>
 </li>
 </ul>

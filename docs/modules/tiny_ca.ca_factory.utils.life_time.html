@@ -249,7 +249,7 @@ instantiation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.life_time.CertLifetime">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.life_time.</span></span><span class="sig-name descname"><span class="pre">CertLifetime</span></span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/life_time.html#CertLifetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.life_time.CertLifetime" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Stateless helper that computes and inspects X.509 certificate validity windows.</p>
 <p>All operations are pure functions (no side effects, no shared state) and are
 therefore safe to call from multiple threads simultaneously.</p>
@@ -274,7 +274,7 @@ passed (which would produce an immediately-invalid certificate).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>) – Start of the validity period as a timezone-aware <code class="docutils literal notranslate"><span class="pre">datetime</span></code>.
 Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> to use <code class="docutils literal notranslate"><span class="pre">datetime.now(timezone.utc)</span></code> automatically.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of calendar days the certificate should remain valid.
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of calendar days the certificate should remain valid.
 Default: <code class="docutils literal notranslate"><span class="pre">365</span></code> (one year).</p></li>
 </ul>
 </dd>
@@ -283,7 +283,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">365</span>
 <code class="docutils literal notranslate"><span class="pre">tzinfo=timezone.utc</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[datetime, datetime]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[datetime, datetime]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed <em>not_after</em> is earlier than the current UTC time,
@@ -307,12 +307,12 @@ Default: <code class="docutils literal notranslate"><span class="pre">365</span>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>hour.</strong> (<em>The beginning</em><em> of </em><em>the window</em><em> of </em><em>action</em><em> (</em><em>UTC</em><em>)</em><em>. None → exact UTC</em>)</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 <li><p><strong>instructions</strong> (<em>Calendar days are trivial. For</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>]</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -398,7 +398,7 @@ aware datetimes.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -443,7 +443,7 @@ aware datetimes.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">

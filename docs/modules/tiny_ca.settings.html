@@ -241,6 +241,11 @@
         <article role="main" id="furo-main-content">
           <section id="module-tiny_ca.settings">
 <span id="tiny-ca-settings-module"></span><h1>tiny_ca.settings module<a class="headerlink" href="#module-tiny_ca.settings" title="Link to this heading">¶</a></h1>
+<p>Package-wide settings.</p>
+<p><code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code> follows the standard-library guidance for libraries: it
+gets a <code class="docutils literal notranslate"><span class="pre">NullHandler</span></code> and no explicit level, so the application decides
+where (and whether) <code class="docutils literal notranslate"><span class="pre">tiny_ca</span></code> log records go.  Configure it as usual, e.g.
+<code class="docutils literal notranslate"><span class="pre">logging.getLogger(&quot;TinyCA&quot;).setLevel(logging.DEBUG)</span></code>.</p>
 </section>
 
         </article>

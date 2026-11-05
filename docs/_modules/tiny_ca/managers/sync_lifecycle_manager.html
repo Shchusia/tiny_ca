@@ -233,7 +233,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.managers.sync_lifecycle_manager</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">sync_lifecycle_manager.py</span>
 
 <span class="sd">High-level orchestrator for the X.509 certificate lifecycle.</span>
@@ -246,6 +246,18 @@
 <span class="sd">- File persistence          → ``BaseStorage``</span>
 <span class="sd">- Database registration     → ``BaseDB``</span>
 
+<span class="sd">Consistency rules</span>
+<span class="sd">-----------------</span>
+<span class="sd">- Every certificate signed by the CA through this manager (issue, renew,</span>
+<span class="sd">  co-sign, intermediate CA, self-signed CA) is registered in the database</span>
+<span class="sd">  when one is configured, so it can be revoked and appears in the CRL.</span>
+<span class="sd">- CN conflicts are detected *before* anything is written to storage.</span>
+<span class="sd">- If registration fails, the artefacts written for the operation are removed</span>
+<span class="sd">  and the error is raised — no orphaned private keys on disk.</span>
+<span class="sd">- A certificate that is replaced (overwrite, rotation, renewal) is revoked</span>
+<span class="sd">  with reason ``superseded``; if that revocation fails, the new certificate</span>
+<span class="sd">  is rolled back and ``CertRevocationError`` is raised.</span>
+
 <span class="sd">SOLID notes</span>
 <span class="sd">-----------</span>
 <span class="sd">SRP : ``CertLifecycleManager`` coordinates operations; it contains no</span>
@@ -253,70 +265,86 @@
 <span class="sd">OCP : New storage backends and database adapters plug in without changing</span>
 <span class="sd">      this class.</span>
 <span class="sd">LSP : ``BaseStorage`` and ``BaseDB`` dependencies are fully substitutable.</span>
-<span class="sd">ISP : Interfaces are narrow; callers that only need issuance never interact</span>
-<span class="sd">      with revocation internals.</span>
-<span class="sd">DIP : All three collaborators are injected at construction time; the manager</span>
-<span class="sd">      never instantiates them directly.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">DIP : All three collaborators are injected at construction time.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography</span><span class="w"> </span><span class="kn">import</span> <span class="n">x509</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.asymmetric</span><span class="w"> </span><span class="kn">import</span> <span class="n">rsa</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateRecord</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.ca_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateFactory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.ca_factory.utils.life_time</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertLifetime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertType</span><span class="p">,</span> <span class="n">KeyAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.db.base_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDB</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.db.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.db.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertificateStatus</span><span class="p">,</span> <span class="n">RevokeStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.db.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">certificate_common_name</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.exc</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CertNotFound</span><span class="p">,</span>
+    <span class="n">CertRevocationError</span><span class="p">,</span>
     <span class="n">DBNotInitedError</span><span class="p">,</span>
+    <span class="n">DBOperationError</span><span class="p">,</span>
     <span class="n">NotUniqueCertOwner</span><span class="p">,</span>
     <span class="n">ValidationCertError</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.models.certificate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAConfig</span><span class="p">,</span> <span class="n">CertificateDetails</span><span class="p">,</span> <span class="n">ClientConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_LOGGER</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseStorage</span><span class="p">,</span> <span class="n">LocalStorage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.storage.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CryptoObject</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.utils.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.utils.serial_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialWithEncoding</span>
+
+<span class="n">_UNSAFE_FILE_CHARS</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[</span><span class="se">\\</span><span class="s2">/\x00]"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="safe_file_name">
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.safe_file_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_file_name</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cert"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Derive a storage file basename from a CN.</span>
+
+<span class="sd">    Path separators and NUL are replaced with ``_`` and leading dots are</span>
+<span class="sd">    stripped, so the result can never point outside the storage folder.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">_UNSAFE_FILE_CHARS</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="ow">or</span> <span class="n">default</span></div>
+
+
+
+<div class="viewcode-block" id="cert_type_from_record">
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.cert_type_from_record">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cert_type_from_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n">CertificateRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertType</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``CertType`` stored in *record*, defaulting to ``SERVICE``."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CertType</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">key_type</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span></div>
+
 
 
 <div class="viewcode-block" id="CertLifecycleManager">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CertLifecycleManager</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Orchestrates the full lifecycle of X.509 certificates.</span>
-
-<span class="sd">    ``CertLifecycleManager`` is the facade that application code interacts with.</span>
-<span class="sd">    It coordinates four collaborators through dependency injection:</span>
-
-<span class="sd">    - ``CertificateFactory`` — cryptographic generation of certificates and CRLs.</span>
-<span class="sd">    - ``BaseStorage``        — persistent storage of PEM/key/CSR/CRL files.</span>
-<span class="sd">    - ``BaseDB``             — registration, lookup, revocation, and rotation</span>
-<span class="sd">                               records in a relational database.</span>
-<span class="sd">    - ``Logger``             — structured operational logging.</span>
-
-<span class="sd">    All three external collaborators are optional at construction time, but</span>
-<span class="sd">    specific operations will raise ``ValueError`` or ``DBNotInitedError`` if</span>
-<span class="sd">    a required collaborator is absent when that operation is invoked.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    storage : BaseStorage</span>
-<span class="sd">        File storage backend.  Defaults to ``LocalStorage()`` which writes to</span>
-<span class="sd">        ``./certs`` relative to the working directory.</span>
+<span class="sd">    storage : BaseStorage | None</span>
+<span class="sd">        File storage backend.  ``None`` creates a ``LocalStorage()`` writing</span>
+<span class="sd">        to ``./certs`` (a new instance per manager).</span>
 <span class="sd">    factory : CertificateFactory | None</span>
-<span class="sd">        Cryptographic factory.  Must be set before calling</span>
-<span class="sd">        ``issue_certificate``, ``generate_crl``, or ``verify_certificate``.</span>
-<span class="sd">        Can be set after construction via the ``factory`` property setter.</span>
+<span class="sd">        Cryptographic factory.  Must be set before issuing, generating CRLs or</span>
+<span class="sd">        verifying.  Can be set later via the ``factory`` property.</span>
 <span class="sd">    db_handler : BaseDB | None</span>
-<span class="sd">        Database adapter.  When ``None``, all operations that require</span>
-<span class="sd">        persistence (status lookup, revocation, rotation) will raise</span>
+<span class="sd">        Database adapter.  When ``None``, operations that require persistence</span>
+<span class="sd">        (status lookup, revocation, rotation, renewal) raise</span>
 <span class="sd">        ``DBNotInitedError``.</span>
 <span class="sd">    logger : Logger | None</span>
 <span class="sd">        Logger for operational messages.  Falls back to ``DEFAULT_LOGGER``.</span>
@@ -324,27 +352,28 @@
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
 <span class="sd">    TypeError</span>
-<span class="sd">        If *storage* is not a ``BaseStorage`` instance.</span>
-<span class="sd">    TypeError</span>
-<span class="sd">        If *db_handler* is provided but is not a ``BaseDB`` instance.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        If *storage* is not a ``BaseStorage`` instance, or *db_handler* is</span>
+<span class="sd">        provided but is not a ``BaseDB`` instance.</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="CertLifecycleManager.__init__">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">storage</span><span class="p">:</span> <span class="n">BaseStorage</span> <span class="o">=</span> <span class="n">LocalStorage</span><span class="p">(),</span>
+        <span class="n">storage</span><span class="p">:</span> <span class="n">BaseStorage</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">factory</span><span class="p">:</span> <span class="n">CertificateFactory</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">db_handler</span><span class="p">:</span> <span class="n">BaseDB</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">storage</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">storage</span> <span class="o">=</span> <span class="n">LocalStorage</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">BaseStorage</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;storage must be a BaseStorage instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"storage must be a BaseStorage instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">db_handler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">db_handler</span><span class="p">,</span> <span class="n">BaseDB</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;db_handler must be a BaseDB instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">db_handler</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"db_handler must be a BaseDB instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">db_handler</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span> <span class="o">=</span> <span class="n">storage</span>
@@ -359,38 +388,24 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateFactory</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The active ``CertificateFactory`` used for certificate issuance.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        CertificateFactory | None</span>
-<span class="sd">            The current factory, or ``None`` if not yet initialised.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The active ``CertificateFactory`` (``None`` if not yet set)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span>
 
     <span class="nd">@factory</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">factory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">CertificateFactory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Replace the active ``CertificateFactory``.</span>
-
-<span class="sd">        Useful for rotating to a new CA without recreating the entire manager.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        value : CertificateFactory</span>
-<span class="sd">            New factory instance to use for subsequent issuance operations.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        TypeError</span>
 <span class="sd">            If *value* is not a ``CertificateFactory`` instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">CertificateFactory</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;factory must be a CertificateFactory instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"factory must be a CertificateFactory instance, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CertificateFactory replaced: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"CertificateFactory replaced: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -406,75 +421,51 @@
         <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Generate a self-signed root CA certificate and persist both artefacts.</span>
-
-<span class="sd">        Delegates cryptographic generation to</span>
-<span class="sd">        ``CertificateFactory.build_self_signed_ca`` and then saves the</span>
-<span class="sd">        certificate and private key through the configured ``BaseStorage``.</span>
-<span class="sd">        When a ``db_handler`` is present the certificate is also registered in</span>
-<span class="sd">        the database.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        config : CAConfig</span>
-<span class="sd">            Pydantic model carrying ``common_name``, ``organization``,</span>
-<span class="sd">            ``country``, ``key_size``, and ``days_valid``.</span>
+<span class="sd">            CA parameters (CN, organisation, country, key algorithm / size,</span>
+<span class="sd">            validity).</span>
 <span class="sd">        cert_path : str | None</span>
-<span class="sd">            Sub-directory under the storage base folder.  ``None`` places the</span>
-<span class="sd">            files directly in the base folder.</span>
+<span class="sd">            Sub-directory under the storage base folder.</span>
 <span class="sd">        uuid_str : str | None</span>
-<span class="sd">            Explicit UUID for the storage sub-directory.  ``None`` causes the</span>
-<span class="sd">            storage layer to generate one automatically.</span>
+<span class="sd">            Explicit UUID for the storage sub-directory.</span>
 <span class="sd">        is_overwrite : bool</span>
-<span class="sd">            When ``True``, any existing certificate with the same CN is revoked</span>
-<span class="sd">            and its files are deleted before the new one is saved.  When</span>
-<span class="sd">            ``False`` (default), ``NotUniqueCertOwner`` is raised if a conflict</span>
-<span class="sd">            exists.</span>
+<span class="sd">            When ``True``, an existing VALID certificate with the same CN is</span>
+<span class="sd">            revoked (``superseded``) and its files are deleted.  When</span>
+<span class="sd">            ``False`` (default), ``NotUniqueCertOwner`` is raised *before*</span>
+<span class="sd">            anything is written.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        tuple[str, str]</span>
-<span class="sd">            ``(path_to_cert_pem, path_to_key_pem)`` as returned by the storage</span>
-<span class="sd">            layer.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        tuple[Path, Path]</span>
+<span class="sd">            ``(path_to_cert_pem, path_to_key)``.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Creating self-signed CA: CN=</span><span class="si">%s</span><span class="s2">, overwrite=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">"Creating self-signed CA: CN=</span><span class="si">%s</span><span class="s2">, overwrite=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span>
             <span class="n">is_overwrite</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">replaced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_conflict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">)</span>
 
         <span class="n">certificate</span><span class="p">,</span> <span class="n">private_key</span> <span class="o">=</span> <span class="n">CertificateFactory</span><span class="o">.</span><span class="n">build_self_signed_ca</span><span class="p">(</span>
             <span class="o">**</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_logger</span>
         <span class="p">)</span>
-
-        <span class="n">path_to_cert</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
+        <span class="n">paths</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_and_register</span><span class="p">(</span>
+            <span class="n">artefacts</span><span class="o">=</span><span class="p">[(</span><span class="n">certificate</span><span class="p">,</span> <span class="s2">"ca"</span><span class="p">),</span> <span class="p">(</span><span class="n">private_key</span><span class="p">,</span> <span class="s2">"ca"</span><span class="p">)],</span>
+            <span class="n">certificate</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
+            <span class="n">cert_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">,</span>
             <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;ca&quot;</span><span class="p">,</span>
             <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
             <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">replaced</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">path_to_key</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span>
-            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;ca&quot;</span><span class="p">,</span>
-            <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-            <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_persist_cert_to_db</span><span class="p">(</span>
-                <span class="n">common_name</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span>
-                <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-                <span class="n">certificate</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
-                <span class="n">cert_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">,</span>
-                <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-                <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CA saved: cert=</span><span class="si">%s</span><span class="s2">, key=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">path_to_cert</span><span class="p">,</span> <span class="n">path_to_key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">path_to_cert</span><span class="p">,</span> <span class="n">path_to_key</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"CA saved: cert=</span><span class="si">%s</span><span class="s2">, key=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -489,105 +480,60 @@
         <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateSigningRequest</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Issue a new end-entity certificate and persist all three artefacts.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="n">PrivateKey</span><span class="p">,</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateSigningRequest</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Issue a new end-entity certificate and persist all artefacts.</span>
 
-<span class="sd">        The method generates the certificate, private key, and CSR via the</span>
-<span class="sd">        configured ``CertificateFactory``, then saves each file through</span>
-<span class="sd">        ``BaseStorage``.  If a ``db_handler`` is configured the certificate</span>
-<span class="sd">        metadata is also written to the database.</span>
-
-<span class="sd">        Artefacts written to storage</span>
-<span class="sd">        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">        - ``&lt;file_name&gt;.pem``  — the signed certificate.</span>
-<span class="sd">        - ``&lt;file_name&gt;.key``  — the private key (unencrypted by default).</span>
-<span class="sd">        - ``&lt;file_name&gt;.csr``  — the certificate signing request (for audit).</span>
+<span class="sd">        Saves ``&lt;file_name&gt;.pem`` (certificate), ``&lt;file_name&gt;.key`` (private</span>
+<span class="sd">        key, mode 0600) and ``&lt;file_name&gt;.csr`` into a dedicated UUID folder,</span>
+<span class="sd">        then registers the certificate in the database.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        config : ClientConfig</span>
-<span class="sd">            Pydantic model containing all certificate parameters: ``common_name``,</span>
-<span class="sd">            ``serial_type``, ``key_size``, ``days_valid``, ``email``,</span>
-<span class="sd">            ``is_server_cert``, ``is_client_cert``, ``san_dns``, ``san_ip``,</span>
-<span class="sd">            and an optional ``name`` for the output file basename.</span>
+<span class="sd">            Certificate parameters.</span>
 <span class="sd">        cert_path : str | None</span>
 <span class="sd">            Sub-directory under the storage base folder.</span>
 <span class="sd">        uuid_str : str | None</span>
-<span class="sd">            Explicit UUID; ``None`` auto-generates one.</span>
+<span class="sd">            Explicit UUID for the storage sub-directory.</span>
 <span class="sd">        is_overwrite : bool</span>
-<span class="sd">            Allow replacing an existing certificate with the same CN.</span>
+<span class="sd">            Replace an existing VALID certificate with the same CN (it is</span>
+<span class="sd">            revoked with reason ``superseded`` and its folder deleted).</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        tuple[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]</span>
-<span class="sd">            ``(certificate, private_key, csr)`` in-memory objects.</span>
+<span class="sd">        tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]</span>
+<span class="sd">            ``(certificate, private_key, csr)``.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        ValueError</span>
 <span class="sd">            If ``self.factory`` has not been initialised.</span>
 <span class="sd">        NotUniqueCertOwner</span>
-<span class="sd">            If *is_overwrite* is ``False`` and a certificate with the same CN</span>
-<span class="sd">            already exists in the database.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;factory is not initialised. &quot;</span>
-                <span class="s2">&quot;Set CertLifecycleManager.factory before issuing certificates.&quot;</span>
-            <span class="p">)</span>
-
+<span class="sd">            If the CN is already in use and *is_overwrite* is ``False``.</span>
+<span class="sd">            Nothing is written in that case.</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the database cannot be read or the certificate cannot be</span>
+<span class="sd">            registered (written artefacts are removed).</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
         <span class="n">file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_derive_file_name</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Issuing certificate: CN=</span><span class="si">%s</span><span class="s2">, file=</span><span class="si">%s</span><span class="s2">, overwrite=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">"Issuing certificate: CN=</span><span class="si">%s</span><span class="s2">, file=</span><span class="si">%s</span><span class="s2">, overwrite=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span>
             <span class="n">file_name</span><span class="p">,</span>
             <span class="n">is_overwrite</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="n">certificate</span><span class="p">,</span> <span class="n">private_key</span><span class="p">,</span> <span class="n">csr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">issue_certificate</span><span class="p">(</span>
-            <span class="o">**</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">})</span>
-        <span class="p">)</span>
-
-        <span class="n">path_to_cert</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
-            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+        <span class="n">replaced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_conflict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span>
             <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
+            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
             <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
             <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">path_to_key</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span>
-            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
-            <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-            <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">path_to_csr</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">csr</span><span class="p">,</span>
-            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
-            <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-            <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_persist_cert_to_db</span><span class="p">(</span>
-                <span class="n">common_name</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span>
-                <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-                <span class="n">certificate</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
-                <span class="n">cert_type</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">serial_type</span><span class="p">,</span>
-                <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-                <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Certificate artefacts saved: cert=</span><span class="si">%s</span><span class="s2">, key=</span><span class="si">%s</span><span class="s2">, csr=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">path_to_cert</span><span class="p">,</span>
-            <span class="n">path_to_key</span><span class="p">,</span>
-            <span class="n">path_to_csr</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">private_key</span><span class="p">,</span> <span class="n">csr</span></div>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">replaced</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -601,47 +547,37 @@
         <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">reason</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Revoke the certificate identified by *serial*.</span>
 
-<span class="sd">        Delegates to ``BaseDB.revoke_certificate``.  The record is updated</span>
-<span class="sd">        in-place (status → REVOKED, revocation date and reason stored); no</span>
-<span class="sd">        file is deleted.  Call ``generate_crl`` afterwards to publish the</span>
-<span class="sd">        updated revocation list.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        serial : int</span>
-<span class="sd">            Integer serial number of the certificate to revoke.</span>
-<span class="sd">        reason : x509.ReasonFlags</span>
-<span class="sd">            RFC 5280 revocation reason code (e.g.</span>
-<span class="sd">            ``x509.ReasonFlags.key_compromise``).</span>
+<span class="sd">        The record is updated in place (status → REVOKED, date and reason</span>
+<span class="sd">        stored).  Call ``generate_crl`` afterwards to publish the change.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        bool</span>
-<span class="sd">            ``True`` if the revocation was recorded successfully;</span>
-<span class="sd">            ``False`` if the operation failed (see logs for details).</span>
+<span class="sd">            ``True`` if the revocation was recorded; ``False`` otherwise</span>
+<span class="sd">            (see logs for details).</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        DBNotInitedError</span>
-<span class="sd">            If no ``db_handler`` was provided at construction time.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            If no ``db_handler`` was provided.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Revoking certificate: serial=</span><span class="si">%d</span><span class="s2">, reason=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Revoking certificate: serial=</span><span class="si">%d</span><span class="s2">, reason=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
 
-        <span class="n">is_success</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span>
+        <span class="n">is_success</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
             <span class="n">serial_number</span><span class="o">=</span><span class="n">serial</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">reason</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">is_success</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Failed to revoke certificate serial=</span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">status</span>
+                <span class="s2">"Failed to revoke certificate serial=</span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">status</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Certificate serial=</span><span class="si">%d</span><span class="s2"> revoked successfully&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Certificate serial=</span><span class="si">%d</span><span class="s2"> revoked successfully"</span><span class="p">,</span> <span class="n">serial</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">is_success</span></div>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">is_success</span><span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -651,51 +587,51 @@
 <div class="viewcode-block" id="CertLifecycleManager.generate_crl">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate_crl</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">crl_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateRevocationList</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Build, sign, and persist a fresh Certificate Revocation List.</span>
 
-<span class="sd">        Retrieves all currently-revoked certificates from the database,</span>
-<span class="sd">        passes them to ``CertificateFactory.build_crl``, and writes the</span>
-<span class="sd">        resulting CRL to storage as ``crl.pem`` (overwriting any previous</span>
-<span class="sd">        version — CRLs are always regenerated in-place).</span>
+<span class="sd">        Writes ``crl.pem`` to storage (overwriting the previous version).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
+<span class="sd">        cert_path : str | None</span>
+<span class="sd">            Sub-directory under the storage base folder.</span>
 <span class="sd">        days_valid : int</span>
-<span class="sd">            Number of days until the CRL&#39;s ``nextUpdate`` field.  Relying</span>
-<span class="sd">            parties will reject the CRL after this point.  Default: ``1``.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        x509.CertificateRevocationList</span>
-<span class="sd">            The signed CRL object (also persisted to storage).</span>
+<span class="sd">            Days until the CRL's ``nextUpdate``.  Default: ``1``.</span>
+<span class="sd">        crl_number : int | None</span>
+<span class="sd">            Explicit CRL number; ``None`` derives a monotonic one from time.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        DBNotInitedError</span>
 <span class="sd">            If no ``db_handler`` was provided.</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If revoked certificates cannot be read — no CRL is produced.</span>
 <span class="sd">        ValueError</span>
 <span class="sd">            If ``self.factory`` has not been initialised.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating CRL: days_valid=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">)</span>
-        <span class="n">revoked_certs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_revoked_certificates</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Generating CRL: days_valid=</span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">days_valid</span><span class="p">)</span>
+        <span class="n">revoked_certs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_revoked_certificates</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
 
-        <span class="n">crl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">build_crl</span><span class="p">(</span>
-            <span class="n">revoked_certs</span><span class="o">=</span><span class="n">revoked_certs</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span>
+        <span class="n">crl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">build_crl</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">revoked_certs</span><span class="o">=</span><span class="n">revoked_certs</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span> <span class="n">crl_number</span><span class="o">=</span><span class="n">crl_number</span>
         <span class="p">)</span>
         <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
             <span class="n">cert</span><span class="o">=</span><span class="n">crl</span><span class="p">,</span>
             <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;crl&quot;</span><span class="p">,</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">"crl"</span><span class="p">,</span>
             <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">is_add_uuid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CRL saved to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"CRL saved to </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">crl</span></div>
 
 
@@ -706,41 +642,27 @@
 <div class="viewcode-block" id="CertLifecycleManager.get_certificate_status">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_certificate_status">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_certificate_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateStatus</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Determine the current status of the certificate identified by *serial*.</span>
 
-<span class="sd">        Looks up the certificate record in the database and evaluates its</span>
-<span class="sd">        state in the following priority order:</span>
-<span class="sd">        1. Not found  → ``UNKNOWN``</span>
-<span class="sd">        2. Revocation date is set → ``REVOKED``</span>
-<span class="sd">        3. ``not_valid_after`` is in the past → ``EXPIRED``</span>
-<span class="sd">        4. Otherwise → ``VALID``</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        serial : int</span>
-<span class="sd">            Integer serial number of the certificate to check.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        CertificateStatus</span>
-<span class="sd">            One of ``VALID``, ``REVOKED``, ``EXPIRED``, or ``UNKNOWN``.</span>
+<span class="sd">        Priority: not found → ``UNKNOWN``; revoked → ``REVOKED``; past</span>
+<span class="sd">        ``not_valid_after`` → ``EXPIRED``; otherwise ``VALID``.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        DBNotInitedError</span>
 <span class="sd">            If no ``db_handler`` was provided.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If the database cannot be read.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
 
-        <span class="n">cert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>
+        <span class="n">cert</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cert</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">UNKNOWN</span>
-        <span class="k">if</span> <span class="n">cert</span><span class="o">.</span><span class="n">revocation_date</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cert</span><span class="o">.</span><span class="n">revocation_date</span> <span class="ow">or</span> <span class="n">cert</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">REVOKED</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">REVOKED</span>
         <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
-
-        <span class="c1"># Normalise: SQLAlchemy stores naive datetimes; make UTC-aware via CertLifetime.</span>
         <span class="n">not_valid_after</span> <span class="o">=</span> <span class="n">CertLifetime</span><span class="o">.</span><span class="n">normalize_dt</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">not_valid_after</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">not_valid_after</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">:</span>
@@ -750,24 +672,25 @@
 
 <div class="viewcode-block" id="CertLifecycleManager.verify_certificate">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_certificate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">verify_certificate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Perform a full verification of *cert*: chain, signature, and revocation.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_certificate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
+        <span class="n">intermediates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Fully verify *cert*: chain, signature, validity and revocation.</span>
 
-<span class="sd">        Combines cryptographic validation (via ``CertificateFactory.validate_cert``)</span>
-<span class="sd">        with a database revocation check (via ``get_certificate_status``).</span>
+<span class="sd">        Steps</span>
+<span class="sd">        ~~~~~</span>
+<span class="sd">        1. Cryptographic validation — ``validate_cert`` (issued directly by</span>
+<span class="sd">           this CA) or ``validate_chain`` when *intermediates* are given.</span>
+<span class="sd">        2. Registry check for every certificate in the path:</span>
+<span class="sd">           - ``REVOKED`` anywhere → rejected;</span>
+<span class="sd">           - a certificate issued directly by this CA must be registered</span>
+<span class="sd">             (``UNKNOWN`` → rejected: it was not issued through this</span>
+<span class="sd">             registry, so its revocation status cannot be known).</span>
 
-<span class="sd">        Validation steps</span>
-<span class="sd">        ~~~~~~~~~~~~~~~~</span>
-<span class="sd">        1. Issuer field matches the CA subject.</span>
-<span class="sd">        2. Current UTC time is within the validity window.</span>
-<span class="sd">        3. Cryptographic signature is valid.</span>
-<span class="sd">        4. Certificate is not listed as revoked in the database.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        cert : x509.Certificate</span>
-<span class="sd">            The certificate object to verify.</span>
+<span class="sd">        Database errors propagate (fail closed).</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -778,30 +701,54 @@
 <span class="sd">        ------</span>
 <span class="sd">        ValueError</span>
 <span class="sd">            If ``self.factory`` has not been initialised.</span>
+<span class="sd">        DBNotInitedError</span>
+<span class="sd">            If no ``db_handler`` was provided.</span>
 <span class="sd">        ValidationCertError</span>
-<span class="sd">            If the certificate fails any cryptographic check or is revoked.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            If any check fails.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
+        <span class="n">factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Verifying certificate serial=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">validate_cert</span><span class="p">(</span><span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Verifying certificate serial=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">intermediates</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">validate_chain</span><span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">intermediates</span><span class="p">)</span>
+            <span class="n">root</span><span class="p">,</span> <span class="n">to_check</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">factory</span><span class="o">.</span><span class="n">validate_cert</span><span class="p">(</span><span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">)</span>
+            <span class="n">root</span><span class="p">,</span> <span class="n">to_check</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="n">cert</span><span class="p">]</span>
 
-        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_certificate_status</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">REVOKED</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Verification failed: certificate serial=</span><span class="si">%s</span><span class="s2"> is revoked&quot;</span><span class="p">,</span>
-                <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">raise</span> <span class="n">ValidationCertError</span><span class="p">(</span><span class="s2">&quot;Certificate is revoked&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">to_check</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_registry_status</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Certificate serial=</span><span class="si">%s</span><span class="s2"> verified successfully&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span>
+            <span class="s2">"Certificate serial=</span><span class="si">%s</span><span class="s2"> verified successfully"</span><span class="p">,</span> <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_registry_status</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_certificate_status</span><span class="p">(</span><span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">REVOKED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Verification failed: certificate serial=</span><span class="si">%s</span><span class="s2"> is revoked"</span><span class="p">,</span>
+                <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationCertError</span><span class="p">(</span><span class="s2">"Certificate is revoked"</span><span class="p">)</span>
+        <span class="n">issued_by_root</span> <span class="o">=</span> <span class="n">root</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">cert</span><span class="o">.</span><span class="n">issuer</span> <span class="o">==</span> <span class="n">root</span><span class="o">.</span><span class="n">subject</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">CertificateStatus</span><span class="o">.</span><span class="n">UNKNOWN</span> <span class="ow">and</span> <span class="n">issued_by_root</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Verification failed: certificate serial=</span><span class="si">%s</span><span class="s2"> is not registered"</span><span class="p">,</span>
+                <span class="n">cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationCertError</span><span class="p">(</span>
+                <span class="s2">"Certificate is not registered in this CA's registry"</span>
+            <span class="p">)</span>
+
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Rotation</span>
+    <span class="c1"># Rotation / renewal</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="CertLifecycleManager.rotate_certificate">
@@ -810,27 +757,16 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">ClientConfig</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateSigningRequest</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Revoke an existing certificate and issue a replacement in a single operation.</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="n">PrivateKey</span><span class="p">,</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateSigningRequest</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Replace an existing certificate with a newly issued one (new key pair).</span>
 
-<span class="sd">        The old certificate is revoked with reason ``superseded`` before the</span>
-<span class="sd">        new one is issued.  Both operations are performed against the configured</span>
-<span class="sd">        ``db_handler``; if the revocation fails an exception is propagated and</span>
-<span class="sd">        the new certificate is not issued.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        serial : int</span>
-<span class="sd">            Serial number of the certificate to replace.</span>
-<span class="sd">        config : ClientConfig</span>
-<span class="sd">            Parameters for the replacement certificate.  The CN may differ</span>
-<span class="sd">            from the original.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        tuple[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]</span>
-<span class="sd">            ``(new_certificate, new_private_key, new_csr)``.</span>
+<span class="sd">        The replacement is issued and registered first; then the old</span>
+<span class="sd">        certificate is revoked with reason ``superseded``.  If that revocation</span>
+<span class="sd">        fails, the replacement is rolled back and ``CertRevocationError`` is</span>
+<span class="sd">        raised, so the caller never ends up with two valid certificates.  The</span>
+<span class="sd">        old artefact folder is kept for audit.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -838,34 +774,109 @@
 <span class="sd">            If no ``db_handler`` was provided.</span>
 <span class="sd">        CertNotFound</span>
 <span class="sd">            If no certificate with *serial* exists in the database.</span>
+<span class="sd">        NotUniqueCertOwner</span>
+<span class="sd">            If *config.common_name* belongs to a *different* VALID certificate.</span>
+<span class="sd">        CertRevocationError</span>
+<span class="sd">            If the old certificate could not be revoked.</span>
 <span class="sd">        ValueError</span>
 <span class="sd">            If ``self.factory`` has not been initialised.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Rotating certificate: serial=</span><span class="si">%d</span><span class="s2">, new_CN=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">common_name</span>
+            <span class="s2">"Rotating certificate: serial=</span><span class="si">%d</span><span class="s2">, new_CN=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">common_name</span>
         <span class="p">)</span>
 
-        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">existing</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Certificate serial=</span><span class="si">%d</span><span class="s2"> not found for rotation&quot;</span><span class="p">,</span> <span class="n">serial</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Certificate serial=</span><span class="si">%d</span><span class="s2"> not found for rotation"</span><span class="p">,</span> <span class="n">serial</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">CertNotFound</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">superseded</span><span class="p">)</span>
-
-        <span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">issue_certificate</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_find_conflict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>
+        <span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_derive_file_name</span><span class="p">(</span><span class="n">config</span><span class="p">),</span>
+            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+            <span class="n">uuid_str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">existing</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Rotation complete: old serial=</span><span class="si">%d</span><span class="s2"> replaced by serial=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">"Rotation complete: old serial=</span><span class="si">%d</span><span class="s2"> replaced by serial=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">serial</span><span class="p">,</span>
             <span class="n">new_cert</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">new_cert</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_csr</span></div>
 
 
+<div class="viewcode-block" id="CertLifecycleManager.renew_certificate">
+<a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.renew_certificate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">renew_certificate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">365</span><span class="p">,</span>
+        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Renew the certificate identified by *serial*: same key, new validity.</span>
+
+<span class="sd">        The renewed certificate is stored (``.pem`` only — the private key</span>
+<span class="sd">        stays in the original folder, which is kept) and registered; the</span>
+<span class="sd">        original is then revoked with reason ``superseded``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        DBNotInitedError</span>
+<span class="sd">            If no ``db_handler`` was provided.</span>
+<span class="sd">        CertNotFound</span>
+<span class="sd">            If no record exists for *serial*.</span>
+<span class="sd">        CertRevocationError</span>
+<span class="sd">            If the original could not be revoked (the renewal is rolled back).</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``self.factory`` has not been initialised.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
+
+        <span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
+        <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CertNotFound</span><span class="p">()</span>
+
+        <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">x509</span><span class="o">.</span><span class="n">load_pem_x509_certificate</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">certificate_pem</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="n">renewed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">renew_certificate</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">cert</span><span class="o">=</span><span class="n">cert_obj</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span> <span class="n">valid_from</span><span class="o">=</span><span class="n">valid_from</span>
+        <span class="p">)</span>
+        <span class="n">common_name</span> <span class="o">=</span> <span class="n">certificate_common_name</span><span class="p">(</span><span class="n">renewed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_find_conflict</span><span class="p">(</span><span class="n">common_name</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_and_register</span><span class="p">(</span>
+            <span class="n">artefacts</span><span class="o">=</span><span class="p">[(</span><span class="n">renewed</span><span class="p">,</span> <span class="n">safe_file_name</span><span class="p">(</span><span class="n">common_name</span><span class="p">,</span> <span class="s2">"renewed"</span><span class="p">))],</span>
+            <span class="n">certificate</span><span class="o">=</span><span class="n">renewed</span><span class="p">,</span>
+            <span class="n">cert_type</span><span class="o">=</span><span class="n">cert_type_from_record</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>
+            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+            <span class="n">uuid_str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Certificate renewed: serial=</span><span class="si">%d</span><span class="s2"> → new_serial=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">serial</span><span class="p">,</span>
+            <span class="n">renewed</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">renewed</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Other factory operations</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
 <div class="viewcode-block" id="CertLifecycleManager.inspect_certificate">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.inspect_certificate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">inspect_certificate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateDetails</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Structured summary of *cert*. Delegates to the factory."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">inspect_certificate</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
 
@@ -877,11 +888,45 @@
         <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
         <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Re-sign *cert* with this CA, store the result and register it.</span>
+
+<span class="sd">        Registration makes the co-signed certificate revocable and verifiable</span>
+<span class="sd">        like any other certificate issued by this CA.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotUniqueCertOwner</span>
+<span class="sd">            If the CN already belongs to a VALID certificate and</span>
+<span class="sd">            *is_overwrite* is ``False``.</span>
+<span class="sd">        DBOperationError</span>
+<span class="sd">            If registration fails.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">cosign_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span> <span class="n">valid_from</span><span class="o">=</span><span class="n">valid_from</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
+        <span class="n">cosigned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">cosign_certificate</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span>
+            <span class="n">valid_from</span><span class="o">=</span><span class="n">valid_from</span><span class="p">,</span>
+            <span class="n">serial_type</span><span class="o">=</span><span class="n">serial_type</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">common_name</span> <span class="o">=</span> <span class="n">certificate_common_name</span><span class="p">(</span><span class="n">cosigned</span><span class="p">)</span>
+        <span class="n">replaced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_conflict</span><span class="p">(</span><span class="n">common_name</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">)</span>
+        <span class="n">cert_type</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">cosigned</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_and_register</span><span class="p">(</span>
+            <span class="n">artefacts</span><span class="o">=</span><span class="p">[(</span><span class="n">cosigned</span><span class="p">,</span> <span class="n">safe_file_name</span><span class="p">(</span><span class="n">common_name</span><span class="p">,</span> <span class="s2">"cosigned"</span><span class="p">))],</span>
+            <span class="n">certificate</span><span class="o">=</span><span class="n">cosigned</span><span class="p">,</span>
+            <span class="n">cert_type</span><span class="o">=</span><span class="n">cert_type</span> <span class="ow">or</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">,</span>
+            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+            <span class="n">uuid_str</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">replaced</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cosigned</span></div>
 
 
 <div class="viewcode-block" id="CertLifecycleManager.export_pkcs12">
@@ -889,65 +934,23 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">export_pkcs12</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
-        <span class="n">private_key</span><span class="p">:</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPrivateKey</span><span class="p">,</span>
+        <span class="n">private_key</span><span class="p">:</span> <span class="n">PrivateKey</span><span class="p">,</span>
         <span class="n">password</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pack cert + key into a PKCS#12 bundle. Delegates to CertificateFactory.export_pkcs12.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Pack cert + key into a PKCS#12 bundle. Delegates to the factory."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">export_pkcs12</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">export_pkcs12</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
             <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span> <span class="n">private_key</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CertLifecycleManager.get_cert_chain">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_cert_chain">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_cert_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return [cert, ca_cert] chain. Delegates to CertificateFactory.get_cert_chain.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the ``[cert, ca_cert]`` chain. Delegates to the factory."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">get_cert_chain</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
-
-
-<div class="viewcode-block" id="CertLifecycleManager.renew_certificate">
-<a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.renew_certificate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">renew_certificate</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">365</span><span class="p">,</span>
-        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Renew the certificate identified by *serial*: same key, new validity window.</span>
-
-<span class="sd">        Fetches the certificate PEM from the database, deserialises it, and</span>
-<span class="sd">        delegates to ``CertificateFactory.renew_certificate``.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        DBNotInitedError</span>
-<span class="sd">            If no ``db_handler`` was provided.</span>
-<span class="sd">        CertNotFound</span>
-<span class="sd">            If no record exists for *serial*.</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If ``self.factory`` has not been initialised.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
-
-        <span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
-        <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">CertNotFound</span><span class="p">()</span>
-
-        <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">x509</span><span class="o">.</span><span class="n">load_pem_x509_certificate</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">certificate_pem</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
-        <span class="n">renewed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">renew_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">cert_obj</span><span class="p">,</span> <span class="n">days_valid</span><span class="o">=</span><span class="n">days_valid</span><span class="p">,</span> <span class="n">valid_from</span><span class="o">=</span><span class="n">valid_from</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Certificate renewed: serial=</span><span class="si">%d</span><span class="s2"> → new_serial=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">serial</span><span class="p">,</span>
-            <span class="n">renewed</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">renewed</span></div>
 
 
 <div class="viewcode-block" id="CertLifecycleManager.issue_intermediate_ca">
@@ -957,20 +960,29 @@
         <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">key_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">,</span>
         <span class="n">days_valid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1825</span><span class="p">,</span>
-        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">valid_from</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">path_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">organization</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">country</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Issue a subordinate CA cert signed by this CA and save artefacts.</span>
+        <span class="n">key_algorithm</span><span class="p">:</span> <span class="n">KeyAlgorithm</span> <span class="o">=</span> <span class="n">KeyAlgorithm</span><span class="o">.</span><span class="n">RSA</span><span class="p">,</span>
+        <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="n">PrivateKey</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Issue a subordinate CA signed by this CA, store it and register it.</span>
 
-<span class="sd">        Returns (cert, private_key). The cert is NOT registered in the DB</span>
-<span class="sd">        automatically — call ``register_cert_in_db`` if persistence is needed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        Certificate and key are saved together in one UUID folder as</span>
+<span class="sd">        ``intermediate_ca.pem`` / ``intermediate_ca.key``.  Registration lets</span>
+<span class="sd">        the intermediate be revoked through the root's CRL.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotUniqueCertOwner</span>
+<span class="sd">            If the CN is in use and *is_overwrite* is ``False``.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
+        <span class="n">replaced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_conflict</span><span class="p">(</span><span class="n">common_name</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">)</span>
         <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">issue_intermediate_ca</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
             <span class="n">common_name</span><span class="o">=</span><span class="n">common_name</span><span class="p">,</span>
             <span class="n">key_size</span><span class="o">=</span><span class="n">key_size</span><span class="p">,</span>
@@ -979,20 +991,17 @@
             <span class="n">path_length</span><span class="o">=</span><span class="n">path_length</span><span class="p">,</span>
             <span class="n">organization</span><span class="o">=</span><span class="n">organization</span><span class="p">,</span>
             <span class="n">country</span><span class="o">=</span><span class="n">country</span><span class="p">,</span>
+            <span class="n">key_algorithm</span><span class="o">=</span><span class="n">key_algorithm</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;intermediate_ca&quot;</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_and_register</span><span class="p">(</span>
+            <span class="n">artefacts</span><span class="o">=</span><span class="p">[(</span><span class="n">cert</span><span class="p">,</span> <span class="s2">"intermediate_ca"</span><span class="p">),</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"intermediate_ca"</span><span class="p">)],</span>
+            <span class="n">certificate</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">cert_type</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">,</span>
             <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
             <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-            <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
-            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;intermediate_ca&quot;</span><span class="p">,</span>
-            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
-            <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-            <span class="n">is_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">replaced</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">cert</span><span class="p">,</span> <span class="n">key</span></div>
 
@@ -1006,17 +1015,17 @@
         <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return paginated certificate records. Requires db_handler.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return paginated certificate records. Requires db_handler."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">list_all</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">list_all</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
             <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span> <span class="n">key_type</span><span class="o">=</span><span class="n">key_type</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CertLifecycleManager.get_expiring_soon">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_expiring_soon">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_expiring_soon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">within_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CertificateRecord</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return VALID certs expiring within *within_days* days. Requires db_handler.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return VALID certs expiring within *within_days* days. Requires db_handler."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_expiring</span><span class="p">(</span><span class="n">within_days</span><span class="o">=</span><span class="n">within_days</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
 
@@ -1024,11 +1033,11 @@
 <div class="viewcode-block" id="CertLifecycleManager.delete_certificate">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.delete_certificate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete_certificate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Hard-delete a certificate from the DB and its artefact folder from storage.</span>
 
 <span class="sd">        Returns True if the DB row was deleted (storage deletion is best-effort).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
         <span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_serial</span><span class="p">(</span><span class="n">serial</span><span class="o">=</span><span class="n">serial</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
         <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1036,15 +1045,14 @@
         <span class="n">uuid</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="n">uuid</span>
         <span class="n">deleted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">delete_by_uuid</span><span class="p">(</span><span class="n">uuid</span><span class="o">=</span><span class="n">uuid</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span>
         <span class="k">if</span> <span class="n">deleted</span> <span class="ow">and</span> <span class="n">uuid</span><span class="p">:</span>
-            <span class="c1"># Delete the certificate folder from storage</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">delete_certificate_folder</span><span class="p">(</span><span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid</span><span class="p">,</span> <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">deleted</span></div>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">deleted</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CertLifecycleManager.refresh_expired_statuses">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.refresh_expired_statuses">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">refresh_expired_statuses</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bulk-mark expired certificates. Returns count of updated rows.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Bulk-mark expired certificates. Returns count of updated rows."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_db</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">update_status_expired</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span></div>
 
@@ -1052,7 +1060,7 @@
 <div class="viewcode-block" id="CertLifecycleManager.verify_crl">
 <a class="viewcode-back" href="../../../modules/tiny_ca.managers.sync_lifecycle_manager.html#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_crl">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">verify_crl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crl</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateRevocationList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify CRL signature and expiry. Delegates to CertificateFactory.verify_crl.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Verify CRL signature and expiry. Delegates to the factory."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_require_factory</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">verify_crl</span><span class="p">(</span><span class="n">crl</span><span class="p">)</span>  <span class="c1"># type: ignore[union-attr]</span></div>
 
@@ -1061,121 +1069,179 @@
     <span class="c1"># Private helpers</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_persist_cert_to_db</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_issue</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">ClientConfig</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">replaced</span><span class="p">:</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">delete_replaced_folder</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span> <span class="n">PrivateKey</span><span class="p">,</span> <span class="n">x509</span><span class="o">.</span><span class="n">CertificateSigningRequest</span><span class="p">]:</span>
+        <span class="n">certificate</span><span class="p">,</span> <span class="n">private_key</span><span class="p">,</span> <span class="n">csr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="o">.</span><span class="n">issue_certificate</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="o">**</span><span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">})</span>
+        <span class="p">)</span>
+        <span class="n">paths</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_and_register</span><span class="p">(</span>
+            <span class="n">artefacts</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">certificate</span><span class="p">,</span> <span class="n">file_name</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">private_key</span><span class="p">,</span> <span class="n">file_name</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">csr</span><span class="p">,</span> <span class="n">file_name</span><span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">certificate</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
+            <span class="n">cert_type</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">serial_type</span><span class="p">,</span>
+            <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+            <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
+            <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
+            <span class="n">replaced</span><span class="o">=</span><span class="n">replaced</span><span class="p">,</span>
+            <span class="n">delete_replaced_folder</span><span class="o">=</span><span class="n">delete_replaced_folder</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Certificate artefacts saved: cert=</span><span class="si">%s</span><span class="s2">, key=</span><span class="si">%s</span><span class="s2">, csr=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="o">*</span><span class="n">paths</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">private_key</span><span class="p">,</span> <span class="n">csr</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_conflict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">common_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">exclude</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Return the VALID record holding *common_name*, if it may be replaced.</span>
+
+<span class="sd">        Raises ``NotUniqueCertOwner`` when such a record exists and</span>
+<span class="sd">        *is_overwrite* is ``False``.  A record whose serial equals *exclude*</span>
+<span class="sd">        is ignored (it is the certificate being rotated / renewed).  Without</span>
+<span class="sd">        a database there is nothing to check.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_name</span><span class="p">(</span><span class="n">common_name</span><span class="o">=</span><span class="n">common_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">serial_number</span><span class="p">)</span> <span class="o">==</span> <span class="n">exclude</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_overwrite</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Duplicate CN detected: CN=</span><span class="si">%s</span><span class="s2"> is already registered"</span><span class="p">,</span> <span class="n">common_name</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotUniqueCertOwner</span><span class="p">(</span><span class="n">common_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">existing</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_store_and_register</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">artefacts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">CryptoObject</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
         <span class="n">certificate</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">,</span>
         <span class="n">cert_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">,</span>
         <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Register *certificate* in the database, handling CN conflicts.</span>
+        <span class="n">replaced</span><span class="p">:</span> <span class="n">CertificateRecord</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">delete_replaced_folder</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Persist *artefacts*, register *certificate* and retire *replaced*.</span>
 
-<span class="sd">        If a VALID certificate with *common_name* already exists:</span>
-<span class="sd">        - *is_overwrite=True*  → the existing cert is revoked (``key_compromise``)</span>
-<span class="sd">          and its storage folder is deleted before the new record is inserted.</span>
-<span class="sd">        - *is_overwrite=False* → ``NotUniqueCertOwner`` is raised immediately.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        common_name : str</span>
-<span class="sd">            The CN of the certificate being registered.</span>
-<span class="sd">        uuid_str : str</span>
-<span class="sd">            UUID of the storage folder that holds the artefact files.</span>
-<span class="sd">        certificate : x509.Certificate</span>
-<span class="sd">            The newly issued certificate object.</span>
-<span class="sd">        cert_type : CertType</span>
-<span class="sd">            Category of the certificate (CA, SERVICE, DEVICE, etc.).</span>
-<span class="sd">        cert_path : str | None</span>
-<span class="sd">            Base sub-path used by the storage layer; needed when deleting the</span>
-<span class="sd">            old artefact folder on overwrite.</span>
-<span class="sd">        is_overwrite : bool</span>
-<span class="sd">            Whether to replace an existing certificate with the same CN.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        NotUniqueCertOwner</span>
-<span class="sd">            If *common_name* is already in use and *is_overwrite* is ``False``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">get_by_name</span><span class="p">(</span><span class="n">common_name</span><span class="o">=</span><span class="n">common_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_overwrite</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;Duplicate CN detected: CN=</span><span class="si">%s</span><span class="s2"> is already registered&quot;</span><span class="p">,</span> <span class="n">common_name</span>
+<span class="sd">        All-or-nothing from the caller's point of view: on any failure the</span>
+<span class="sd">        written artefacts (and the new DB row) are removed and the error is</span>
+<span class="sd">        re-raised.</span>
+<span class="sd">        """</span>
+        <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">effective_uuid</span> <span class="o">=</span> <span class="n">uuid_str</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">artefacts</span><span class="p">:</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">effective_uuid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">save_certificate</span><span class="p">(</span>
+                    <span class="n">cert</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+                    <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
+                    <span class="n">file_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">uuid_str</span><span class="o">=</span><span class="n">effective_uuid</span><span class="p">,</span>
+                    <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="k">raise</span> <span class="n">NotUniqueCertOwner</span><span class="p">(</span><span class="n">common_name</span><span class="p">)</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">register_cert_in_db</span><span class="p">(</span>
+                <span class="n">cert</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">effective_uuid</span><span class="p">),</span> <span class="n">key_type</span><span class="o">=</span><span class="n">cert_type</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">DBOperationError</span><span class="p">(</span>
+                    <span class="s2">"register_cert_in_db"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"certificate serial=</span><span class="si">{</span><span class="n">certificate</span><span class="o">.</span><span class="n">serial_number</span><span class="si">}</span><span class="s2"> was not stored"</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_discard</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">effective_uuid</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cert_path</span><span class="p">)</span>
+            <span class="k">raise</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Overwriting existing certificate: CN=</span><span class="si">%s</span><span class="s2"> (serial=</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
-                <span class="n">common_name</span><span class="p">,</span>
-                <span class="n">existing</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+        <span class="k">if</span> <span class="n">replaced</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">:</span>
+            <span class="n">ok</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span>
+                <span class="n">serial_number</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">replaced</span><span class="o">.</span><span class="n">serial_number</span><span class="p">),</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">superseded</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">revoke_certificate</span><span class="p">(</span>
-                <span class="n">serial</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">serial_number</span><span class="p">),</span>
-                <span class="n">reason</span><span class="o">=</span><span class="n">x509</span><span class="o">.</span><span class="n">ReasonFlags</span><span class="o">.</span><span class="n">key_compromise</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">delete_certificate_folder</span><span class="p">(</span>
-                <span class="n">uuid_str</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">uuid</span><span class="p">),</span> <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span> <span class="ow">and</span> <span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">RevokeStatus</span><span class="o">.</span><span class="n">NOT_FOUND</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">delete_by_uuid</span><span class="p">(</span><span class="n">uuid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">effective_uuid</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_discard</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">effective_uuid</span><span class="p">,</span> <span class="n">uuid_str</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cert_path</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">CertRevocationError</span><span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">replaced</span><span class="o">.</span><span class="n">serial_number</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">status</span><span class="p">))</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">delete_replaced_folder</span>
+                <span class="ow">and</span> <span class="n">replaced</span><span class="o">.</span><span class="n">uuid</span>
+                <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">replaced</span><span class="o">.</span><span class="n">uuid</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">(</span><span class="n">effective_uuid</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">delete_certificate_folder</span><span class="p">(</span>
+                    <span class="n">uuid_str</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">replaced</span><span class="o">.</span><span class="n">uuid</span><span class="p">),</span> <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span>
+                <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="o">.</span><span class="n">register_cert_in_db</span><span class="p">(</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">certificate</span><span class="p">,</span>
-            <span class="n">uuid</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
-            <span class="n">key_type</span><span class="o">=</span><span class="n">cert_type</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="s2">&quot;Certificate registered in DB: CN=</span><span class="si">%s</span><span class="s2">, uuid=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">common_name</span><span class="p">,</span> <span class="n">uuid_str</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">"Certificate registered in DB: serial=</span><span class="si">%s</span><span class="s2">, uuid=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">certificate</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+                <span class="n">effective_uuid</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">paths</span><span class="p">,</span> <span class="n">effective_uuid</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_discard</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+        <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">folder_created</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Best-effort removal of artefacts written by a failed operation."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">folder_created</span> <span class="ow">and</span> <span class="n">uuid_str</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="o">.</span><span class="n">delete_certificate_folder</span><span class="p">(</span>
+                        <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span> <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span>
+                    <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="p">,</span> <span class="n">LocalStorage</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+                    <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - best effort</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Failed to clean up artefacts </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_derive_file_name</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ClientConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Derive the base filename for the certificate artefacts from *config*.</span>
-
-<span class="sd">        Priority: ``config.name`` (explicit name) → ``config.common_name``</span>
-<span class="sd">        lowercased with OS path separators replaced by underscores to prevent</span>
-<span class="sd">        accidental directory traversal.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        config : ClientConfig</span>
-<span class="sd">            Certificate configuration model.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        str</span>
-<span class="sd">            Sanitised filename without extension (e.g. ``&quot;my-service&quot;``).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Storage basename: ``config.name`` (validated by the model) or the CN</span>
+<span class="sd">        made safe by :func:`safe_file_name`.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">safe_file_name</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">common_name</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Assert that a database handler is configured.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        DBNotInitedError</span>
-<span class="sd">            If ``self._db`` is ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Raise ``DBNotInitedError`` if no database handler is configured."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">DBNotInitedError</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Assert that a certificate factory is configured.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If ``self._factory`` is ``None``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` if no certificate factory is configured."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;factory is not initialised. &quot;</span>
-                <span class="s2">&quot;Set CertLifecycleManager.factory before using this operation.&quot;</span>
+                <span class="s2">"factory is not initialised. "</span>
+                <span class="s2">"Set CertLifecycleManager.factory before using this operation."</span>
             <span class="p">)</span></div>
 
 </pre></div>

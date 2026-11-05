@@ -303,6 +303,7 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.issue_intermediate_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.issue_intermediate_ca()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.renew_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.renew_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.validate_cert"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.validate_chain"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_chain()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.verify_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.verify_crl()</span></code></a></li>
 </ul>
 </li>
@@ -355,6 +356,13 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ICALoader.base_info"><code class="docutils literal notranslate"><span class="pre">ICALoader.base_info</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ICALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">ICALoader.ca_cert</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ICALoader.ca_key"><code class="docutils literal notranslate"><span class="pre">ICALoader.ca_key</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.EC_P256"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.EC_P256</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.EC_P384"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.EC_P384</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.ED25519"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.ED25519</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.RSA"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.RSA</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.LocalStorage"><code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code></a><ul>
@@ -440,14 +448,18 @@
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#module-level-contents">Module-level contents</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.ALLOWED_CERT_EXTENSIONS"><code class="docutils literal notranslate"><span class="pre">ALLOWED_CERT_EXTENSIONS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType"><code class="docutils literal notranslate"><span class="pre">CertType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.KeyAlgorithm"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.exc.html">tiny_ca.exc module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertNotFound"><code class="docutils literal notranslate"><span class="pre">CertNotFound</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertRevocationError"><code class="docutils literal notranslate"><span class="pre">CertRevocationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CryptoException"><code class="docutils literal notranslate"><span class="pre">CryptoException</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError"><code class="docutils literal notranslate"><span class="pre">DBNotInitedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError"><code class="docutils literal notranslate"><span class="pre">DBOperationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ErrorLoadCert"><code class="docutils literal notranslate"><span class="pre">ErrorLoadCert</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists"><code class="docutils literal notranslate"><span class="pre">FileAlreadyExists</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidPathError"><code class="docutils literal notranslate"><span class="pre">InvalidPathError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate"><code class="docutils literal notranslate"><span class="pre">InvalidRangeTimeCertificate</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.IsNotFile"><code class="docutils literal notranslate"><span class="pre">IsNotFile</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotExistCertFile"><code class="docutils literal notranslate"><span class="pre">NotExistCertFile</span></code></a></li>

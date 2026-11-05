@@ -255,12 +255,28 @@ class TestCAFileLoaderLoadErrors:
         with pytest.raises(ErrorLoadCert):
             CAFileLoader(ca_cert_path=cert_file, ca_key_path=key_file)
 
-    def test_non_rsa_key_raises_type_error(self, tmp_path, ca_cert):
-        """Covers line 262: isinstance check for non-RSA key."""
-        from cryptography.hazmat.primitives.asymmetric import ec
+    def test_unsupported_key_type_raises_type_error(self, tmp_path, ca_cert):
+        """Only RSA / EC / Ed25519 CA keys are accepted (DSA is rejected)."""
         from cryptography.hazmat.primitives import serialization as ser
+        from cryptography.hazmat.primitives.asymmetric import dsa
 
-        ec_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+        bad_key = dsa.generate_private_key(key_size=2048)
+        cert_file = tmp_path / "ca.pem"
+        key_file = tmp_path / "dsa_key.pem"
+        cert_file.write_bytes(ca_cert.public_bytes(ser.Encoding.PEM))
+        key_file.write_bytes(
+            bad_key.private_bytes(
+                ser.Encoding.PEM, ser.PrivateFormat.PKCS8, ser.NoEncryption()
+            )
+        )
+        with pytest.raises(TypeError, match="CA key must be"):
+            CAFileLoader(ca_cert_path=cert_file, ca_key_path=key_file)
+
+    def test_ec_key_is_accepted(self, tmp_path, ca_cert):
+        from cryptography.hazmat.primitives import serialization as ser
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        ec_key = ec.generate_private_key(ec.SECP256R1())
         cert_file = tmp_path / "ca.pem"
         key_file = tmp_path / "ec_key.pem"
         cert_file.write_bytes(ca_cert.public_bytes(ser.Encoding.PEM))
@@ -271,8 +287,8 @@ class TestCAFileLoaderLoadErrors:
                 ser.NoEncryption(),
             )
         )
-        with pytest.raises(TypeError, match="RSA"):
-            CAFileLoader(ca_cert_path=cert_file, ca_key_path=key_file)
+        loader = CAFileLoader(ca_cert_path=cert_file, ca_key_path=key_file)
+        assert isinstance(loader.ca_key, ec.EllipticCurvePrivateKey)
 
 
 # ===========================================================================

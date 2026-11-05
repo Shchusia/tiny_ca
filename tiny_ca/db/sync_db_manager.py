@@ -30,17 +30,17 @@ import datetime
 from logging import Logger
 
 from cryptography import x509
-from cryptography.hazmat._oid import NameOID
-from cryptography.hazmat.primitives import serialization
-from sqlalchemy import create_engine, delete, select
+from sqlalchemy import asc, create_engine, delete, desc, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from tiny_ca.const import CertType
+from tiny_ca.exc import DBOperationError
 from tiny_ca.settings import DEFAULT_LOGGER
 
 from .base_db import BaseDB
 from .const import CertificateStatus, RevokeStatus
 from .models import Base, CertificateRecord
+from .utils import build_record, utc_now_naive
 
 # ---------------------------------------------------------------------------
 # SRP: engine and session-factory management
@@ -141,24 +141,26 @@ class SyncDBHandler(BaseDB):
     # ------------------------------------------------------------------
     # BaseDB interface
     # ------------------------------------------------------------------
+    #
+    # Error policy
+    # ~~~~~~~~~~~~
+    # Read operations raise ``DBOperationError`` on any database failure.
+    # They never turn an error into "not found" / "empty": for a CA that
+    # would make a revoked certificate look valid or produce an empty CRL.
 
     def get_by_serial(self, serial: int) -> CertificateRecord | None:
         """
         Fetch a single certificate record by its X.509 serial number.
 
-        The serial is stored as a string in the database (to avoid integer
-        overflow across all backends); the conversion is handled internally.
-
-        Parameters
-        ----------
-        serial : int
-            Integer serial number to look up.
-
         Returns
         -------
         CertificateRecord | None
-            The matching ORM record, or ``None`` if no record exists for
-            *serial* or if a database error occurs.
+            The matching record, or ``None`` if no record exists for *serial*.
+
+        Raises
+        ------
+        DBOperationError
+            If the database query fails.
         """
         session = self._db.session()
         try:
@@ -172,7 +174,7 @@ class SyncDBHandler(BaseDB):
             self._logger.error(
                 "get_by_serial(%d) failed: %s", serial, exc, exc_info=True
             )
-            return None
+            raise DBOperationError("get_by_serial", exc) from exc
         finally:
             session.close()
 
@@ -180,35 +182,33 @@ class SyncDBHandler(BaseDB):
         """
         Fetch the active VALID certificate record for the given Common Name.
 
-        Only records with ``status == CertificateStatus.VALID`` are returned.
-        Revoked and expired records are ignored so that the caller always
-        receives the currently-active certificate for a given CN, or ``None``
-        if no active certificate exists.
+        If several VALID records share the CN (e.g. created by an older
+        version of the library), the most recently inserted one is returned.
 
-        Parameters
-        ----------
-        common_name : str
-            The CN (Common Name) value from the certificate Subject field.
-
-        Returns
-        -------
-        CertificateRecord | None
-            The matching VALID record, or ``None`` if absent or on DB error.
+        Raises
+        ------
+        DBOperationError
+            If the database query fails.
         """
         session = self._db.session()
         try:
-            stmt = select(CertificateRecord).where(
-                CertificateRecord.common_name == common_name,
-                CertificateRecord.status == CertificateStatus.VALID,
+            stmt = (
+                select(CertificateRecord)
+                .where(
+                    CertificateRecord.common_name == common_name,
+                    CertificateRecord.status == CertificateStatus.VALID,
+                )
+                .order_by(desc(CertificateRecord.id))
+                .limit(1)
             )
-            cert: CertificateRecord | None = session.execute(stmt).scalar_one_or_none()
+            cert: CertificateRecord | None = session.execute(stmt).scalars().first()
             self._logger.debug("get_by_name(%r) → %s", common_name, cert)
             return cert
         except Exception as exc:
             self._logger.error(
                 "get_by_name(%r) failed: %s", common_name, exc, exc_info=True
             )
-            return None
+            raise DBOperationError("get_by_name", exc) from exc
         finally:
             session.close()
 
@@ -221,63 +221,26 @@ class SyncDBHandler(BaseDB):
         """
         Persist a newly issued certificate to the registry.
 
-        Creates a new ``CertificateRecord`` row with ``status=VALID`` from the
-        metadata and PEM encoding of *cert*.  The full PEM is stored so the
-        certificate can be reconstructed independently of the filesystem.
-
-        Parameters
-        ----------
-        cert : x509.Certificate
-            The issued X.509 certificate.  Its Subject must contain at least
-            one ``commonName`` (CN) attribute.
-        uuid : str
-            UUID string that identifies the storage folder holding the
-            corresponding ``.pem``, ``.key``, and ``.csr`` files.
-        key_type : CertType
-            Certificate category.  Stored as its ``str`` value (e.g.
-            ``"device"``).  Default: ``CertType.DEVICE``.
+        Creates a new ``CertificateRecord`` row with ``status=VALID``.  When
+        the Subject has no CN, the RFC 4514 Subject string is stored as
+        ``common_name``.
 
         Returns
         -------
         bool
-            ``True`` if the record was committed successfully;
-            ``False`` if the operation was rolled back due to an error
-            (e.g. duplicate serial, constraint violation).
-
-        Raises
-        ------
-        IndexError
-            Re-raised if the certificate contains no CN attribute, indicating
-            a malformed certificate that should not be stored.
+            ``True`` if the record was committed; ``False`` if the operation
+            was rolled back (e.g. duplicate serial or UUID).  Callers must
+            check the result — ``CertLifecycleManager`` raises
+            ``DBOperationError`` on ``False``.
         """
         session = self._db.session()
         try:
-            common_name = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
-                0
-            ].value
-            common_name = (
-                common_name
-                if isinstance(common_name, str)
-                else common_name.decode("utf-8")
-            )
-
-            record = CertificateRecord(
-                serial_number=str(cert.serial_number),
-                common_name=common_name,
-                not_valid_before=cert.not_valid_before_utc,
-                not_valid_after=cert.not_valid_after_utc,
-                certificate_pem=cert.public_bytes(serialization.Encoding.PEM).decode(
-                    "utf-8"
-                ),
-                status=CertificateStatus.VALID,
-                key_type=key_type.value,
-                uuid=uuid,
-            )
+            record = build_record(cert, uuid, key_type)
             session.add(record)
             session.commit()
             self._logger.info(
                 "Certificate registered: CN=%r, serial=%s, uuid=%s",
-                common_name,
+                record.common_name,
                 cert.serial_number,
                 uuid,
             )
@@ -300,25 +263,7 @@ class SyncDBHandler(BaseDB):
         reason: x509.ReasonFlags = x509.ReasonFlags.unspecified,
     ) -> tuple[bool, RevokeStatus]:
         """
-        Mark a certificate as revoked and record the reason and timestamp.
-
-        Looks up the certificate by *serial_number* filtered to
-        ``status == VALID`` — already-revoked or unknown serials are treated
-        as not found.  On success the record is updated in-place:
-        - ``status``            → ``CertificateStatus.REVOKED``
-        - ``revocation_reason`` → integer value of *reason*
-        - ``revocation_date``   → current UTC timestamp
-
-        The change is committed atomically; a rollback is performed on any
-        unexpected error.
-
-        Parameters
-        ----------
-        serial_number : int
-            Serial number of the certificate to revoke.
-        reason : x509.ReasonFlags
-            RFC 5280 §5.3.1 revocation reason code.
-            Default: ``x509.ReasonFlags.unspecified`` (code 0).
+        Mark a VALID certificate as revoked and record the reason and timestamp.
 
         Returns
         -------
@@ -343,8 +288,8 @@ class SyncDBHandler(BaseDB):
                 return False, RevokeStatus.NOT_FOUND
 
             cert.status = CertificateStatus.REVOKED
-            cert.revocation_reason = reason.value if hasattr(reason, "value") else 0  # type: ignore
-            cert.revocation_date = datetime.datetime.now(datetime.UTC)  # type: ignore
+            cert.revocation_reason = reason.value
+            cert.revocation_date = utc_now_naive()
 
             session.commit()
             self._logger.info(
@@ -363,37 +308,26 @@ class SyncDBHandler(BaseDB):
 
     def get_revoked_certificates(self) -> Generator[CertificateRecord, None, None]:
         """
-        Yield revoked certificate rows relevant for the current CRL window.
+        Yield every revoked certificate that has not yet expired.
 
-        A record is included when **all** of the following conditions hold:
-
-        1. ``revocation_date`` is not ``NULL`` — the certificate was actually revoked.
-        2. ``not_valid_after > now`` — the certificate has not yet expired; expired
-           certificates need not appear in a CRL because relying parties will
-           reject them regardless.
-        3. ``revocation_date > now - 365 days`` — the revocation is recent enough
-           to be relevant.  This prevents unbounded CRL growth from very old
-           entries that no relying party could still encounter.
-
-        Only three columns are selected (``serial_number``, ``revocation_date``,
-        ``revocation_reason``) to minimise data transfer; callers must not
-        access other ``CertificateRecord`` attributes on the yielded rows.
+        A revoked certificate stays on the CRL until its own ``notAfter``
+        passes (RFC 5280 §3.3) — there is **no** age cut-off on the
+        revocation date, otherwise a long-lived certificate revoked long ago
+        would silently become trusted again.
 
         Yields
         ------
-        CertificateRecord
-            SQLAlchemy ``Row`` objects with ``serial_number``,
-            ``revocation_date``, and ``revocation_reason`` attributes.
+        Row
+            SQLAlchemy rows with ``serial_number``, ``revocation_date`` and
+            ``revocation_reason`` attributes.
 
-        Notes
-        -----
-        All rows are fetched in a single query before yielding begins.  The
-        session is closed in the ``finally`` block; do not use the yielded
-        rows after the generator has been exhausted or abandoned.
+        Raises
+        ------
+        DBOperationError
+            If the query fails.  The CRL must not be built from a partial or
+            empty result in that case.
         """
-        now = datetime.datetime.now(datetime.UTC)
-        cutoff = now - datetime.timedelta(days=365)
-
+        now = utc_now_naive()
         session = self._db.session()
         try:
             stmt = select(
@@ -403,16 +337,16 @@ class SyncDBHandler(BaseDB):
             ).where(
                 CertificateRecord.revocation_date.isnot(None),
                 CertificateRecord.not_valid_after > now,
-                CertificateRecord.revocation_date > cutoff,
             )
-            rows = session.execute(stmt)
-            yield from rows  # type: ignore
+            rows = session.execute(stmt).all()
         except Exception as exc:
             self._logger.error(
                 "get_revoked_certificates failed: %s", exc, exc_info=True
             )
+            raise DBOperationError("get_revoked_certificates", exc) from exc
         finally:
             session.close()
+        yield from rows  # type: ignore[misc]
 
     def list_all(
         self,
@@ -424,24 +358,16 @@ class SyncDBHandler(BaseDB):
         """
         Return a paginated list of certificate records with optional filters.
 
-        Parameters
-        ----------
-        status : str | None
-            Filter by lifecycle state.  ``None`` returns all statuses.
-        key_type : str | None
-            Filter by certificate category.  ``None`` returns all types.
-        limit : int
-            Maximum number of records to return.  Default: ``100``.
-        offset : int
-            Number of records to skip (pagination).  Default: ``0``.
-
         Returns
         -------
         list[CertificateRecord]
-            Records ordered by ``id`` descending.  Empty list on error.
-        """
-        from sqlalchemy import desc
+            Records ordered by ``id`` descending.
 
+        Raises
+        ------
+        DBOperationError
+            If the query fails.
+        """
         session = self._db.session()
         try:
             stmt = select(CertificateRecord)
@@ -460,7 +386,7 @@ class SyncDBHandler(BaseDB):
             return list(rows)
         except Exception as exc:
             self._logger.error("list_all failed: %s", exc, exc_info=True)
-            return []
+            raise DBOperationError("list_all", exc) from exc
         finally:
             session.close()
 
@@ -468,19 +394,12 @@ class SyncDBHandler(BaseDB):
         """
         Return VALID certificates expiring within *within_days* calendar days.
 
-        Parameters
-        ----------
-        within_days : int
-            Look-ahead window in days.  Default: ``30``.
-
-        Returns
-        -------
-        list[CertificateRecord]
-            Records ordered by ``not_valid_after`` ascending.  Empty list on error.
+        Raises
+        ------
+        DBOperationError
+            If the query fails.
         """
-        from sqlalchemy import asc
-
-        now = datetime.datetime.now(datetime.UTC)
+        now = utc_now_naive()
         cutoff = now + datetime.timedelta(days=within_days)
         session = self._db.session()
         try:
@@ -500,7 +419,7 @@ class SyncDBHandler(BaseDB):
             return list(rows)
         except Exception as exc:
             self._logger.error("get_expiring failed: %s", exc, exc_info=True)
-            return []
+            raise DBOperationError("get_expiring", exc) from exc
         finally:
             session.close()
 
@@ -508,21 +427,15 @@ class SyncDBHandler(BaseDB):
         """
         Permanently delete the certificate record identified by *uuid*.
 
-        Parameters
-        ----------
-        uuid : str
-            Storage folder UUID of the certificate to delete.
-
         Returns
         -------
         bool
-            ``True`` if a row was deleted; ``False`` otherwise.
+            ``True`` if a row was deleted; ``False`` otherwise (including errors,
+            which are logged).
         """
-        from sqlalchemy import delete as sa_delete
-
         session = self._db.session()
         try:
-            stmt = sa_delete(CertificateRecord).where(CertificateRecord.uuid == uuid)
+            stmt = delete(CertificateRecord).where(CertificateRecord.uuid == uuid)
             result = session.execute(stmt)
             session.commit()
             deleted = bool(result.rowcount > 0)  # type: ignore[attr-defined]
@@ -544,15 +457,18 @@ class SyncDBHandler(BaseDB):
         Returns
         -------
         int
-            Number of rows updated.  ``0`` on error.
-        """
-        from sqlalchemy import update as sa_update
+            Number of rows updated.
 
-        now = datetime.datetime.now(datetime.UTC)
+        Raises
+        ------
+        DBOperationError
+            If the update fails (the transaction is rolled back).
+        """
+        now = utc_now_naive()
         session = self._db.session()
         try:
             stmt = (
-                sa_update(CertificateRecord)
+                update(CertificateRecord)
                 .where(
                     CertificateRecord.status == CertificateStatus.VALID,
                     CertificateRecord.not_valid_after < now,
@@ -567,6 +483,6 @@ class SyncDBHandler(BaseDB):
         except Exception as exc:
             session.rollback()
             self._logger.error("update_status_expired failed: %s", exc, exc_info=True)
-            return 0
+            raise DBOperationError("update_status_expired", exc) from exc
         finally:
             session.close()

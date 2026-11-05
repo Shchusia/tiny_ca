@@ -255,7 +255,7 @@ authoritative in-process registry is acceptable.</p>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding</span></code>   — stateless generator that encodes a short name</dt><dd><p>prefix and a random UUID fragment into a single
+<dt><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding</span></code>   — stateless generator that encodes a short name</dt><dd><p>prefix and 64 bits of CSPRNG output into a single
 integer.  No shared state; safe for concurrent use.</p>
 </dd>
 </dl>
@@ -282,7 +282,7 @@ DIP : <code class="docutils literal notranslate"><span class="pre">CertificateFa
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.utils.serial_generator.ISerialGenerator">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.utils.serial_generator.</span></span><span class="sig-name descname"><span class="pre">ISerialGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#ISerialGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.utils.serial_generator.ISerialGenerator" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Protocol" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Protocol" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
 <p>Minimal contract for serial-number generators.</p>
 <p>Any class that exposes <code class="docutils literal notranslate"><span class="pre">generate</span></code> and <code class="docutils literal notranslate"><span class="pre">parse</span></code> with compatible
 signatures satisfies this Protocol and can be injected wherever
@@ -299,7 +299,7 @@ certificate serial numbers are needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable identifier (e.g. CN or service name).</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Human-readable identifier (e.g. CN or service name).</p></li>
 <li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Category of the certificate (CA, USER, SERVICE, …).</p></li>
 </ul>
 </dd>
@@ -307,7 +307,7 @@ certificate serial numbers are needed.</p>
 <dd class="field-even"><p>A non-negative integer suitable for use as an X.509 serial number.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -318,13 +318,13 @@ certificate serial numbers are needed.</p>
 <dd><p>Decode a previously generated serial number.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer serial number produced by <code class="docutils literal notranslate"><span class="pre">generate</span></code>.</p>
+<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Integer serial number produced by <code class="docutils literal notranslate"><span class="pre">generate</span></code>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name)</span></code> recovered from the serial.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -334,7 +334,7 @@ certificate serial numbers are needed.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.utils.serial_generator.SerialGenerator">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.utils.serial_generator.</span></span><span class="sig-name descname"><span class="pre">SerialGenerator</span></span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#SerialGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialGenerator" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Stateful serial-number generator with a bidirectional id ↔ serial registry.</p>
 <p>Serial number layout (64-bit integer)</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mi">16</span><span class="o">-</span><span class="n">bit</span> <span class="n">prefix</span> <span class="p">][</span> <span class="mi">48</span><span class="o">-</span><span class="n">bit</span> <span class="n">data</span> <span class="p">]</span>
@@ -360,7 +360,7 @@ multi-process use without external synchronisation.</p>
 <dd><p>Maps <code class="docutils literal notranslate"><span class="pre">serial</span></code> → original identifier (int or str).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)">dict</a>[<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a>, <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a> | <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -371,7 +371,7 @@ multi-process use without external synchronisation.</p>
 <dd><p>Maps <code class="docutils literal notranslate"><span class="pre">&quot;&lt;cert_type_value&gt;_&lt;name&gt;&quot;</span></code> → serial; populated for string ids.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)">dict</a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>, <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -382,7 +382,7 @@ multi-process use without external synchronisation.</p>
 <dd><p>Per-type auto-increment counter for string-based identifiers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)">dict</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a>, <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -408,7 +408,7 @@ auto-increment counter is used and the original string is stored in
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Source identifier.  Integers are encoded directly; strings trigger
+<li><p><strong>id_value</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Source identifier.  Integers are encoded directly; strings trigger
 the auto-increment path.</p></li>
 <li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category; determines the 2-byte prefix.</p></li>
 </ul>
@@ -417,10 +417,10 @@ the auto-increment path.</p></li>
 <dd class="field-even"><p>64-bit serial number: <code class="docutils literal notranslate"><span class="pre">(prefix</span> <span class="pre">&lt;&lt;</span> <span class="pre">48)</span> <span class="pre">|</span> <span class="pre">data</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.14)"><strong>KeyError</strong></a> – If <em>serial_type</em> has no registered prefix.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.15)"><strong>KeyError</strong></a> – If <em>serial_type</em> has no registered prefix.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -432,7 +432,7 @@ the auto-increment path.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Original string identifier passed to <a class="reference internal" href="#tiny_ca.utils.serial_generator.SerialGenerator.generate" title="tiny_ca.utils.serial_generator.SerialGenerator.generate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code></a>.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Original string identifier passed to <a class="reference internal" href="#tiny_ca.utils.serial_generator.SerialGenerator.generate" title="tiny_ca.utils.serial_generator.SerialGenerator.generate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code></a>.</p></li>
 <li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate type under which the name was registered.</p></li>
 </ul>
 </dd>
@@ -440,7 +440,7 @@ the auto-increment path.</p></li>
 <dd class="field-even"><p>Registered serial number, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not found.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -454,14 +454,14 @@ For all other types the original identifier is looked up from the
 internal registry; <code class="docutils literal notranslate"><span class="pre">None</span></code> is returned if not found.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – 64-bit serial number previously produced by <a class="reference internal" href="#tiny_ca.utils.serial_generator.SerialGenerator.generate" title="tiny_ca.utils.serial_generator.SerialGenerator.generate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code></a>.</p>
+<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 64-bit serial number previously produced by <a class="reference internal" href="#tiny_ca.utils.serial_generator.SerialGenerator.generate" title="tiny_ca.utils.serial_generator.SerialGenerator.generate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code></a>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">original_id)</span></code>.  Both members may be <code class="docutils literal notranslate"><span class="pre">None</span></code> if
 the serial was not generated by this instance.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a> | <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -471,9 +471,9 @@ the serial was not generated by this instance.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.utils.serial_generator.SerialWithEncoding">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.utils.serial_generator.</span></span><span class="sig-name descname"><span class="pre">SerialWithEncoding</span></span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#SerialWithEncoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Stateless serial-number generator that encodes a short name prefix and
-a UUID-derived random fragment into a single integer.</p>
+64 bits of CSPRNG output into a single integer.</p>
 <p>Serial number layout</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mi">16</span><span class="o">-</span><span class="n">bit</span> <span class="n">prefix</span> <span class="p">][</span> <span class="mi">80</span><span class="o">-</span><span class="n">bit</span> <span class="n">encoded</span> <span class="n">name</span> <span class="p">][</span> <span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">random</span> <span class="p">]</span>
 </pre></div>
@@ -483,45 +483,50 @@ X.509 allows up to 20 bytes / 160 bits per RFC 5280 §4.1.2.2).</p>
 <ul class="simple">
 <li><p><strong>prefix</strong>       — 2-byte ASCII code from <code class="xref py py-class docutils literal notranslate"><span class="pre">_PrefixRegistry</span></code>.</p></li>
 <li><dl class="simple">
-<dt><strong>encoded name</strong> — up to 4 ASCII characters packed into 32 bits</dt><dd><p>(little-endian byte order, zero-padded).</p>
+<dt><strong>encoded name</strong> — up to 10 ASCII characters packed into 80 bits</dt><dd><p>(little-endian byte order, zero-padded).  Non-ASCII
+characters are stored as <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code> so that every
+character occupies exactly one byte.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><strong>random</strong>       — lower 64 bits of a fresh <code class="docutils literal notranslate"><span class="pre">uuid.uuid4()</span></code> ensuring</dt><dd><p>global uniqueness without shared state.</p>
+<dt><strong>random</strong>       — 64 bits from <a class="reference external" href="https://docs.python.org/3/library/secrets.html#secrets.randbits" title="(in Python v3.15)"><code class="xref py py-func docutils literal notranslate"><span class="pre">secrets.randbits()</span></code></a> (meets the</dt><dd><p>CA/Browser Forum “≥ 64 bits of CSPRNG output” rule).</p>
 </dd>
 </dl>
 </li>
 </ul>
+<p>The 16-bit prefixes are all printable ASCII (&lt; 0x80), so the top bit of
+the 160-bit value is always zero and the DER encoding fits the 20-octet
+limit of RFC 5280 §4.1.2.2 without a padding byte.</p>
 <p>Because no mutable state is kept, this class is safe to use from multiple
 threads or processes simultaneously.</p>
 <section id="class-attributes">
 <h3>Class Attributes<a class="headerlink" href="#class-attributes" title="Link to this heading">¶</a></h3>
 <dl class="simple">
-<dt>RANDOM_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the random (UUID) portion. Default: <code class="docutils literal notranslate"><span class="pre">64</span></code>.</p>
+<dt>RANDOM_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the random portion. Default: <code class="docutils literal notranslate"><span class="pre">64</span></code>.</p>
 </dd>
-<dt>NAME_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the encoded name portion. Default: <code class="docutils literal notranslate"><span class="pre">32</span></code>
-(4 bytes × 8 bits).</p>
+<dt>NAME_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the encoded name portion. Default: <code class="docutils literal notranslate"><span class="pre">80</span></code>
+(10 bytes × 8 bits).</p>
 </dd>
-<dt>MAX_NAME_LENGTH<span class="classifier">int</span></dt><dd><p>Maximum number of ASCII characters that can be encoded. Default: <code class="docutils literal notranslate"><span class="pre">4</span></code>.</p>
+<dt>MAX_NAME_LENGTH<span class="classifier">int</span></dt><dd><p>Maximum number of ASCII characters that can be encoded. Default: <code class="docutils literal notranslate"><span class="pre">10</span></code>.</p>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.utils.serial_generator.SerialWithEncoding.MAX_NAME_LENGTH">
-<span class="sig-name descname"><span class="pre">MAX_NAME_LENGTH</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.MAX_NAME_LENGTH" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">MAX_NAME_LENGTH</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.MAX_NAME_LENGTH" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum number of characters accepted by <code class="xref py py-meth docutils literal notranslate"><span class="pre">_encode_name()</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.utils.serial_generator.SerialWithEncoding.NAME_BITS">
-<span class="sig-name descname"><span class="pre">NAME_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">80</span></span><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.NAME_BITS" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">NAME_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">80</span></span><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.NAME_BITS" title="Link to this definition">¶</a></dt>
 <dd><p>Bit-width of the encoded-name segment (10 ASCII chars × 8 bits).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.utils.serial_generator.SerialWithEncoding.RANDOM_BITS">
-<span class="sig-name descname"><span class="pre">RANDOM_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></span><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.RANDOM_BITS" title="Link to this definition">¶</a></dt>
-<dd><p>Bit-width of the random (UUID) segment.</p>
+<span class="sig-name descname"><span class="pre">RANDOM_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></span><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.RANDOM_BITS" title="Link to this definition">¶</a></dt>
+<dd><p>Bit-width of the random segment.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -529,12 +534,12 @@ threads or processes simultaneously.</p>
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#SerialWithEncoding.generate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.generate" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a globally unique serial number for <em>name</em> and <em>serial_type</em>.</p>
 <p>Only the first <a class="reference internal" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.MAX_NAME_LENGTH" title="tiny_ca.utils.serial_generator.SerialWithEncoding.MAX_NAME_LENGTH"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MAX_NAME_LENGTH</span></code></a> characters of <em>name</em> are encoded;
-uniqueness is guaranteed by the UUID random segment, not by the name.</p>
+uniqueness is provided by the random segment, not by the name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable identifier.  Only the first 4 ASCII characters are
-embedded; the remainder is ignored (not hashed or truncated with loss).</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Human-readable identifier.  Only the first 10 characters are
+embedded; non-ASCII characters become <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code>.</p></li>
 <li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category; determines the 2-byte prefix.</p></li>
 </ul>
 </dd>
@@ -542,17 +547,17 @@ embedded; the remainder is ignored (not hashed or truncated with loss).</p></li>
 <dd class="field-even"><p>Non-negative integer serial suitable for X.509 certificates.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.14)"><strong>KeyError</strong></a> – If <em>serial_type</em> has no registered prefix.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.15)"><strong>KeyError</strong></a> – If <em>serial_type</em> has no registered prefix.</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;nginx&quot;</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">"nginx"</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cert_type</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cert_type</span> <span class="o">==</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ngin&quot;</span>  <span class="c1"># only first 4 chars are stored</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"nginx"</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -563,22 +568,22 @@ embedded; the remainder is ignored (not hashed or truncated with loss).</p></li>
 <dd><p>Decode a serial number produced by <a class="reference internal" href="#tiny_ca.utils.serial_generator.SerialWithEncoding.generate" title="tiny_ca.utils.serial_generator.SerialWithEncoding.generate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer serial number to decode.</p>
+<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Integer serial number to decode.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name_prefix)</span></code> where <em>name_prefix</em> is the up-to-4-char
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name_prefix)</span></code> where <em>name_prefix</em> is the up-to-10-char
 string recovered from the encoded-name segment.
 <em>cert_type</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code> if the prefix is unrecognised.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>]</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;ca-root&quot;</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">"ca-root"</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cert_type</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cert_type</span> <span class="o">==</span> <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ca-r&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"ca-root"</span>
 </pre></div>
 </div>
 </dd></dl>

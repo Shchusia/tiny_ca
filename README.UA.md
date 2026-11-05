@@ -83,7 +83,8 @@ app.include_router(router, prefix="/api/v1")
 | **Співпідписання** | Перепідписання чужого сертифіката під цим CA зі збереженням Subject і розширень |
 | **Ланцюжок** | Побудова `[leaf, ca]` `fullchain.pem` для nginx, Apache або Envoy |
 | **Моніторинг** | Список із фільтрами, сертифікати що спливають, масова позначка прострочених |
-| **Сховище** | `LocalStorage` (sync) і `AsyncLocalStorage` (async, aiofiles) з UUID-ізоляцією |
+| **Сховище** | `LocalStorage` (sync) і `AsyncLocalStorage` (async) з UUID-ізоляцією, приватними ключами `0600` і захистом від path traversal |
+| **Алгоритми ключів** | RSA (2048+), ECDSA P-256 / P-384, Ed25519 — для CA і для кінцевих сертифікатів |
 | **База даних** | `SyncDBHandler` (SQLAlchemy) і `AsyncDBHandler` (aiosqlite) — SQLite, PostgreSQL, MySQL |
 | **Паритет API** | `CertLifecycleManager` і `AsyncCertLifecycleManager` мають ідентичний набір методів |
 | **Серійні номери** | `SerialWithEncoding` — 160-бітні RFC 5280, з префіксом типу та фрагментом імені |
@@ -95,7 +96,7 @@ app.include_router(router, prefix="/api/v1")
 
 - **Python** 3.11 або вище
 - **Основні:** `cryptography >= 46`, `sqlalchemy >= 2`, `pydantic >= 2`
-- **Async-extras:** `aiofiles`, `aiosqlite`
+- **Async-extras:** `aiosqlite`
 - **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)
 - **MySQL:** `pymysql` (sync) / `aiomysql` (async)
 
@@ -116,7 +117,7 @@ CertLifecycleManager / AsyncCertLifecycleManager   ← точка входу
         │
         ├── BaseStorage (ABC)
         │       ├── LocalStorage                    ← sync файлова система (UUID-ізоляція)
-        │       └── AsyncLocalStorage               ← async файлова система (aiofiles)
+        │       └── AsyncLocalStorage               ← async файлова система (робочі потоки)
         │
         └── BaseDB (ABC)
                 ├── SyncDBHandler                   ← SQLAlchemy sync
@@ -396,7 +397,12 @@ storage = LocalStorage(base_folder="./pki")
 
 ### `AsyncLocalStorage` (async)
 
-Пряма async-заміна — однаковий конструктор, однакова структура, весь I/O через `aiofiles`.
+Пряма async-заміна — однаковий конструктор, однакова структура і ті самі гарантії безпеки; блокуючий I/O виконується в робочих потоках.
+
+> **З версії 0.3.0:** приватні ключі записуються з правами `0600` (без шифрування, якщо не передано
+> `base_encryption_algorithm=BestAvailableEncryption(...)`); `file_name` / `cert_path` / `uuid_str`
+> перевіряються на вихід за межі `base_folder`; помилки БД під час читання піднімають `DBOperationError`
+> (fail-closed) — порожній CRL ніколи не публікується. Деталі — у `CHANGELOG.md`.
 
 ---
 
@@ -581,4 +587,3 @@ tiny_ca/
 | SQLAlchemy | MIT |
 | Pydantic | MIT |
 | aiosqlite | MIT |
-| aiofiles | Apache 2.0 |

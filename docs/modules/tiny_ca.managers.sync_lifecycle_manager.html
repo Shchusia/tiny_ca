@@ -251,6 +251,20 @@ specialised concern to the appropriate collaborator:</p>
 <li><p>File persistence          → <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code></p></li>
 <li><p>Database registration     → <code class="docutils literal notranslate"><span class="pre">BaseDB</span></code></p></li>
 </ul>
+<section id="consistency-rules">
+<h2>Consistency rules<a class="headerlink" href="#consistency-rules" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Every certificate signed by the CA through this manager (issue, renew,
+co-sign, intermediate CA, self-signed CA) is registered in the database
+when one is configured, so it can be revoked and appears in the CRL.</p></li>
+<li><p>CN conflicts are detected <em>before</em> anything is written to storage.</p></li>
+<li><p>If registration fails, the artefacts written for the operation are removed
+and the error is raised — no orphaned private keys on disk.</p></li>
+<li><p>A certificate that is replaced (overwrite, rotation, renewal) is revoked
+with reason <code class="docutils literal notranslate"><span class="pre">superseded</span></code>; if that revocation fails, the new certificate
+is rolled back and <code class="docutils literal notranslate"><span class="pre">CertRevocationError</span></code> is raised.</p></li>
+</ul>
+</section>
 <section id="solid-notes">
 <h2>SOLID notes<a class="headerlink" href="#solid-notes" title="Link to this heading">¶</a></h2>
 <dl>
@@ -260,66 +274,41 @@ specialised concern to the appropriate collaborator:</p>
 </dd>
 </dl>
 <p>LSP : <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code> and <code class="docutils literal notranslate"><span class="pre">BaseDB</span></code> dependencies are fully substitutable.
-ISP : Interfaces are narrow; callers that only need issuance never interact</p>
-<blockquote>
-<div><p>with revocation internals.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>DIP<span class="classifier">All three collaborators are injected at construction time; the manager</span></dt><dd><p>never instantiates them directly.</p>
-</dd>
-</dl>
+DIP : All three collaborators are injected at construction time.</p>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.managers.sync_lifecycle_manager.</span></span><span class="sig-name descname"><span class="pre">CertLifecycleManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">storage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;tiny_ca.storage.local_storage.LocalStorage</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.managers.sync_lifecycle_manager.</span></span><span class="sig-name descname"><span class="pre">CertLifecycleManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">storage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Orchestrates the full lifecycle of X.509 certificates.</p>
-<p><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager</span></code> is the facade that application code interacts with.
-It coordinates four collaborators through dependency injection:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> — cryptographic generation of certificates and CRLs.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code>        — persistent storage of PEM/key/CSR/CRL files.</p></li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">BaseDB</span></code>             — registration, lookup, revocation, and rotation</dt><dd><p>records in a relational database.</p>
-</dd>
-</dl>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Logger</span></code>             — structured operational logging.</p></li>
-</ul>
-<p>All three external collaborators are optional at construction time, but
-specific operations will raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> or <code class="docutils literal notranslate"><span class="pre">DBNotInitedError</span></code> if
-a required collaborator is absent when that operation is invoked.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>storage</strong> (<a class="reference internal" href="tiny_ca.storage.base_storage.html#tiny_ca.storage.base_storage.BaseStorage" title="tiny_ca.storage.base_storage.BaseStorage"><em>BaseStorage</em></a>) – File storage backend.  Defaults to <code class="docutils literal notranslate"><span class="pre">LocalStorage()</span></code> which writes to
-<code class="docutils literal notranslate"><span class="pre">./certs</span></code> relative to the working directory.</p></li>
-<li><p><strong>factory</strong> (<a class="reference internal" href="tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory" title="tiny_ca.ca_factory.factory.CertificateFactory"><em>CertificateFactory</em></a><em> | </em><em>None</em>) – Cryptographic factory.  Must be set before calling
-<code class="docutils literal notranslate"><span class="pre">issue_certificate</span></code>, <code class="docutils literal notranslate"><span class="pre">generate_crl</span></code>, or <code class="docutils literal notranslate"><span class="pre">verify_certificate</span></code>.
-Can be set after construction via the <code class="docutils literal notranslate"><span class="pre">factory</span></code> property setter.</p></li>
-<li><p><strong>db_handler</strong> (<a class="reference internal" href="tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB" title="tiny_ca.db.base_db.BaseDB"><em>BaseDB</em></a><em> | </em><em>None</em>) – Database adapter.  When <code class="docutils literal notranslate"><span class="pre">None</span></code>, all operations that require
-persistence (status lookup, revocation, rotation) will raise
+<li><p><strong>storage</strong> (<a class="reference internal" href="tiny_ca.storage.base_storage.html#tiny_ca.storage.base_storage.BaseStorage" title="tiny_ca.storage.base_storage.BaseStorage"><em>BaseStorage</em></a><em> | </em><em>None</em>) – File storage backend.  <code class="docutils literal notranslate"><span class="pre">None</span></code> creates a <code class="docutils literal notranslate"><span class="pre">LocalStorage()</span></code> writing
+to <code class="docutils literal notranslate"><span class="pre">./certs</span></code> (a new instance per manager).</p></li>
+<li><p><strong>factory</strong> (<a class="reference internal" href="tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory" title="tiny_ca.ca_factory.factory.CertificateFactory"><em>CertificateFactory</em></a><em> | </em><em>None</em>) – Cryptographic factory.  Must be set before issuing, generating CRLs or
+verifying.  Can be set later via the <code class="docutils literal notranslate"><span class="pre">factory</span></code> property.</p></li>
+<li><p><strong>db_handler</strong> (<a class="reference internal" href="tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB" title="tiny_ca.db.base_db.BaseDB"><em>BaseDB</em></a><em> | </em><em>None</em>) – Database adapter.  When <code class="docutils literal notranslate"><span class="pre">None</span></code>, operations that require persistence
+(status lookup, revocation, rotation, renewal) raise
 <code class="docutils literal notranslate"><span class="pre">DBNotInitedError</span></code>.</p></li>
 <li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>) – Logger for operational messages.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <em>storage</em> is not a <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code> instance.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <em>db_handler</em> is provided but is not a <code class="docutils literal notranslate"><span class="pre">BaseDB</span></code> instance.</p></li>
-</ul>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#TypeError" title="(in Python v3.15)"><strong>TypeError</strong></a> – If <em>storage</em> is not a <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code> instance, or <em>db_handler</em> is
+    provided but is not a <code class="docutils literal notranslate"><span class="pre">BaseDB</span></code> instance.</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">storage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;tiny_ca.storage.local_storage.LocalStorage</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">storage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_handler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>storage</strong> (<a class="reference internal" href="tiny_ca.storage.base_storage.html#tiny_ca.storage.base_storage.BaseStorage" title="tiny_ca.storage.base_storage.BaseStorage"><em>BaseStorage</em></a>)</p></li>
+<li><p><strong>storage</strong> (<a class="reference internal" href="tiny_ca.storage.base_storage.html#tiny_ca.storage.base_storage.BaseStorage" title="tiny_ca.storage.base_storage.BaseStorage"><em>BaseStorage</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>factory</strong> (<a class="reference internal" href="tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory" title="tiny_ca.ca_factory.factory.CertificateFactory"><em>CertificateFactory</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>db_handler</strong> (<a class="reference internal" href="tiny_ca.db.base_db.html#tiny_ca.db.base_db.BaseDB" title="tiny_ca.db.base_db.BaseDB"><em>BaseDB</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -330,16 +319,29 @@ persistence (status lookup, revocation, rotation) will raise
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.cosign_certificate">
-<span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.cosign_certificate" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code></span></p>
+<span class="sig-name descname"><span class="pre">cosign_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.cosign_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.cosign_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Re-sign <em>cert</em> with this CA, store the result and register it.</p>
+<p>Registration makes the co-signed certificate revocable and verifiable
+like any other certificate issued by this CA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotUniqueCertOwner" title="tiny_ca.exc.NotUniqueCertOwner"><strong>NotUniqueCertOwner</strong></a> – If the CN already belongs to a VALID certificate and
+    <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If registration fails.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code></span></p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>cert</strong> (<em>Certificate</em>)</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType" title="tiny_ca.const.CertType"><em>CertType</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -349,32 +351,24 @@ persistence (status lookup, revocation, rotation) will raise
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.create_self_signed_ca">
 <span class="sig-name descname"><span class="pre">create_self_signed_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.create_self_signed_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.create_self_signed_ca" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a self-signed root CA certificate and persist both artefacts.</p>
-<p>Delegates cryptographic generation to
-<code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca</span></code> and then saves the
-certificate and private key through the configured <code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code>.
-When a <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> is present the certificate is also registered in
-the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CAConfig" title="tiny_ca.CAConfig"><em>CAConfig</em></a>) – Pydantic model carrying <code class="docutils literal notranslate"><span class="pre">common_name</span></code>, <code class="docutils literal notranslate"><span class="pre">organization</span></code>,
-<code class="docutils literal notranslate"><span class="pre">country</span></code>, <code class="docutils literal notranslate"><span class="pre">key_size</span></code>, and <code class="docutils literal notranslate"><span class="pre">days_valid</span></code>.</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Sub-directory under the storage base folder.  <code class="docutils literal notranslate"><span class="pre">None</span></code> places the
-files directly in the base folder.</p></li>
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Explicit UUID for the storage sub-directory.  <code class="docutils literal notranslate"><span class="pre">None</span></code> causes the
-storage layer to generate one automatically.</p></li>
-<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, any existing certificate with the same CN is revoked
-and its files are deleted before the new one is saved.  When
-<code class="docutils literal notranslate"><span class="pre">False</span></code> (default), <code class="docutils literal notranslate"><span class="pre">NotUniqueCertOwner</span></code> is raised if a conflict
-exists.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CAConfig" title="tiny_ca.CAConfig"><em>CAConfig</em></a>) – CA parameters (CN, organisation, country, key algorithm / size,
+validity).</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Sub-directory under the storage base folder.</p></li>
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Explicit UUID for the storage sub-directory.</p></li>
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, an existing VALID certificate with the same CN is
+revoked (<code class="docutils literal notranslate"><span class="pre">superseded</span></code>) and its files are deleted.  When
+<code class="docutils literal notranslate"><span class="pre">False</span></code> (default), <code class="docutils literal notranslate"><span class="pre">NotUniqueCertOwner</span></code> is raised <em>before</em>
+anything is written.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(path_to_cert_pem,</span> <span class="pre">path_to_key_pem)</span></code> as returned by the storage
-layer.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(path_to_cert_pem,</span> <span class="pre">path_to_key)</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[Path, Path]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -386,12 +380,12 @@ layer.</p>
 <p>Returns True if the DB row was deleted (storage deletion is best-effort).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -400,17 +394,17 @@ layer.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.export_pkcs12">
 <span class="sig-name descname"><span class="pre">export_pkcs12</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">private_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.export_pkcs12"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.export_pkcs12" title="Link to this definition">¶</a></dt>
-<dd><p>Pack cert + key into a PKCS#12 bundle. Delegates to CertificateFactory.export_pkcs12.</p>
+<dd><p>Pack cert + key into a PKCS#12 bundle. Delegates to the factory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a></span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>cert</strong> (<em>Certificate</em>)</p></li>
-<li><p><strong>private_key</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v49.0.0.dev1)"><em>RSAPrivateKey</em></a>)</p></li>
-<li><p><strong>password</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><em>bytes</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>private_key</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v51.0.0-dev1)"><em>RSAPrivateKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey" title="(in Cryptography v51.0.0-dev1)"><em>EllipticCurvePrivateKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey" title="(in Cryptography v51.0.0-dev1)"><em>Ed25519PrivateKey</em></a>)</p></li>
+<li><p><strong>password</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><em>bytes</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -418,45 +412,32 @@ layer.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.factory">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">factory</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory" title="tiny_ca.ca_factory.factory.CertificateFactory"><span class="pre">CertificateFactory</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.factory" title="Link to this definition">¶</a></dt>
-<dd><p>The active <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> used for certificate issuance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The current factory, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not yet initialised.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory" title="tiny_ca.ca_factory.factory.CertificateFactory">CertificateFactory</a> | None</p>
-</dd>
-</dl>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">factory</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.ca_factory.factory.html#tiny_ca.ca_factory.factory.CertificateFactory" title="tiny_ca.ca_factory.factory.CertificateFactory"><span class="pre">CertificateFactory</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.factory" title="Link to this definition">¶</a></dt>
+<dd><p>The active <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> (<code class="docutils literal notranslate"><span class="pre">None</span></code> if not yet set).</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl">
-<span class="sig-name descname"><span class="pre">generate_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.generate_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">generate_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crl_number</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.generate_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.generate_crl" title="Link to this definition">¶</a></dt>
 <dd><p>Build, sign, and persist a fresh Certificate Revocation List.</p>
-<p>Retrieves all currently-revoked certificates from the database,
-passes them to <code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl</span></code>, and writes the
-resulting CRL to storage as <code class="docutils literal notranslate"><span class="pre">crl.pem</span></code> (overwriting any previous
-version — CRLs are always regenerated in-place).</p>
+<p>Writes <code class="docutils literal notranslate"><span class="pre">crl.pem</span></code> to storage (overwriting the previous version).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of days until the CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code> field.  Relying
-parties will reject the CRL after this point.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Sub-directory under the storage base folder.</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Days until the CRL’s <code class="docutils literal notranslate"><span class="pre">nextUpdate</span></code>.  Default: <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>crl_number</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>) – Explicit CRL number; <code class="docutils literal notranslate"><span class="pre">None</span></code> derives a monotonic one from time.</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The signed CRL object (also persisted to storage).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>x509.CertificateRevocationList</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If revoked certificates cannot be read — no CRL is produced.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
 </ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRevocationList</span></code></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -464,10 +445,10 @@ parties will reject the CRL after this point.  Default: <code class="docutils li
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_cert_chain">
 <span class="sig-name descname"><span class="pre">get_cert_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.get_cert_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_cert_chain" title="Link to this definition">¶</a></dt>
-<dd><p>Return [cert, ca_cert] chain. Delegates to CertificateFactory.get_cert_chain.</p>
+<dd><p>Return the <code class="docutils literal notranslate"><span class="pre">[cert,</span> <span class="pre">ca_cert]</span></code> chain. Delegates to the factory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code>]</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code>]</span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>cert</strong> (<em>Certificate</em>)</p>
@@ -479,24 +460,20 @@ parties will reject the CRL after this point.  Default: <code class="docutils li
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_certificate_status">
 <span class="sig-name descname"><span class="pre">get_certificate_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.get_certificate_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.get_certificate_status" title="Link to this definition">¶</a></dt>
 <dd><p>Determine the current status of the certificate identified by <em>serial</em>.</p>
-<p>Looks up the certificate record in the database and evaluates its
-state in the following priority order:
-1. Not found  → <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>
-2. Revocation date is set → <code class="docutils literal notranslate"><span class="pre">REVOKED</span></code>
-3. <code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> is in the past → <code class="docutils literal notranslate"><span class="pre">EXPIRED</span></code>
-4. Otherwise → <code class="docutils literal notranslate"><span class="pre">VALID</span></code></p>
+<p>Priority: not found → <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>; revoked → <code class="docutils literal notranslate"><span class="pre">REVOKED</span></code>; past
+<code class="docutils literal notranslate"><span class="pre">not_valid_after</span></code> → <code class="docutils literal notranslate"><span class="pre">EXPIRED</span></code>; otherwise <code class="docutils literal notranslate"><span class="pre">VALID</span></code>.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the database cannot be read.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.db.const.html#tiny_ca.db.const.CertificateStatus" title="tiny_ca.db.const.CertificateStatus"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateStatus</span></code></a></span></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer serial number of the certificate to check.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>One of <code class="docutils literal notranslate"><span class="pre">VALID</span></code>, <code class="docutils literal notranslate"><span class="pre">REVOKED</span></code>, <code class="docutils literal notranslate"><span class="pre">EXPIRED</span></code>, or <code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.db.const.html#tiny_ca.db.const.CertificateStatus" title="tiny_ca.db.const.CertificateStatus">CertificateStatus</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p>
+<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -507,10 +484,10 @@ state in the following priority order:
 <dd><p>Return VALID certs expiring within <em>within_days</em> days. Requires db_handler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>]</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>]</span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>within_days</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p>
+<dd class="field-even"><p><strong>within_days</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -518,7 +495,8 @@ state in the following priority order:
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.inspect_certificate">
 <span class="sig-name descname"><span class="pre">inspect_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.inspect_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.inspect_certificate" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Structured summary of <em>cert</em>. Delegates to the factory.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateDetails" title="tiny_ca.models.certificate.CertificateDetails"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateDetails</span></code></a></span></p>
 </dd>
@@ -531,109 +509,65 @@ state in the following priority order:
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.issue_certificate">
 <span class="sig-name descname"><span class="pre">issue_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.issue_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.issue_certificate" title="Link to this definition">¶</a></dt>
-<dd><p>Issue a new end-entity certificate and persist all three artefacts.</p>
-<p>The method generates the certificate, private key, and CSR via the
-configured <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code>, then saves each file through
-<code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code>.  If a <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> is configured the certificate
-metadata is also written to the database.</p>
-<section id="artefacts-written-to-storage">
-<h2>Artefacts written to storage<a class="headerlink" href="#artefacts-written-to-storage" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file_name&gt;.pem</span></code>  — the signed certificate.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file_name&gt;.key</span></code>  — the private key (unencrypted by default).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;file_name&gt;.csr</span></code>  — the certificate signing request (for audit).</p></li>
-</ul>
-<dl class="field-list simple">
-<dt class="field-odd">type config<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig" title="tiny_ca.models.certificate.ClientConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClientConfig</span></code></a></span></p>
-</dd>
-<dt class="field-even">param config<span class="colon">:</span></dt>
-<dd class="field-even"><p>Pydantic model containing all certificate parameters: <code class="docutils literal notranslate"><span class="pre">common_name</span></code>,
-<code class="docutils literal notranslate"><span class="pre">serial_type</span></code>, <code class="docutils literal notranslate"><span class="pre">key_size</span></code>, <code class="docutils literal notranslate"><span class="pre">days_valid</span></code>, <code class="docutils literal notranslate"><span class="pre">email</span></code>,
-<code class="docutils literal notranslate"><span class="pre">is_server_cert</span></code>, <code class="docutils literal notranslate"><span class="pre">is_client_cert</span></code>, <code class="docutils literal notranslate"><span class="pre">san_dns</span></code>, <code class="docutils literal notranslate"><span class="pre">san_ip</span></code>,
-and an optional <code class="docutils literal notranslate"><span class="pre">name</span></code> for the output file basename.</p>
-</dd>
-<dt class="field-odd">type config<span class="colon">:</span></dt>
-<dd class="field-odd"><p>ClientConfig</p>
-</dd>
-<dt class="field-even">type cert_path<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param cert_path<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Sub-directory under the storage base folder.</p>
-</dd>
-<dt class="field-even">type cert_path<span class="colon">:</span></dt>
-<dd class="field-even"><p>str | None</p>
-</dd>
-<dt class="field-odd">type uuid_str<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-<dt class="field-even">param uuid_str<span class="colon">:</span></dt>
-<dd class="field-even"><p>Explicit UUID; <code class="docutils literal notranslate"><span class="pre">None</span></code> auto-generates one.</p>
-</dd>
-<dt class="field-odd">type uuid_str<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str | None</p>
-</dd>
-<dt class="field-even">type is_overwrite<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param is_overwrite<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Allow replacing an existing certificate with the same CN.</p>
-</dd>
-<dt class="field-even">type is_overwrite<span class="colon">:</span></dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-<dt class="field-odd">returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key,</span> <span class="pre">csr)</span></code> in-memory objects.</p>
-</dd>
-<dt class="field-even">rtype<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]</p>
-</dd>
-<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p>
-</dd>
-<dt class="field-even">raises NotUniqueCertOwner<span class="colon">:</span></dt>
-<dd class="field-even"><p>If <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code> and a certificate with the same CN
-    already exists in the database.</p>
-</dd>
-</dl>
-</section>
+<dd><p>Issue a new end-entity certificate and persist all artefacts.</p>
+<p>Saves <code class="docutils literal notranslate"><span class="pre">&lt;file_name&gt;.pem</span></code> (certificate), <code class="docutils literal notranslate"><span class="pre">&lt;file_name&gt;.key</span></code> (private
+key, mode 0600) and <code class="docutils literal notranslate"><span class="pre">&lt;file_name&gt;.csr</span></code> into a dedicated UUID folder,
+then registers the certificate in the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig" title="tiny_ca.models.certificate.ClientConfig"><em>ClientConfig</em></a>)</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.ClientConfig" title="tiny_ca.ClientConfig"><em>ClientConfig</em></a>) – Certificate parameters.</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Sub-directory under the storage base folder.</p></li>
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Explicit UUID for the storage sub-directory.</p></li>
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – Replace an existing VALID certificate with the same CN (it is
+revoked with reason <code class="docutils literal notranslate"><span class="pre">superseded</span></code> and its folder deleted).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<em>Certificate</em>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)">object</a>, <em>CertificateSigningRequest</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(certificate,</span> <span class="pre">private_key,</span> <span class="pre">csr)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[x509.Certificate, <a class="reference internal" href="tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey" title="tiny_ca.utils.keys.PrivateKey">PrivateKey</a>, x509.CertificateSigningRequest]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotUniqueCertOwner" title="tiny_ca.exc.NotUniqueCertOwner"><strong>NotUniqueCertOwner</strong></a> – If the CN is already in use and <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.
+    Nothing is written in that case.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError" title="tiny_ca.exc.DBOperationError"><strong>DBOperationError</strong></a> – If the database cannot be read or the certificate cannot be
+    registered (written artefacts are removed).</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.issue_intermediate_ca">
-<span class="sig-name descname"><span class="pre">issue_intermediate_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1825</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.issue_intermediate_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.issue_intermediate_ca" title="Link to this definition">¶</a></dt>
-<dd><p>Issue a subordinate CA cert signed by this CA and save artefacts.</p>
-<p>Returns (cert, private_key). The cert is NOT registered in the DB
-automatically — call <code class="docutils literal notranslate"><span class="pre">register_cert_in_db</span></code> if persistence is needed.</p>
+<span class="sig-name descname"><span class="pre">issue_intermediate_ca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">common_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1825</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">organization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">KeyAlgorithm.RSA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.issue_intermediate_ca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.issue_intermediate_ca" title="Link to this definition">¶</a></dt>
+<dd><p>Issue a subordinate CA signed by this CA, store it and register it.</p>
+<p>Certificate and key are saved together in one UUID folder as
+<code class="docutils literal notranslate"><span class="pre">intermediate_ca.pem</span></code> / <code class="docutils literal notranslate"><span class="pre">intermediate_ca.key</span></code>.  Registration lets
+the intermediate be revoked through the root’s CRL.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a>]</span></p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotUniqueCertOwner" title="tiny_ca.exc.NotUniqueCertOwner"><strong>NotUniqueCertOwner</strong></a> – If the CN is in use and <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
-<dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime</em></a>)</p></li>
-<li><p><strong>path_length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code>, <a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RSAPrivateKey</span></code></a> | <a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">EllipticCurvePrivateKey</span></code></a> | <a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Ed25519PrivateKey</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>key_size</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>path_length</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>organization</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>country</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>key_algorithm</strong> (<a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.KeyAlgorithm" title="tiny_ca.const.KeyAlgorithm"><em>KeyAlgorithm</em></a>)</p></li>
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -645,14 +579,14 @@ automatically — call <code class="docutils literal notranslate"><span class="p
 <dd><p>Return paginated certificate records. Requires db_handler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>]</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateRecord</span></code></a>]</span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>status</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>key_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>status</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>key_type</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>offset</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -664,23 +598,25 @@ automatically — call <code class="docutils literal notranslate"><span class="p
 <dd><p>Bulk-mark expired certificates. Returns count of updated rows.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.renew_certificate">
-<span class="sig-name descname"><span class="pre">renew_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.renew_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.renew_certificate" title="Link to this definition">¶</a></dt>
-<dd><p>Renew the certificate identified by <em>serial</em>: same key, new validity window.</p>
-<p>Fetches the certificate PEM from the database, deserialises it, and
-delegates to <code class="docutils literal notranslate"><span class="pre">CertificateFactory.renew_certificate</span></code>.</p>
+<span class="sig-name descname"><span class="pre">renew_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days_valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.renew_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.renew_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Renew the certificate identified by <em>serial</em>: same key, new validity.</p>
+<p>The renewed certificate is stored (<code class="docutils literal notranslate"><span class="pre">.pem</span></code> only — the private key
+stays in the original folder, which is kept) and registered; the
+original is then revoked with reason <code class="docutils literal notranslate"><span class="pre">superseded</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p></li>
 <li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertNotFound" title="tiny_ca.exc.CertNotFound"><strong>CertNotFound</strong></a> – If no record exists for <em>serial</em>.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertRevocationError" title="tiny_ca.exc.CertRevocationError"><strong>CertRevocationError</strong></a> – If the original could not be revoked (the renewal is rolled back).</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -688,9 +624,10 @@ delegates to <code class="docutils literal notranslate"><span class="pre">Certif
 </dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
-<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>valid_from</strong> (<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><em>datetime</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -700,58 +637,55 @@ delegates to <code class="docutils literal notranslate"><span class="pre">Certif
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.revoke_certificate">
 <span class="sig-name descname"><span class="pre">revoke_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.revoke_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.revoke_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Revoke the certificate identified by <em>serial</em>.</p>
-<p>Delegates to <code class="docutils literal notranslate"><span class="pre">BaseDB.revoke_certificate</span></code>.  The record is updated
-in-place (status → REVOKED, revocation date and reason stored); no
-file is deleted.  Call <code class="docutils literal notranslate"><span class="pre">generate_crl</span></code> afterwards to publish the
-updated revocation list.</p>
+<p>The record is updated in place (status → REVOKED, date and reason
+stored).  Call <code class="docutils literal notranslate"><span class="pre">generate_crl</span></code> afterwards to publish the change.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer serial number of the certificate to revoke.</p></li>
-<li><p><strong>reason</strong> (<em>x509.ReasonFlags</em>) – RFC 5280 revocation reason code (e.g.
-<code class="docutils literal notranslate"><span class="pre">x509.ReasonFlags.key_compromise</span></code>).</p></li>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the revocation was recorded; <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise
+(see logs for details).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>reason</strong> (<a class="reference external" href="https://cryptography.io/en/latest/x509/reference/#cryptography.x509.ReasonFlags" title="(in Cryptography v51.0.0-dev1)"><em>ReasonFlags</em></a>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the revocation was recorded successfully;
-<code class="docutils literal notranslate"><span class="pre">False</span></code> if the operation failed (see logs for details).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided at construction time.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.rotate_certificate">
-<span class="sig-name descname"><span class="pre">rotate_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.rotate_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.rotate_certificate" title="Link to this definition">¶</a></dt>
-<dd><p>Revoke an existing certificate and issue a replacement in a single operation.</p>
-<p>The old certificate is revoked with reason <code class="docutils literal notranslate"><span class="pre">superseded</span></code> before the
-new one is issued.  Both operations are performed against the configured
-<code class="docutils literal notranslate"><span class="pre">db_handler</span></code>; if the revocation fails an exception is propagated and
-the new certificate is not issued.</p>
+<span class="sig-name descname"><span class="pre">rotate_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.rotate_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.rotate_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Replace an existing certificate with a newly issued one (new key pair).</p>
+<p>The replacement is issued and registered first; then the old
+certificate is revoked with reason <code class="docutils literal notranslate"><span class="pre">superseded</span></code>.  If that revocation
+fails, the replacement is rolled back and <code class="docutils literal notranslate"><span class="pre">CertRevocationError</span></code> is
+raised, so the caller never ends up with two valid certificates.  The
+old artefact folder is kept for audit.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Serial number of the certificate to replace.</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.ClientConfig" title="tiny_ca.ClientConfig"><em>ClientConfig</em></a>) – Parameters for the replacement certificate.  The CN may differ
-from the original.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(new_certificate,</span> <span class="pre">new_private_key,</span> <span class="pre">new_csr)</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[x509.Certificate, rsa.RSAPrivateKey, x509.CertificateSigningRequest]</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
 <li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError" title="tiny_ca.exc.DBNotInitedError"><strong>DBNotInitedError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p></li>
 <li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertNotFound" title="tiny_ca.exc.CertNotFound"><strong>CertNotFound</strong></a> – If no certificate with <em>serial</em> exists in the database.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotUniqueCertOwner" title="tiny_ca.exc.NotUniqueCertOwner"><strong>NotUniqueCertOwner</strong></a> – If <em>config.common_name</em> belongs to a <em>different</em> VALID certificate.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertRevocationError" title="tiny_ca.exc.CertRevocationError"><strong>CertRevocationError</strong></a> – If the old certificate could not be revoked.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code>, <a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RSAPrivateKey</span></code></a> | <a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">EllipticCurvePrivateKey</span></code></a> | <a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Ed25519PrivateKey</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CertificateSigningRequest</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig" title="tiny_ca.models.certificate.ClientConfig"><em>ClientConfig</em></a>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -759,48 +693,50 @@ from the original.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_certificate">
-<span class="sig-name descname"><span class="pre">verify_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.verify_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_certificate" title="Link to this definition">¶</a></dt>
-<dd><p>Perform a full verification of <em>cert</em>: chain, signature, and revocation.</p>
-<p>Combines cryptographic validation (via <code class="docutils literal notranslate"><span class="pre">CertificateFactory.validate_cert</span></code>)
-with a database revocation check (via <code class="docutils literal notranslate"><span class="pre">get_certificate_status</span></code>).</p>
-<section id="validation-steps">
-<h2>Validation steps<a class="headerlink" href="#validation-steps" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p>Issuer field matches the CA subject.</p></li>
-<li><p>Current UTC time is within the validity window.</p></li>
-<li><p>Cryptographic signature is valid.</p></li>
-<li><p>Certificate is not listed as revoked in the database.</p></li>
+<span class="sig-name descname"><span class="pre">verify_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermediates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.verify_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_certificate" title="Link to this definition">¶</a></dt>
+<dd><p>Fully verify <em>cert</em>: chain, signature, validity and revocation.</p>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p>Cryptographic validation — <code class="docutils literal notranslate"><span class="pre">validate_cert</span></code> (issued directly by
+this CA) or <code class="docutils literal notranslate"><span class="pre">validate_chain</span></code> when <em>intermediates</em> are given.</p></li>
+<li><p>Registry check for every certificate in the path:
+- <code class="docutils literal notranslate"><span class="pre">REVOKED</span></code> anywhere → rejected;
+- a certificate issued directly by this CA must be registered</p>
+<blockquote>
+<div><p>(<code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code> → rejected: it was not issued through this
+registry, so its revocation status cannot be known).</p>
+</div></blockquote>
+</li>
 </ol>
+<p>Database errors propagate (fail closed).</p>
 <dl class="field-list simple">
-<dt class="field-odd">type cert<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Certificate</span></code></span></p>
+<dt class="field-odd">returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when all checks pass.</p>
 </dd>
-<dt class="field-even">param cert<span class="colon">:</span></dt>
-<dd class="field-even"><p>The certificate object to verify.</p>
+<dt class="field-even">rtype<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
 </dd>
-<dt class="field-odd">type cert<span class="colon">:</span></dt>
-<dd class="field-odd"><p>x509.Certificate</p>
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p>
 </dd>
-<dt class="field-even">returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when all checks pass.</p>
-</dd>
-<dt class="field-odd">rtype<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-<dt class="field-even">raises ValueError<span class="colon">:</span></dt>
-<dd class="field-even"><p>If <code class="docutils literal notranslate"><span class="pre">self.factory</span></code> has not been initialised.</p>
+<dt class="field-even">raises DBNotInitedError<span class="colon">:</span></dt>
+<dd class="field-even"><p>If no <code class="docutils literal notranslate"><span class="pre">db_handler</span></code> was provided.</p>
 </dd>
 <dt class="field-odd">raises ValidationCertError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the certificate fails any cryptographic check or is revoked.</p>
+<dd class="field-odd"><p>If any check fails.</p>
 </dd>
 </dl>
 </section>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cert</strong> (<em>Certificate</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>Certificate</em>)</p></li>
+<li><p><strong>intermediates</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><em>Certificate</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -808,10 +744,10 @@ with a database revocation check (via <code class="docutils literal notranslate"
 <dl class="py method">
 <dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_crl">
 <span class="sig-name descname"><span class="pre">verify_crl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crl</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#CertLifecycleManager.verify_crl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_crl" title="Link to this definition">¶</a></dt>
-<dd><p>Verify CRL signature and expiry. Delegates to CertificateFactory.verify_crl.</p>
+<dd><p>Verify CRL signature and expiry. Delegates to the factory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>crl</strong> (<em>CertificateRevocationList</em>)</p>
@@ -819,6 +755,39 @@ with a database revocation check (via <code class="docutils literal notranslate"
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.cert_type_from_record">
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.managers.sync_lifecycle_manager.</span></span><span class="sig-name descname"><span class="pre">cert_type_from_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#cert_type_from_record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.cert_type_from_record" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">CertType</span></code> stored in <em>record</em>, defaulting to <code class="docutils literal notranslate"><span class="pre">SERVICE</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType" title="tiny_ca.const.CertType"><code class="xref py py-class docutils literal notranslate"><span class="pre">CertType</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>record</strong> (<a class="reference internal" href="tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord" title="tiny_ca.db.models.CertificateRecord"><em>CertificateRecord</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tiny_ca.managers.sync_lifecycle_manager.safe_file_name">
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.managers.sync_lifecycle_manager.</span></span><span class="sig-name descname"><span class="pre">safe_file_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cert'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/managers/sync_lifecycle_manager.html#safe_file_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.managers.sync_lifecycle_manager.safe_file_name" title="Link to this definition">¶</a></dt>
+<dd><p>Derive a storage file basename from a CN.</p>
+<p>Path separators and NUL are replaced with <code class="docutils literal notranslate"><span class="pre">_</span></code> and leading dots are
+stripped, so the result can never point outside the storage folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>text</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>default</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -861,6 +830,7 @@ with a database revocation check (via <code class="docutils literal notranslate"
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">tiny_ca.managers.sync_lifecycle_manager module</a><ul>
+<li><a class="reference internal" href="#consistency-rules">Consistency rules</a></li>
 <li><a class="reference internal" href="#solid-notes">SOLID notes</a></li>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.__init__"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.__init__()</span></code></a></li>
@@ -885,6 +855,8 @@ with a database revocation check (via <code class="docutils literal notranslate"
 <li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.CertLifecycleManager.verify_crl"><code class="docutils literal notranslate"><span class="pre">CertLifecycleManager.verify_crl()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.cert_type_from_record"><code class="docutils literal notranslate"><span class="pre">cert_type_from_record()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.managers.sync_lifecycle_manager.safe_file_name"><code class="docutils literal notranslate"><span class="pre">safe_file_name()</span></code></a></li>
 </ul>
 </li>
 </ul>

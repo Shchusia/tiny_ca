@@ -233,7 +233,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.db.models</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 
 <span class="sd">SQLAlchemy ORM models and status enumerations for the certificate registry.</span>
 
@@ -257,7 +257,7 @@
 <span class="sd">- ``uuid`` links the database record to the filesystem folder managed by</span>
 <span class="sd">  ``BaseStorage``, enabling clean deletion of both the DB row and the</span>
 <span class="sd">  corresponding files together.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -276,7 +276,7 @@
 <div class="viewcode-block" id="CertificateRecord">
 <a class="viewcode-back" href="../../../modules/tiny_ca.db.models.html#tiny_ca.db.models.CertificateRecord">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CertificateRecord</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    ORM model for a single certificate entry in the registry.</span>
 
 <span class="sd">    Maps to the ``certificates`` table.  Each row represents one certificate</span>
@@ -296,17 +296,17 @@
 <span class="sd">        generations (e.g. after rotation).</span>
 <span class="sd">    status : str</span>
 <span class="sd">        Current lifecycle state.  One of the ``CertificateStatus`` values:</span>
-<span class="sd">        ``&quot;valid&quot;``, ``&quot;revoked&quot;``, ``&quot;expired&quot;``, or ``&quot;unknown&quot;``.</span>
+<span class="sd">        ``"valid"``, ``"revoked"``, ``"expired"``, or ``"unknown"``.</span>
 <span class="sd">        Defaults to ``CertificateStatus.VALID`` on insertion.</span>
 <span class="sd">    not_valid_before : datetime</span>
-<span class="sd">        Start of the certificate&#39;s validity period (UTC, naive datetime as</span>
-<span class="sd">        stored by SQLAlchemy&#39;s ``DateTime`` Column type).</span>
+<span class="sd">        Start of the certificate's validity period (UTC, naive datetime as</span>
+<span class="sd">        stored by SQLAlchemy's ``DateTime`` Column type).</span>
 <span class="sd">    not_valid_after : datetime</span>
-<span class="sd">        End of the certificate&#39;s validity period (UTC, naive datetime).</span>
+<span class="sd">        End of the certificate's validity period (UTC, naive datetime).</span>
 <span class="sd">        Indexed to allow efficient queries for expired certificates.</span>
 <span class="sd">    key_type : str</span>
-<span class="sd">        Certificate category stored as the ``CertType`` enum&#39;s string value</span>
-<span class="sd">        (e.g. ``&quot;ca&quot;``, ``&quot;device&quot;``, ``&quot;service&quot;``).</span>
+<span class="sd">        Certificate category stored as the ``CertType`` enum's string value</span>
+<span class="sd">        (e.g. ``"ca"``, ``"device"``, ``"service"``).</span>
 <span class="sd">        Defaults to ``CertType.DEVICE.value``.</span>
 <span class="sd">    certificate_pem : str</span>
 <span class="sd">        Full PEM-encoded public certificate.  Allows reconstruction of the</span>
@@ -322,9 +322,9 @@
 <span class="sd">        UUID string that identifies the filesystem folder (managed by</span>
 <span class="sd">        ``BaseStorage``) holding the ``.pem``, ``.key``, and ``.csr`` files</span>
 <span class="sd">        for this certificate.  ``None`` if no filesystem artefacts exist.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;certificates&quot;</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">"certificates"</span>
 
     <span class="nb">id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -333,53 +333,53 @@
         <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;X.509 serial number as a decimal string (up to 160-bit value).&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"X.509 serial number as a decimal string (up to 160-bit value)."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">common_name</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">String</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;CN extracted from the certificate Subject at issuance time.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"CN extracted from the certificate Subject at issuance time."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">status</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="n">String</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="n">CertificateStatus</span><span class="o">.</span><span class="n">VALID</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Lifecycle state: valid | revoked | expired | unknown.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"Lifecycle state: valid | revoked | expired | unknown."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">not_valid_before</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">DateTime</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Start of the certificate validity window (UTC).&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"Start of the certificate validity window (UTC)."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">not_valid_after</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">DateTime</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;End of the certificate validity window (UTC). Indexed for expiry queries.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"End of the certificate validity window (UTC). Indexed for expiry queries."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">key_type</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">String</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="n">CertType</span><span class="o">.</span><span class="n">DEVICE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Certificate category: ca | device | service | user | internal.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"Certificate category: ca | device | service | user | internal."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">certificate_pem</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">String</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Full PEM-encoded public certificate for offline reconstruction.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"Full PEM-encoded public certificate for offline reconstruction."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">revocation_date</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">DateTime</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;UTC timestamp of revocation. NULL for non-revoked certificates.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"UTC timestamp of revocation. NULL for non-revoked certificates."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">revocation_reason</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="n">String</span><span class="p">,</span>
         <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;RFC 5280 §5.3.1 reason code integer. NULL for non-revoked certificates.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"RFC 5280 §5.3.1 reason code integer. NULL for non-revoked certificates."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">uuid</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
         <span class="n">String</span><span class="p">,</span>
         <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Filesystem folder UUID linking this record to its storage artefacts.&quot;</span><span class="p">,</span>
+        <span class="n">comment</span><span class="o">=</span><span class="s2">"Filesystem folder UUID linking this record to its storage artefacts."</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>

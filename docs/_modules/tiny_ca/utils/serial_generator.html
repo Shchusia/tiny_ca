@@ -233,7 +233,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.utils.serial_generator</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">serial_generator.py</span>
 
 <span class="sd">X.509 certificate serial number generation and parsing utilities.</span>
@@ -246,7 +246,7 @@
 <span class="sd">                             authoritative in-process registry is acceptable.</span>
 
 <span class="sd">- ``SerialWithEncoding``   — stateless generator that encodes a short name</span>
-<span class="sd">                             prefix and a random UUID fragment into a single</span>
+<span class="sd">                             prefix and 64 bits of CSPRNG output into a single</span>
 <span class="sd">                             integer.  No shared state; safe for concurrent use.</span>
 
 <span class="sd">SOLID compliance</span>
@@ -262,12 +262,12 @@
 <span class="sd">ISP : ``ISerialGenerator`` declares only the two methods callers actually need.</span>
 <span class="sd">DIP : ``CertificateFactory`` (and other consumers) depend on ``ISerialGenerator``,</span>
 <span class="sd">      not on concrete classes.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CertType</span>
 
@@ -280,19 +280,19 @@
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.ISerialGenerator">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ISerialGenerator</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Minimal contract for serial-number generators.</span>
 
 <span class="sd">    Any class that exposes ``generate`` and ``parse`` with compatible</span>
 <span class="sd">    signatures satisfies this Protocol and can be injected wherever</span>
 <span class="sd">    certificate serial numbers are needed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="ISerialGenerator.generate">
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.ISerialGenerator.generate">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Generate a unique serial number for the given name and certificate type.</span>
 
 <span class="sd">        Parameters</span>
@@ -306,7 +306,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
 <span class="sd">            A non-negative integer suitable for use as an X.509 serial number.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="o">...</span></div>
 
 
@@ -314,7 +314,7 @@
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.ISerialGenerator.parse">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Decode a previously generated serial number.</span>
 
 <span class="sd">        Parameters</span>
@@ -326,7 +326,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        tuple[CertType, str]</span>
 <span class="sd">            ``(cert_type, name)`` recovered from the serial.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="o">...</span></div>
 </div>
 
@@ -338,7 +338,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_PrefixRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Bidirectional mapping between :class:`CertType` and 2-byte hex prefixes.</span>
 
 <span class="sd">    The prefixes are chosen to be human-readable in hex dumps:</span>
@@ -346,34 +346,34 @@
 <span class="sd">    ========== ======= ========</span>
 <span class="sd">    CertType   Prefix  ASCII</span>
 <span class="sd">    ========== ======= ========</span>
-<span class="sd">    CA         0x4341  &quot;CA&quot;</span>
-<span class="sd">    USER       0x5553  &quot;US&quot;</span>
-<span class="sd">    SERVICE    0x5356  &quot;SV&quot;</span>
-<span class="sd">    DEVICE     0x4445  &quot;DE&quot;</span>
-<span class="sd">    INTERNAL   0x494E  &quot;IN&quot;</span>
+<span class="sd">    CA         0x4341  "CA"</span>
+<span class="sd">    USER       0x5553  "US"</span>
+<span class="sd">    SERVICE    0x5356  "SV"</span>
+<span class="sd">    DEVICE     0x4445  "DE"</span>
+<span class="sd">    INTERNAL   0x494E  "IN"</span>
 <span class="sd">    ========== ======= ========</span>
 
 <span class="sd">    Class is intentionally non-instantiable (all attributes are class-level).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1">#: ``CertType`` → 2-byte integer prefix (big-endian ASCII representation).</span>
     <span class="n">TYPE_TO_PREFIX</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CertType</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">:</span> <span class="mh">0x4341</span><span class="p">,</span>  <span class="c1"># &quot;CA&quot;</span>
-        <span class="n">CertType</span><span class="o">.</span><span class="n">USER</span><span class="p">:</span> <span class="mh">0x5553</span><span class="p">,</span>  <span class="c1"># &quot;US&quot;</span>
-        <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">:</span> <span class="mh">0x5356</span><span class="p">,</span>  <span class="c1"># &quot;SV&quot;</span>
-        <span class="n">CertType</span><span class="o">.</span><span class="n">DEVICE</span><span class="p">:</span> <span class="mh">0x4445</span><span class="p">,</span>  <span class="c1"># &quot;DE&quot;</span>
-        <span class="n">CertType</span><span class="o">.</span><span class="n">INTERNAL</span><span class="p">:</span> <span class="mh">0x494E</span><span class="p">,</span>  <span class="c1"># &quot;IN&quot;</span>
+        <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">:</span> <span class="mh">0x4341</span><span class="p">,</span>  <span class="c1"># "CA"</span>
+        <span class="n">CertType</span><span class="o">.</span><span class="n">USER</span><span class="p">:</span> <span class="mh">0x5553</span><span class="p">,</span>  <span class="c1"># "US"</span>
+        <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">:</span> <span class="mh">0x5356</span><span class="p">,</span>  <span class="c1"># "SV"</span>
+        <span class="n">CertType</span><span class="o">.</span><span class="n">DEVICE</span><span class="p">:</span> <span class="mh">0x4445</span><span class="p">,</span>  <span class="c1"># "DE"</span>
+        <span class="n">CertType</span><span class="o">.</span><span class="n">INTERNAL</span><span class="p">:</span> <span class="mh">0x494E</span><span class="p">,</span>  <span class="c1"># "IN"</span>
     <span class="p">}</span>
 
     <span class="c1">#: Reverse mapping: 2-byte prefix → ``CertType``.</span>
     <span class="n">PREFIX_TO_TYPE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">CertType</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">TYPE_TO_PREFIX</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;_PrefixRegistry is not meant to be subclassed.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"_PrefixRegistry is not meant to be subclassed."</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">prefix_for</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cert_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the numeric prefix for *cert_type*.</span>
 
 <span class="sd">        Parameters</span>
@@ -390,18 +390,18 @@
 <span class="sd">        ------</span>
 <span class="sd">        KeyError</span>
 <span class="sd">            If *cert_type* has no registered prefix.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">TYPE_TO_PREFIX</span><span class="p">[</span><span class="n">cert_type</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;No prefix registered for CertType.</span><span class="si">{</span><span class="n">cert_type</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">. &quot;</span>
-                <span class="s2">&quot;Add it to _PrefixRegistry.TYPE_TO_PREFIX.&quot;</span>
+                <span class="sa">f</span><span class="s2">"No prefix registered for CertType.</span><span class="si">{</span><span class="n">cert_type</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="s2">"Add it to _PrefixRegistry.TYPE_TO_PREFIX."</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">type_for</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the :class:`CertType` associated with *prefix*, or ``None``.</span>
 
 <span class="sd">        Parameters</span>
@@ -413,7 +413,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        CertType | None</span>
 <span class="sd">            Matching certificate type, or ``None`` if the prefix is unknown.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">PREFIX_TO_TYPE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
 
 
@@ -425,7 +425,7 @@
 <div class="viewcode-block" id="SerialGenerator">
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SerialGenerator</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stateful serial-number generator with a bidirectional id ↔ serial registry.</span>
 
 <span class="sd">    Serial number layout (64-bit integer)</span>
@@ -447,10 +447,10 @@
 <span class="sd">    _id_map : dict[int, int | str]</span>
 <span class="sd">        Maps ``serial`` → original identifier (int or str).</span>
 <span class="sd">    _name_map : dict[str, int]</span>
-<span class="sd">        Maps ``&quot;&lt;cert_type_value&gt;_&lt;name&gt;&quot;`` → serial; populated for string ids.</span>
+<span class="sd">        Maps ``"&lt;cert_type_value&gt;_&lt;name&gt;"`` → serial; populated for string ids.</span>
 <span class="sd">    _last_serial : dict[CertType, int]</span>
 <span class="sd">        Per-type auto-increment counter for string-based identifiers.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1">#: Bit-width reserved for the data portion of the serial.</span>
     <span class="n">_DATA_BITS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">48</span>
@@ -473,7 +473,7 @@
 <div class="viewcode-block" id="SerialGenerator.generate">
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.generate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Generate a serial number for *id_value* and register the mapping.</span>
 
 <span class="sd">        For **integer** inputs the value is embedded directly into the data</span>
@@ -498,7 +498,7 @@
 <span class="sd">        ------</span>
 <span class="sd">        KeyError</span>
 <span class="sd">            If *serial_type* has no registered prefix.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">_PrefixRegistry</span><span class="o">.</span><span class="n">prefix_for</span><span class="p">(</span><span class="n">serial_type</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">id_value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -511,7 +511,7 @@
             <span class="n">serial</span> <span class="o">=</span> <span class="p">(</span><span class="n">prefix</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DATA_BITS</span><span class="p">)</span> <span class="o">|</span> <span class="n">data</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_id_map</span><span class="p">[</span><span class="n">serial</span><span class="p">]</span> <span class="o">=</span> <span class="n">id_value</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_name_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">serial_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">id_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">serial</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_name_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">serial_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">id_value</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">serial</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_serial</span><span class="p">[</span><span class="n">serial_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span>
 
         <span class="k">return</span> <span class="n">serial</span></div>
@@ -520,7 +520,7 @@
 <div class="viewcode-block" id="SerialGenerator.parse">
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.parse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Decode a serial number back to its type and original identifier.</span>
 
 <span class="sd">        For ``CertType.USER`` the numeric data portion is returned directly.</span>
@@ -537,7 +537,7 @@
 <span class="sd">        tuple[CertType | None, int | str | None]</span>
 <span class="sd">            ``(cert_type, original_id)``.  Both members may be ``None`` if</span>
 <span class="sd">            the serial was not generated by this instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">serial</span> <span class="o">&gt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DATA_BITS</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">serial</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DATA_MASK</span>
         <span class="n">cert_type</span> <span class="o">=</span> <span class="n">_PrefixRegistry</span><span class="o">.</span><span class="n">type_for</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
@@ -551,7 +551,7 @@
 <div class="viewcode-block" id="SerialGenerator.get_serial_by_name">
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialGenerator.get_serial_by_name">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_serial_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Look up the serial number previously assigned to a string identifier.</span>
 
 <span class="sd">        Parameters</span>
@@ -565,8 +565,8 @@
 <span class="sd">        -------</span>
 <span class="sd">        int | None</span>
 <span class="sd">            Registered serial number, or ``None`` if not found.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">serial_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">serial_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 </div>
 
 
@@ -579,23 +579,29 @@
 <div class="viewcode-block" id="SerialWithEncoding">
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialWithEncoding">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SerialWithEncoding</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stateless serial-number generator that encodes a short name prefix and</span>
-<span class="sd">    a UUID-derived random fragment into a single integer.</span>
+<span class="sd">    64 bits of CSPRNG output into a single integer.</span>
 
 <span class="sd">    Serial number layout</span>
 <span class="sd">    ::</span>
 
 <span class="sd">        [ 16-bit prefix ][ 80-bit encoded name ][ 64-bit random ]</span>
 
-<span class="sd">    Total width: **160 bits** (well within Python&#39;s arbitrary-precision int;</span>
+<span class="sd">    Total width: **160 bits** (well within Python's arbitrary-precision int;</span>
 <span class="sd">    X.509 allows up to 20 bytes / 160 bits per RFC 5280 §4.1.2.2).</span>
 
 <span class="sd">    - **prefix**       — 2-byte ASCII code from :class:`_PrefixRegistry`.</span>
-<span class="sd">    - **encoded name** — up to 4 ASCII characters packed into 32 bits</span>
-<span class="sd">                         (little-endian byte order, zero-padded).</span>
-<span class="sd">    - **random**       — lower 64 bits of a fresh ``uuid.uuid4()`` ensuring</span>
-<span class="sd">                         global uniqueness without shared state.</span>
+<span class="sd">    - **encoded name** — up to 10 ASCII characters packed into 80 bits</span>
+<span class="sd">                         (little-endian byte order, zero-padded).  Non-ASCII</span>
+<span class="sd">                         characters are stored as ``"?"`` so that every</span>
+<span class="sd">                         character occupies exactly one byte.</span>
+<span class="sd">    - **random**       — 64 bits from :func:`secrets.randbits` (meets the</span>
+<span class="sd">                         CA/Browser Forum "≥ 64 bits of CSPRNG output" rule).</span>
+
+<span class="sd">    The 16-bit prefixes are all printable ASCII (&lt; 0x80), so the top bit of</span>
+<span class="sd">    the 160-bit value is always zero and the DER encoding fits the 20-octet</span>
+<span class="sd">    limit of RFC 5280 §4.1.2.2 without a padding byte.</span>
 
 <span class="sd">    Because no mutable state is kept, this class is safe to use from multiple</span>
 <span class="sd">    threads or processes simultaneously.</span>
@@ -603,15 +609,15 @@
 <span class="sd">    Class Attributes</span>
 <span class="sd">    ----------------</span>
 <span class="sd">    RANDOM_BITS : int</span>
-<span class="sd">        Number of bits reserved for the random (UUID) portion. Default: ``64``.</span>
+<span class="sd">        Number of bits reserved for the random portion. Default: ``64``.</span>
 <span class="sd">    NAME_BITS : int</span>
-<span class="sd">        Number of bits reserved for the encoded name portion. Default: ``32``</span>
-<span class="sd">        (4 bytes × 8 bits).</span>
+<span class="sd">        Number of bits reserved for the encoded name portion. Default: ``80``</span>
+<span class="sd">        (10 bytes × 8 bits).</span>
 <span class="sd">    MAX_NAME_LENGTH : int</span>
-<span class="sd">        Maximum number of ASCII characters that can be encoded. Default: ``4``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Maximum number of ASCII characters that can be encoded. Default: ``10``.</span>
+<span class="sd">    """</span>
 
-    <span class="c1">#: Bit-width of the random (UUID) segment.</span>
+    <span class="c1">#: Bit-width of the random segment.</span>
     <span class="n">RANDOM_BITS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span>
 
     <span class="c1">#: Bit-width of the encoded-name segment (10 ASCII chars × 8 bits).</span>
@@ -628,17 +634,17 @@
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialWithEncoding.generate">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial_type</span><span class="p">:</span> <span class="n">CertType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Generate a globally unique serial number for *name* and *serial_type*.</span>
 
 <span class="sd">        Only the first :attr:`MAX_NAME_LENGTH` characters of *name* are encoded;</span>
-<span class="sd">        uniqueness is guaranteed by the UUID random segment, not by the name.</span>
+<span class="sd">        uniqueness is provided by the random segment, not by the name.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        name : str</span>
-<span class="sd">            Human-readable identifier.  Only the first 4 ASCII characters are</span>
-<span class="sd">            embedded; the remainder is ignored (not hashed or truncated with loss).</span>
+<span class="sd">            Human-readable identifier.  Only the first 10 characters are</span>
+<span class="sd">            embedded; non-ASCII characters become ``"?"``.</span>
 <span class="sd">        serial_type : CertType</span>
 <span class="sd">            Certificate category; determines the 2-byte prefix.</span>
 
@@ -654,14 +660,14 @@
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; serial = SerialWithEncoding.generate(&quot;nginx&quot;, CertType.SERVICE)</span>
+<span class="sd">        &gt;&gt;&gt; serial = SerialWithEncoding.generate("nginx", CertType.SERVICE)</span>
 <span class="sd">        &gt;&gt;&gt; cert_type, name = SerialWithEncoding.parse(serial)</span>
 <span class="sd">        &gt;&gt;&gt; assert cert_type == CertType.SERVICE</span>
-<span class="sd">        &gt;&gt;&gt; assert name == &quot;ngin&quot;  # only first 4 chars are stored</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &gt;&gt;&gt; assert name == "nginx"</span>
+<span class="sd">        """</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_PrefixRegistry</span><span class="o">.</span><span class="n">prefix_for</span><span class="p">(</span><span class="n">serial_type</span><span class="p">)</span>
-        <span class="n">encoded_name</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_encode_name</span><span class="p">(</span><span class="n">name</span><span class="p">[:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">MAX_NAME_LENGTH</span><span class="p">])</span>
-        <span class="n">random_part</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">int</span> <span class="o">&amp;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_random_mask</span><span class="p">()</span>
+        <span class="n">encoded_name</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_encode_name</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_to_ascii</span><span class="p">(</span><span class="n">name</span><span class="p">)[:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">MAX_NAME_LENGTH</span><span class="p">])</span>
+        <span class="n">random_part</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">randbits</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">RANDOM_BITS</span><span class="p">)</span>
 
         <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">prefix</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">NAME_BITS</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">RANDOM_BITS</span><span class="p">))</span>
@@ -675,7 +681,7 @@
 <a class="viewcode-back" href="../../../modules/utils.html#tiny_ca.SerialWithEncoding.parse">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CertType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Decode a serial number produced by :meth:`generate`.</span>
 
 <span class="sd">        Parameters</span>
@@ -686,17 +692,17 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        tuple[CertType | None, str]</span>
-<span class="sd">            ``(cert_type, name_prefix)`` where *name_prefix* is the up-to-4-char</span>
+<span class="sd">            ``(cert_type, name_prefix)`` where *name_prefix* is the up-to-10-char</span>
 <span class="sd">            string recovered from the encoded-name segment.</span>
 <span class="sd">            *cert_type* is ``None`` if the prefix is unrecognised.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; serial = SerialWithEncoding.generate(&quot;ca-root&quot;, CertType.CA)</span>
+<span class="sd">        &gt;&gt;&gt; serial = SerialWithEncoding.generate("ca-root", CertType.CA)</span>
 <span class="sd">        &gt;&gt;&gt; cert_type, name = SerialWithEncoding.parse(serial)</span>
 <span class="sd">        &gt;&gt;&gt; assert cert_type == CertType.CA</span>
-<span class="sd">        &gt;&gt;&gt; assert name == &quot;ca-r&quot;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &gt;&gt;&gt; assert name == "ca-root"</span>
+<span class="sd">        """</span>
         <span class="n">random_part</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">serial</span> <span class="o">&amp;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_random_mask</span><span class="p">()</span>  <span class="c1"># noqa: F841 — kept for clarity</span>
         <span class="n">encoded_name</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span><span class="n">serial</span> <span class="o">&gt;&gt;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">RANDOM_BITS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_name_mask</span><span class="p">()</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">serial</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">RANDOM_BITS</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">NAME_BITS</span><span class="p">)</span>
@@ -711,9 +717,19 @@
     <span class="c1"># Private encoding helpers</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_to_ascii</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Replace every non-ASCII character of *text* with ``"?"``.</span>
+
+<span class="sd">        Guarantees that each character fits in one byte, so it can never</span>
+<span class="sd">        overflow into the neighbouring prefix / random segments.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span>
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_encode_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Pack up to :attr:`MAX_NAME_LENGTH` ASCII characters into a single integer.</span>
 
 <span class="sd">        Characters are stored in **little-endian** byte order:</span>
@@ -732,12 +748,15 @@
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        ValueError</span>
-<span class="sd">            If *text* is longer than :attr:`MAX_NAME_LENGTH`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            If *text* is longer than :attr:`MAX_NAME_LENGTH` or contains</span>
+<span class="sd">            non-ASCII characters.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">isascii</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Name must be ASCII; use _to_ascii() first."</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">MAX_NAME_LENGTH</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Name too long: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars &gt; </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">MAX_NAME_LENGTH</span><span class="si">}</span><span class="s2"> max. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Truncate before calling or increase MAX_NAME_LENGTH.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Name too long: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars &gt; </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">MAX_NAME_LENGTH</span><span class="si">}</span><span class="s2"> max. "</span>
+                <span class="sa">f</span><span class="s2">"Truncate before calling or increase MAX_NAME_LENGTH."</span>
             <span class="p">)</span>
         <span class="n">result</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
@@ -746,7 +765,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_decode_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Unpack a little-endian-encoded integer back into an ASCII string.</span>
 
 <span class="sd">        Null bytes (``0x00``) terminate the string early, so zero-padding</span>
@@ -763,37 +782,37 @@
 <span class="sd">        -------</span>
 <span class="sd">        str</span>
 <span class="sd">            Decoded ASCII string with trailing null characters removed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">chars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
             <span class="n">byte</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="n">position</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mh">0xFF</span>
             <span class="k">if</span> <span class="n">byte</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">break</span>
             <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">byte</span><span class="p">))</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_random_mask</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Bitmask for the random segment: ``(1 &lt;&lt; RANDOM_BITS) - 1``.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
 <span class="sd">            Integer with the lower :attr:`RANDOM_BITS` set to 1.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">RANDOM_BITS</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_name_mask</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Bitmask for the name segment: ``(1 &lt;&lt; NAME_BITS) - 1``.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        int</span>
 <span class="sd">            Integer with the lower :attr:`NAME_BITS` set to 1.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">NAME_BITS</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span></div>
 
 </pre></div>

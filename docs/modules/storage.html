@@ -267,7 +267,7 @@ substitute them freely.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.storage.base_storage.BaseStorage">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.base_storage.</span></span><span class="sig-name descname"><span class="pre">BaseStorage</span></span><a class="reference internal" href="../_modules/tiny_ca/storage/base_storage.html#BaseStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.base_storage.BaseStorage" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Abstract contract for certificate artefact storage backends.</p>
 <p>Subclasses persist cryptographic objects (certificates, keys, CSRs, CRLs)
 to some durable medium and provide a way to remove an entire issuance
@@ -292,9 +292,9 @@ errors) should return <code class="docutils literal notranslate"><span class="pr
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – UUID string that identifies the sub-directory to delete.  This is
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – UUID string that identifies the sub-directory to delete.  This is
 the value returned as the second element by <code class="docutils literal notranslate"><span class="pre">save_certificate</span></code>.</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-path prepended before <em>uuid_str</em>, matching the
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-path prepended before <em>uuid_str</em>, matching the
 <em>cert_path</em> used when the artefacts were saved.  <code class="docutils literal notranslate"><span class="pre">None</span></code> means
 <em>uuid_str</em> is directly under the backend’s root folder.</p></li>
 </ul>
@@ -308,7 +308,7 @@ the value returned as the second element by <code class="docutils literal notran
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -337,10 +337,10 @@ and the target path already exists; silently replace when <code class="docutils 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cert</strong> (<a class="reference internal" href="tiny_ca.storage.const.html#tiny_ca.storage.const.CryptoObject" title="tiny_ca.storage.const.CryptoObject"><em>CryptoObject</em></a>) – The cryptographic object to serialise and save.</p></li>
-<li><p><strong>file_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Base filename without extension (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ca&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;my-service&quot;</span></code>).</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-directory appended after the backend’s root folder.
+<li><p><strong>file_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Base filename without extension (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ca&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;my-service&quot;</span></code>).</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-directory appended after the backend’s root folder.
 <code class="docutils literal notranslate"><span class="pre">None</span></code> saves directly under the root.</p></li>
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Explicit UUID for the issuance sub-directory.  Pass the UUID
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Explicit UUID for the issuance sub-directory.  Pass the UUID
 returned by a previous call to group multiple artefacts in the
 same folder.  <code class="docutils literal notranslate"><span class="pre">None</span></code> triggers auto-generation.
 Ignored when <em>is_add_uuid</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
@@ -355,10 +355,10 @@ implementation’s default (typically PEM).</p></li>
 <li><p><strong>encryption_algorithm</strong> (<em>serialization.KeySerializationEncryption</em><em> | </em><em>None</em>) – Encryption wrapper for private keys
 (e.g. <code class="docutils literal notranslate"><span class="pre">NoEncryption</span></code>, <code class="docutils literal notranslate"><span class="pre">BestAvailableEncryption</span></code>).
 <code class="docutils literal notranslate"><span class="pre">None</span></code> uses the implementation default.</p></li>
-<li><p><strong>is_add_uuid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), a UUID subdirectory is inserted into the
+<li><p><strong>is_add_uuid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), a UUID subdirectory is inserted into the
 path.  Set to <code class="docutils literal notranslate"><span class="pre">False</span></code> for singleton files such as CRLs that are
 regenerated in-place (<code class="docutils literal notranslate"><span class="pre">crl.pem</span></code>).</p></li>
-<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, silently replace an existing file at the computed
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, silently replace an existing file at the computed
 path.  When <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), raise <code class="docutils literal notranslate"><span class="pre">FileAlreadyExists</span></code>.</p></li>
 </ul>
 </dd>
@@ -369,12 +369,12 @@ the value of <em>uuid_str</em>), or <code class="docutils literal notranslate"><
 <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[Path, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[Path, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a> | None]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists" title="tiny_ca.exc.FileAlreadyExists"><strong>FileAlreadyExists</strong></a> – If the target file already exists and <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <em>cert</em> is not a recognised cryptographic type.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#TypeError" title="(in Python v3.15)"><strong>TypeError</strong></a> – If <em>cert</em> is not a recognised cryptographic type.</p></li>
 </ul>
 </dd>
 </dl>
@@ -397,11 +397,25 @@ Private to this module; not part of the public API.</p>
 </dd>
 </dl>
 </section>
+<section id="security-notes">
+<h3>Security notes<a class="headerlink" href="#security-notes" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Private keys are written with mode <code class="docutils literal notranslate"><span class="pre">0600</span></code> (owner read/write only); other
+artefacts with <code class="docutils literal notranslate"><span class="pre">0644</span></code>.  Files are created with <code class="docutils literal notranslate"><span class="pre">O_EXCL</span></code> when
+overwriting is not allowed, so an existing file is never clobbered by a
+race between the existence check and the write.</p></li>
+<li><p>Every path component supplied by the caller (<code class="docutils literal notranslate"><span class="pre">file_name</span></code>, <code class="docutils literal notranslate"><span class="pre">cert_path</span></code>,
+<code class="docutils literal notranslate"><span class="pre">uuid_str</span></code>) is validated so the resulting path can never escape
+<code class="docutils literal notranslate"><span class="pre">base_folder</span></code>.</p></li>
+<li><p>Private keys are stored unencrypted unless <code class="docutils literal notranslate"><span class="pre">base_encryption_algorithm</span></code>
+(or a per-call <code class="docutils literal notranslate"><span class="pre">encryption_algorithm</span></code>) is supplied; a warning is logged
+once per storage instance in that case.</p></li>
+</ul>
+</section>
 <section id="id1">
 <h3>SOLID notes<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
 <dl>
-<dt>SRP<span class="classifier"><code class="docutils literal notranslate"><span class="pre">_CertSerializer</span></code> is responsible for serialisation only.</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code>   is responsible for path resolution and file I/O only.
-Neither class performs cryptographic operations or database access.</p>
+<dt>SRP<span class="classifier"><code class="docutils literal notranslate"><span class="pre">_CertSerializer</span></code> is responsible for serialisation only.</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code>   is responsible for path resolution and file I/O only.</p>
 </dd>
 <dt>OCP<span class="classifier">New crypto object types are handled by adding a branch in</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">_CertSerializer.serialise</span></code> without modifying <code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code>.</p>
 </dd>
@@ -416,8 +430,7 @@ Neither class performs cryptographic operations or database access.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.local_storage.</span></span><span class="sig-name descname"><span class="pre">LocalStorage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./certs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Encoding.PEM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PrivateFormat.TraditionalOpenSSL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PublicFormat.SubjectPublicKeyInfo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;cryptography.hazmat.primitives._serialization.NoEncryption</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.local_storage.LocalStorage" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="tiny_ca.storage.base_storage.html#tiny_ca.storage.base_storage.BaseStorage" title="tiny_ca.storage.base_storage.BaseStorage"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseStorage</span></code></a></p>
 <p>Local filesystem storage backend for certificate artefacts.</p>
-<p>Writes serialised cryptographic objects to a configurable directory tree.
-Each issuance group (certificate + key + CSR) is placed in a dedicated
+<p>Each issuance group (certificate + key + CSR) is placed in a dedicated
 UUID subdirectory so that all artefacts for a given certificate can be
 found and deleted together.</p>
 <section id="directory-layout">
@@ -426,39 +439,37 @@ found and deleted together.</p>
 └── [cert_path/]
     └── [&lt;uuid&gt;/]
         ├── &lt;file_name&gt;.pem   # x509.Certificate or CRL
-        ├── &lt;file_name&gt;.key   # RSA private key
+        ├── &lt;file_name&gt;.key   # private key (mode 0600)
         ├── &lt;file_name&gt;.csr   # certificate signing request
-        └── &lt;file_name&gt;.pub   # RSA public key (if applicable)
+        └── &lt;file_name&gt;.pub   # public key (if applicable)
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">type base_folder<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span></p>
 </dd>
 <dt class="field-even">param base_folder<span class="colon">:</span></dt>
-<dd class="field-even"><p>Root directory under which all certificates are stored.  The directory
-is created on first write if it does not exist.
+<dd class="field-even"><p>Root directory under which all certificates are stored.
 Default: <code class="docutils literal notranslate"><span class="pre">&quot;./certs&quot;</span></code>.</p>
 </dd>
 <dt class="field-odd">type base_folder<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str | Path</p>
 </dd>
 <dt class="field-even">type base_encoding<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v49.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Encoding</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Encoding</span></code></a></span></p>
 </dd>
 <dt class="field-odd">param base_encoding<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Default encoding for all serialised objects.
-Default: <code class="docutils literal notranslate"><span class="pre">Encoding.PEM</span></code>.</p>
+<dd class="field-odd"><p>Default encoding for all serialised objects.  Default: PEM.</p>
 </dd>
 <dt class="field-even">type base_encoding<span class="colon">:</span></dt>
 <dd class="field-even"><p>serialization.Encoding</p>
 </dd>
 <dt class="field-odd">type base_private_format<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v49.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrivateFormat</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrivateFormat</span></code></a></span></p>
 </dd>
 <dt class="field-even">param base_private_format<span class="colon">:</span></dt>
-<dd class="field-even"><p>Default format for RSA private-key files.
-Default: <code class="docutils literal notranslate"><span class="pre">PrivateFormat.TraditionalOpenSSL</span></code> (PKCS#1, OpenSSL-compatible).</p>
+<dd class="field-even"><p>Default format for private-key files.  Default: <code class="docutils literal notranslate"><span class="pre">TraditionalOpenSSL</span></code>
+(Ed25519 keys always use PKCS#8).</p>
 </dd>
 <dt class="field-odd">type base_private_format<span class="colon">:</span></dt>
 <dd class="field-odd"><p>serialization.PrivateFormat</p>
@@ -467,24 +478,24 @@ Default: <code class="docutils literal notranslate"><span class="pre">PrivateFor
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">PublicFormat</span></code></span></p>
 </dd>
 <dt class="field-odd">param base_public_format<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Default format for RSA public-key files.
-Default: <code class="docutils literal notranslate"><span class="pre">PublicFormat.SubjectPublicKeyInfo</span></code> (PKCS#8 / X.509 SubjectPublicKeyInfo).</p>
+<dd class="field-odd"><p>Default format for public-key files.  Default: <code class="docutils literal notranslate"><span class="pre">SubjectPublicKeyInfo</span></code>.</p>
 </dd>
 <dt class="field-even">type base_public_format<span class="colon">:</span></dt>
 <dd class="field-even"><p>serialization.PublicFormat</p>
 </dd>
 <dt class="field-odd">type base_encryption_algorithm<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v49.0.0.dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeySerializationEncryption</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeySerializationEncryption</span></code></a></span></p>
 </dd>
 <dt class="field-even">param base_encryption_algorithm<span class="colon">:</span></dt>
-<dd class="field-even"><p>Default encryption applied to private-key files.
-Default: <code class="docutils literal notranslate"><span class="pre">NoEncryption()</span></code> — keys are stored in plaintext.</p>
+<dd class="field-even"><p>Default encryption applied to private-key files.  Default:
+<code class="docutils literal notranslate"><span class="pre">NoEncryption()</span></code> — pass <code class="docutils literal notranslate"><span class="pre">BestAvailableEncryption(password)</span></code> in
+production.</p>
 </dd>
 <dt class="field-odd">type base_encryption_algorithm<span class="colon">:</span></dt>
 <dd class="field-odd"><p>serialization.KeySerializationEncryption</p>
 </dd>
 <dt class="field-even">type logger<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 <dt class="field-odd">param logger<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Logger for diagnostic messages.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>.</p>
@@ -499,12 +510,12 @@ Default: <code class="docutils literal notranslate"><span class="pre">NoEncrypti
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>)</p></li>
-<li><p><strong>base_encoding</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v49.0.0.dev1)"><em>Encoding</em></a>)</p></li>
-<li><p><strong>base_private_format</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v49.0.0.dev1)"><em>PrivateFormat</em></a>)</p></li>
+<li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>base_encoding</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v51.0.0-dev1)"><em>Encoding</em></a>)</p></li>
+<li><p><strong>base_private_format</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v51.0.0-dev1)"><em>PrivateFormat</em></a>)</p></li>
 <li><p><strong>base_public_format</strong> (<em>PublicFormat</em>)</p></li>
-<li><p><strong>base_encryption_algorithm</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v49.0.0.dev1)"><em>KeySerializationEncryption</em></a>)</p></li>
-<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>base_encryption_algorithm</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v51.0.0-dev1)"><em>KeySerializationEncryption</em></a>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -517,31 +528,21 @@ Default: <code class="docutils literal notranslate"><span class="pre">NoEncrypti
 <dt class="sig sig-object py" id="tiny_ca.storage.local_storage.LocalStorage.delete_certificate_folder">
 <span class="sig-name descname"><span class="pre">delete_certificate_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage.delete_certificate_folder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.local_storage.LocalStorage.delete_certificate_folder" title="Link to this definition">¶</a></dt>
 <dd><p>Recursively remove the directory identified by <em>uuid_str</em>.</p>
-<p>The target path is resolved as:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">base_folder</span><span class="o">&gt;</span> <span class="o">/</span> <span class="p">[</span><span class="n">cert_path</span><span class="o">/</span><span class="p">]</span> <span class="o">/</span> <span class="o">&lt;</span><span class="n">uuid_str</span><span class="o">&gt;</span>
-</pre></div>
-</div>
-<p>The operation is idempotent: if the directory does not exist a
-<code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> is emitted and <code class="docutils literal notranslate"><span class="pre">True</span></code> is returned (no action needed).
-If the path exists but is a regular file rather than a directory, a
-<code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> is emitted and <code class="docutils literal notranslate"><span class="pre">True</span></code> is returned (not our directory).
-Only a genuine <code class="docutils literal notranslate"><span class="pre">OSError</span></code> during <code class="docutils literal notranslate"><span class="pre">shutil.rmtree</span></code> causes <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p>The operation is idempotent: if the directory does not exist (or is
+not a directory) a <code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> is emitted and <code class="docutils literal notranslate"><span class="pre">True</span></code> returned.
+Only a genuine <code class="docutils literal notranslate"><span class="pre">OSError</span></code> during removal causes <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidPathError" title="tiny_ca.exc.InvalidPathError"><strong>InvalidPathError</strong></a> – If <em>uuid_str</em> or <em>cert_path</em> would escape <em>base_folder</em>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+</dd>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – UUID sub-directory name to remove.</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-path under <em>base_folder</em> containing <em>uuid_str</em>.</p></li>
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code>  — directory removed, or path was already absent.
-<code class="docutils literal notranslate"><span class="pre">False</span></code> — <code class="docutils literal notranslate"><span class="pre">OSError</span></code> occurred; check logs for details.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
-</dd>
-<dt class="field-even">Warns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>UserWarning</strong> – If the target path does not exist or is not a directory.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -550,44 +551,40 @@ Only a genuine <code class="docutils literal notranslate"><span class="pre">OSEr
 <dt class="sig sig-object py" id="tiny_ca.storage.local_storage.LocalStorage.save_certificate">
 <span class="sig-name descname"><span class="pre">save_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_add_uuid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/local_storage.html#LocalStorage.save_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.local_storage.LocalStorage.save_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Serialise <em>cert</em> and write the result to the local filesystem.</p>
-<p>Assembles the output path as:</p>
+<p>The output path is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">base_folder</span><span class="o">&gt;</span> <span class="o">/</span> <span class="p">[</span><span class="n">cert_path</span><span class="o">/</span><span class="p">]</span> <span class="o">/</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">uuid</span><span class="o">&gt;/</span><span class="p">]</span> <span class="o">/</span> <span class="o">&lt;</span><span class="n">file_name</span><span class="o">&gt;&lt;</span><span class="n">ext</span><span class="o">&gt;</span>
 </pre></div>
 </div>
-<p>Where <em>ext</em> is determined automatically from the type of <em>cert</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cert</strong> (<a class="reference internal" href="tiny_ca.storage.const.html#tiny_ca.storage.const.CryptoObject" title="tiny_ca.storage.const.CryptoObject"><em>CryptoObject</em></a>) – Cryptographic object to serialise and persist.</p></li>
-<li><p><strong>file_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Base filename without extension (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ca&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;nginx&quot;</span></code>).</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-directory appended after <em>base_folder</em>.</p></li>
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Reuse an existing UUID directory by passing the value returned by
-a previous <code class="docutils literal notranslate"><span class="pre">save_certificate</span></code> call.  <code class="docutils literal notranslate"><span class="pre">None</span></code> auto-generates a
-new UUID.  Ignored when <em>is_add_uuid</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><strong>encoding</strong> (<em>serialization.Encoding</em><em> | </em><em>None</em>) – Encoding override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <em>base_encoding</em>.</p></li>
-<li><p><strong>private_format</strong> (<em>serialization.PrivateFormat</em><em> | </em><em>None</em>) – Private-key format override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <em>base_private_format</em>.</p></li>
-<li><p><strong>public_format</strong> (<em>serialization.PublicFormat</em><em> | </em><em>None</em>) – Public-key format override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <em>base_public_format</em>.</p></li>
-<li><p><strong>encryption_algorithm</strong> (<em>serialization.KeySerializationEncryption</em><em> | </em><em>None</em>) – Private-key encryption override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses
-<em>base_encryption_algorithm</em>.</p></li>
-<li><p><strong>is_add_uuid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), a UUID subdirectory is inserted.
-Set to <code class="docutils literal notranslate"><span class="pre">False</span></code> for singleton files such as CRL that are
-regenerated in-place.</p></li>
-<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, silently replace an existing file.
-When <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), raise <code class="docutils literal notranslate"><span class="pre">FileAlreadyExists</span></code>.</p></li>
+<li><p><strong>file_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Base filename without extension (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ca&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;nginx&quot;</span></code>).
+Must not contain path separators.</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional relative sub-directory under <em>base_folder</em>.</p></li>
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>) – Reuse an existing UUID directory.  <code class="docutils literal notranslate"><span class="pre">None</span></code> auto-generates one.
+Ignored when <em>is_add_uuid</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>encoding</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Encoding</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Per-call overrides of the instance defaults.</p></li>
+<li><p><strong>private_format</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrivateFormat</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Per-call overrides of the instance defaults.</p></li>
+<li><p><strong>public_format</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">PublicFormat</span></code> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Per-call overrides of the instance defaults.</p></li>
+<li><p><strong>encryption_algorithm</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v51.0.0-dev1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeySerializationEncryption</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Per-call overrides of the instance defaults.</p></li>
+<li><p><strong>is_add_uuid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), a UUID subdirectory is inserted.</p></li>
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, replace an existing file; otherwise raise
+<code class="docutils literal notranslate"><span class="pre">FileAlreadyExists</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(absolute_path_to_written_file,</span> <span class="pre">uuid_used)</span></code>.
-<em>uuid_used</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code> when <em>is_add_uuid</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(path_to_written_file,</span> <span class="pre">uuid_used)</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[Path, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[Path, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a> | None]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists" title="tiny_ca.exc.FileAlreadyExists"><strong>FileAlreadyExists</strong></a> – If the computed target path already exists and <em>is_overwrite</em>
-    is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <em>cert</em> is not a supported cryptographic type.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists" title="tiny_ca.exc.FileAlreadyExists"><strong>FileAlreadyExists</strong></a> – If the target exists and <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidPathError" title="tiny_ca.exc.InvalidPathError"><strong>InvalidPathError</strong></a> – If <em>file_name</em>, <em>cert_path</em> or <em>uuid_str</em> would escape
+    <em>base_folder</em>.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#TypeError" title="(in Python v3.15)"><strong>TypeError</strong></a> – If <em>cert</em> is not a supported cryptographic type.</p></li>
 </ul>
 </dd>
 </dl>
@@ -597,7 +594,7 @@ When <code class="docutils literal notranslate"><span class="pre">False</span></
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>)</p></li>
+<li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em>)</p></li>
 <li><p><strong>base_encoding</strong> (<em>serialization.Encoding</em>)</p></li>
 <li><p><strong>base_private_format</strong> (<em>serialization.PrivateFormat</em>)</p></li>
 <li><p><strong>base_public_format</strong> (<em>serialization.PublicFormat</em>)</p></li>
@@ -611,14 +608,23 @@ When <code class="docutils literal notranslate"><span class="pre">False</span></
 </section>
 <section id="module-tiny_ca.storage.async_local_storage">
 <span id="asynclocalstorage"></span><h2>AsyncLocalStorage<a class="headerlink" href="#module-tiny_ca.storage.async_local_storage" title="Link to this heading">¶</a></h2>
+<p>async_local_storage.py</p>
+<p>Asynchronous variant of <a class="reference internal" href="tiny_ca.storage.local_storage.html#tiny_ca.storage.local_storage.LocalStorage" title="tiny_ca.storage.local_storage.LocalStorage"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalStorage</span></code></a>.</p>
+<p>All path resolution, validation, serialisation and permission handling is
+shared with the synchronous implementation; blocking filesystem calls are run
+in a worker thread via <a class="reference external" href="https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread" title="(in Python v3.15)"><code class="xref py py-func docutils literal notranslate"><span class="pre">asyncio.to_thread()</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.storage.async_local_storage.AsyncLocalStorage">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.async_local_storage.</span></span><span class="sig-name descname"><span class="pre">AsyncLocalStorage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./certs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Encoding.PEM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PrivateFormat.TraditionalOpenSSL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PublicFormat.SubjectPublicKeyInfo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;cryptography.hazmat.primitives._serialization.NoEncryption</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/async_local_storage.html#AsyncLocalStorage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.async_local_storage.AsyncLocalStorage" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="tiny_ca.storage.local_storage.html#tiny_ca.storage.local_storage.LocalStorage" title="tiny_ca.storage.local_storage.LocalStorage"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalStorage</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code> with <code class="docutils literal notranslate"><span class="pre">async</span></code> <code class="docutils literal notranslate"><span class="pre">save_certificate</span></code> /
+<code class="docutils literal notranslate"><span class="pre">delete_certificate_folder</span></code> methods.</p>
+<p>Security properties are identical to <code class="xref py py-class docutils literal notranslate"><span class="pre">LocalStorage</span></code>: private keys
+are written with mode <code class="docutils literal notranslate"><span class="pre">0600</span></code> and every path component is validated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>)</p></li>
+<li><p><strong>base_folder</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em>)</p></li>
 <li><p><strong>base_encoding</strong> (<em>serialization.Encoding</em>)</p></li>
 <li><p><strong>base_private_format</strong> (<em>serialization.PrivateFormat</em>)</p></li>
 <li><p><strong>base_public_format</strong> (<em>serialization.PublicFormat</em>)</p></li>
@@ -631,31 +637,16 @@ When <code class="docutils literal notranslate"><span class="pre">False</span></
 <dt class="sig sig-object py" id="tiny_ca.storage.async_local_storage.AsyncLocalStorage.delete_certificate_folder">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">delete_certificate_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/async_local_storage.html#AsyncLocalStorage.delete_certificate_folder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.async_local_storage.AsyncLocalStorage.delete_certificate_folder" title="Link to this definition">¶</a></dt>
 <dd><p>Recursively remove the directory identified by <em>uuid_str</em>.</p>
-<p>The target path is resolved as:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">base_folder</span><span class="o">&gt;</span> <span class="o">/</span> <span class="p">[</span><span class="n">cert_path</span><span class="o">/</span><span class="p">]</span> <span class="o">/</span> <span class="o">&lt;</span><span class="n">uuid_str</span><span class="o">&gt;</span>
-</pre></div>
-</div>
-<p>The operation is idempotent: if the directory does not exist a
-<code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> is emitted and <code class="docutils literal notranslate"><span class="pre">True</span></code> is returned (no action needed).
-If the path exists but is a regular file rather than a directory, a
-<code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> is emitted and <code class="docutils literal notranslate"><span class="pre">True</span></code> is returned (not our directory).
-Only a genuine <code class="docutils literal notranslate"><span class="pre">OSError</span></code> during <code class="docutils literal notranslate"><span class="pre">shutil.rmtree</span></code> causes <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">LocalStorage.delete_certificate_folder()</span></code> for the contract.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – UUID sub-directory name to remove.</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-path under <em>base_folder</em> containing <em>uuid_str</em>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code>  — directory removed, or path was already absent.
-<code class="docutils literal notranslate"><span class="pre">False</span></code> — <code class="docutils literal notranslate"><span class="pre">OSError</span></code> occurred; check logs for details.</p>
-</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
 </dd>
-<dt class="field-even">Warns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>UserWarning</strong> – If the target path does not exist or is not a directory.</p>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -664,44 +655,30 @@ Only a genuine <code class="docutils literal notranslate"><span class="pre">OSEr
 <dt class="sig sig-object py" id="tiny_ca.storage.async_local_storage.AsyncLocalStorage.save_certificate">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">save_certificate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uuid_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">private_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">public_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encryption_algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_add_uuid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/storage/async_local_storage.html#AsyncLocalStorage.save_certificate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.storage.async_local_storage.AsyncLocalStorage.save_certificate" title="Link to this definition">¶</a></dt>
 <dd><p>Serialise <em>cert</em> and write the result to the local filesystem.</p>
-<p>Assembles the output path as:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">base_folder</span><span class="o">&gt;</span> <span class="o">/</span> <span class="p">[</span><span class="n">cert_path</span><span class="o">/</span><span class="p">]</span> <span class="o">/</span> <span class="p">[</span><span class="o">&lt;</span><span class="n">uuid</span><span class="o">&gt;/</span><span class="p">]</span> <span class="o">/</span> <span class="o">&lt;</span><span class="n">file_name</span><span class="o">&gt;&lt;</span><span class="n">ext</span><span class="o">&gt;</span>
-</pre></div>
-</div>
-<p>Where <em>ext</em> is determined automatically from the type of <em>cert</em>.</p>
+<p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">LocalStorage.save_certificate()</span></code> for the full contract.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cert</strong> (<a class="reference internal" href="tiny_ca.storage.const.html#tiny_ca.storage.const.CryptoObject" title="tiny_ca.storage.const.CryptoObject"><em>CryptoObject</em></a>) – Cryptographic object to serialise and persist.</p></li>
-<li><p><strong>file_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Base filename without extension (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ca&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;nginx&quot;</span></code>).</p></li>
-<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional sub-directory appended after <em>base_folder</em>.</p></li>
-<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Reuse an existing UUID directory by passing the value returned by
-a previous <code class="docutils literal notranslate"><span class="pre">save_certificate</span></code> call.  <code class="docutils literal notranslate"><span class="pre">None</span></code> auto-generates a
-new UUID.  Ignored when <em>is_add_uuid</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><strong>encoding</strong> (<em>serialization.Encoding</em><em> | </em><em>None</em>) – Encoding override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <em>base_encoding</em>.</p></li>
-<li><p><strong>private_format</strong> (<em>serialization.PrivateFormat</em><em> | </em><em>None</em>) – Private-key format override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <em>base_private_format</em>.</p></li>
-<li><p><strong>public_format</strong> (<em>serialization.PublicFormat</em><em> | </em><em>None</em>) – Public-key format override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <em>base_public_format</em>.</p></li>
-<li><p><strong>encryption_algorithm</strong> (<em>serialization.KeySerializationEncryption</em><em> | </em><em>None</em>) – Private-key encryption override.  <code class="docutils literal notranslate"><span class="pre">None</span></code> uses
-<em>base_encryption_algorithm</em>.</p></li>
-<li><p><strong>is_add_uuid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), a UUID subdirectory is inserted.
-Set to <code class="docutils literal notranslate"><span class="pre">False</span></code> for singleton files such as CRL that are
-regenerated in-place.</p></li>
-<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code>, silently replace an existing file.
-When <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), raise <code class="docutils literal notranslate"><span class="pre">FileAlreadyExists</span></code>.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists" title="tiny_ca.exc.FileAlreadyExists"><strong>FileAlreadyExists</strong></a> – If the target exists and <em>is_overwrite</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidPathError" title="tiny_ca.exc.InvalidPathError"><strong>InvalidPathError</strong></a> – If a path component would escape <em>base_folder</em>.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#TypeError" title="(in Python v3.15)"><strong>TypeError</strong></a> – If <em>cert</em> is not a supported cryptographic type.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(absolute_path_to_written_file,</span> <span class="pre">uuid_used)</span></code>.
-<em>uuid_used</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code> when <em>is_add_uuid</em> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[Path, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a> | None]</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.FileAlreadyExists" title="tiny_ca.exc.FileAlreadyExists"><strong>FileAlreadyExists</strong></a> – If the computed target path already exists and <em>is_overwrite</em>
-    is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <em>cert</em> is not a supported cryptographic type.</p></li>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cert</strong> (<em>Certificate</em><em> | </em><em>CertificateRevocationList</em><em> | </em><em>CertificateSigningRequest</em><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v51.0.0-dev1)"><em>RSAPrivateKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey" title="(in Cryptography v51.0.0-dev1)"><em>EllipticCurvePrivateKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey" title="(in Cryptography v51.0.0-dev1)"><em>Ed25519PrivateKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey" title="(in Cryptography v51.0.0-dev1)"><em>RSAPublicKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey" title="(in Cryptography v51.0.0-dev1)"><em>EllipticCurvePublicKey</em></a><em> | </em><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey" title="(in Cryptography v51.0.0-dev1)"><em>Ed25519PublicKey</em></a>)</p></li>
+<li><p><strong>file_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>uuid_str</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>encoding</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.Encoding" title="(in Cryptography v51.0.0-dev1)"><em>Encoding</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>private_format</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.PrivateFormat" title="(in Cryptography v51.0.0-dev1)"><em>PrivateFormat</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>public_format</strong> (<em>PublicFormat</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>encryption_algorithm</strong> (<a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/serialization/#cryptography.hazmat.primitives.serialization.KeySerializationEncryption" title="(in Cryptography v51.0.0-dev1)"><em>KeySerializationEncryption</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>is_add_uuid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
+<li><p><strong>is_overwrite</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -713,14 +690,13 @@ When <code class="docutils literal notranslate"><span class="pre">False</span></
 <section id="module-tiny_ca.storage.const">
 <span id="constants"></span><h2>Constants<a class="headerlink" href="#module-tiny_ca.storage.const" title="Link to this heading">¶</a></h2>
 <p>storage/const.py</p>
-<p>Shared type aliases for the storage layer.</p>
+<p>Shared type aliases and constants for the storage layer.</p>
 <p>Exports <code class="docutils literal notranslate"><span class="pre">CryptoObject</span></code>, a union type alias covering every cryptographic
 object that <code class="docutils literal notranslate"><span class="pre">BaseStorage.save_certificate</span></code> is capable of serialising and
-persisting.  Declaring it once here prevents duplication across
-<code class="docutils literal notranslate"><span class="pre">base_storage.py</span></code>, <code class="docutils literal notranslate"><span class="pre">local_storage.py</span></code>, and any future storage backends.</p>
+persisting, plus the POSIX permissions used for written files.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="tiny_ca.storage.const.CryptoObject">
-<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">CryptoObject</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">cryptography.hazmat.bindings._rust.x509.Certificate</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateRevocationList</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey</span></span><a class="headerlink" href="#tiny_ca.storage.const.CryptoObject" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">CryptoObject</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">cryptography.hazmat.bindings._rust.x509.Certificate</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateRevocationList</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey</span> <span class="pre">|</span> <span class="pre">cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey</span></span><a class="headerlink" href="#tiny_ca.storage.const.CryptoObject" title="Link to this definition">¶</a></dt>
 <dd><p>Union of all cryptographic object types accepted by the storage layer.</p>
 <div class="table-wrapper docutils container">
 <table class="docutils align-default">
@@ -736,21 +712,30 @@ persisting.  Declaring it once here prevents duplication across
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">x509.CertificateRevocationList</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.pem</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CertificateSigningRequest</span></code> (Rust)</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x509.CertificateSigningRequest</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.csr</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rsa.RSAPrivateKey</span></code></p></td>
+<tr class="row-odd"><td><p>RSA / EC / Ed25519 private key</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.key</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rsa.RSAPublicKey</span></code></p></td>
+<tr class="row-even"><td><p>RSA / EC / Ed25519 public key</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.pub</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>The internal Rust-backed <code class="docutils literal notranslate"><span class="pre">CertificateSigningRequest</span></code> type is included
-because the <code class="docutils literal notranslate"><span class="pre">cryptography</span></code> library exposes CSR objects through its Rust
-bindings rather than a pure-Python class.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="tiny_ca.storage.const.PRIVATE_FILE_MODE">
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">PRIVATE_FILE_MODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">384</span></span><a class="headerlink" href="#tiny_ca.storage.const.PRIVATE_FILE_MODE" title="Link to this definition">¶</a></dt>
+<dd><p>POSIX permissions for private key files (owner read/write only).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="tiny_ca.storage.const.PUBLIC_FILE_MODE">
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.storage.const.</span></span><span class="sig-name descname"><span class="pre">PUBLIC_FILE_MODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">420</span></span><a class="headerlink" href="#tiny_ca.storage.const.PUBLIC_FILE_MODE" title="Link to this definition">¶</a></dt>
+<dd><p>POSIX permissions for public artefacts (certificates, CSRs, CRLs).</p>
 </dd></dl>
 
 </section>
@@ -823,6 +808,7 @@ bindings rather than a pure-Python class.</p>
 </li>
 <li><a class="reference internal" href="#module-tiny_ca.storage.local_storage">LocalStorage</a><ul>
 <li><a class="reference internal" href="#module-level-contents">Module-level contents</a></li>
+<li><a class="reference internal" href="#security-notes">Security notes</a></li>
 <li><a class="reference internal" href="#id1">SOLID notes</a></li>
 <li><a class="reference internal" href="#tiny_ca.storage.local_storage.LocalStorage"><code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.storage.local_storage.LocalStorage.__init__"><code class="docutils literal notranslate"><span class="pre">LocalStorage.__init__()</span></code></a></li>
@@ -842,6 +828,8 @@ bindings rather than a pure-Python class.</p>
 </li>
 <li><a class="reference internal" href="#module-tiny_ca.storage.const">Constants</a><ul>
 <li><a class="reference internal" href="#tiny_ca.storage.const.CryptoObject"><code class="docutils literal notranslate"><span class="pre">CryptoObject</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.storage.const.PRIVATE_FILE_MODE"><code class="docutils literal notranslate"><span class="pre">PRIVATE_FILE_MODE</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.storage.const.PUBLIC_FILE_MODE"><code class="docutils literal notranslate"><span class="pre">PUBLIC_FILE_MODE</span></code></a></li>
 </ul>
 </li>
 </ul>

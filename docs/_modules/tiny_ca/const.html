@@ -233,7 +233,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.const</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""</span>
 <span class="sd">const.py</span>
 
 <span class="sd">Package-level constants and enumerations shared across all ``tiny_ca`` modules.</span>
@@ -245,7 +245,7 @@
 <span class="sd">``CertType``                 -- enumeration of certificate categories used to</span>
 <span class="sd">                                 embed a human-readable type prefix into X.509</span>
 <span class="sd">                                 serial numbers.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -259,17 +259,17 @@
 <span class="c1">#: ======= ===========================</span>
 <span class="c1">#: Ext     Contents</span>
 <span class="c1">#: ======= ===========================</span>
-<span class="c1">#: ``.key`` RSA private key (PEM)</span>
+<span class="c1">#: ``.key`` Private key (PEM)</span>
 <span class="c1">#: ``.pem`` X.509 certificate or CRL (PEM)</span>
 <span class="c1">#: ``.csr`` Certificate signing request (PEM)</span>
 <span class="c1">#: ======= ===========================</span>
-<span class="n">ALLOWED_CERT_EXTENSIONS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.key&quot;</span><span class="p">,</span> <span class="s2">&quot;.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;.csr&quot;</span><span class="p">)</span>
+<span class="n">ALLOWED_CERT_EXTENSIONS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".key"</span><span class="p">,</span> <span class="s2">".pem"</span><span class="p">,</span> <span class="s2">".csr"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="CertType">
 <a class="viewcode-back" href="../../modules/tiny_ca.const.html#tiny_ca.CertType">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CertType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Enumeration of certificate categories issued by the CA.</span>
 
 <span class="sd">    Each member carries a short string value that is used as a human-readable</span>
@@ -280,20 +280,20 @@
 
 <span class="sd">    Members</span>
 <span class="sd">    -------</span>
-<span class="sd">    USER : &quot;USR&quot;</span>
+<span class="sd">    USER : "USR"</span>
 <span class="sd">        End-user personal certificate.  Issued to individual people for</span>
 <span class="sd">        authentication, email signing, or client TLS.</span>
-<span class="sd">    SERVICE : &quot;SVC&quot;</span>
+<span class="sd">    SERVICE : "SVC"</span>
 <span class="sd">        Service or application certificate.  Issued to software services,</span>
 <span class="sd">        microservices, or API endpoints that need mutual TLS or code signing.</span>
-<span class="sd">    DEVICE : &quot;DEV&quot;</span>
+<span class="sd">    DEVICE : "DEV"</span>
 <span class="sd">        Device certificate.  Issued to physical or virtual devices (IoT nodes,</span>
 <span class="sd">        network equipment) that authenticate to the infrastructure.</span>
-<span class="sd">    INTERNAL : &quot;INT&quot;</span>
+<span class="sd">    INTERNAL : "INT"</span>
 <span class="sd">        Internal infrastructure certificate.  Issued to internal components</span>
 <span class="sd">        such as monitoring agents, message brokers, or CI runners that need</span>
 <span class="sd">        identity but are not user-facing.</span>
-<span class="sd">    CA : &quot;CA&quot;</span>
+<span class="sd">    CA : "CA"</span>
 <span class="sd">        Certificate Authority certificate.  Used for the root or intermediate</span>
 <span class="sd">        CA itself; ``BasicConstraints(ca=True)`` is always set for this type.</span>
 
@@ -306,16 +306,46 @@
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; CertType.SERVICE.value</span>
-<span class="sd">    &#39;SVC&#39;</span>
-<span class="sd">    &gt;&gt;&gt; CertType(&quot;DEV&quot;)</span>
-<span class="sd">    &lt;CertType.DEVICE: &#39;DEV&#39;&gt;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    'SVC'</span>
+<span class="sd">    &gt;&gt;&gt; CertType("DEV")</span>
+<span class="sd">    &lt;CertType.DEVICE: 'DEV'&gt;</span>
+<span class="sd">    """</span>
 
-    <span class="n">USER</span> <span class="o">=</span> <span class="s2">&quot;USR&quot;</span>
-    <span class="n">SERVICE</span> <span class="o">=</span> <span class="s2">&quot;SVC&quot;</span>
-    <span class="n">DEVICE</span> <span class="o">=</span> <span class="s2">&quot;DEV&quot;</span>
-    <span class="n">INTERNAL</span> <span class="o">=</span> <span class="s2">&quot;INT&quot;</span>
-    <span class="n">CA</span> <span class="o">=</span> <span class="s2">&quot;CA&quot;</span></div>
+    <span class="n">USER</span> <span class="o">=</span> <span class="s2">"USR"</span>
+    <span class="n">SERVICE</span> <span class="o">=</span> <span class="s2">"SVC"</span>
+    <span class="n">DEVICE</span> <span class="o">=</span> <span class="s2">"DEV"</span>
+    <span class="n">INTERNAL</span> <span class="o">=</span> <span class="s2">"INT"</span>
+    <span class="n">CA</span> <span class="o">=</span> <span class="s2">"CA"</span></div>
+
+
+
+<div class="viewcode-block" id="KeyAlgorithm">
+<a class="viewcode-back" href="../../modules/tiny_ca.const.html#tiny_ca.KeyAlgorithm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyAlgorithm</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Public-key algorithm used when generating a new key pair.</span>
+
+<span class="sd">    Members</span>
+<span class="sd">    -------</span>
+<span class="sd">    RSA :</span>
+<span class="sd">        RSA with the key length taken from ``key_size`` (2048 / 3072 / 4096).</span>
+<span class="sd">    EC_P256 :</span>
+<span class="sd">        ECDSA on NIST P-256 (secp256r1), signed with SHA-256.</span>
+<span class="sd">    EC_P384 :</span>
+<span class="sd">        ECDSA on NIST P-384 (secp384r1), signed with SHA-384.</span>
+<span class="sd">    ED25519 :</span>
+<span class="sd">        Ed25519 (RFC 8410).  ``key_size`` is ignored.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Ed25519 keys cannot be written in the ``TraditionalOpenSSL`` format, so</span>
+<span class="sd">    ``LocalStorage`` transparently stores them as PKCS#8.</span>
+<span class="sd">    """</span>
+
+    <span class="n">RSA</span> <span class="o">=</span> <span class="s2">"rsa"</span>
+    <span class="n">EC_P256</span> <span class="o">=</span> <span class="s2">"ec-p256"</span>
+    <span class="n">EC_P384</span> <span class="o">=</span> <span class="s2">"ec-p384"</span>
+    <span class="n">ED25519</span> <span class="o">=</span> <span class="s2">"ed25519"</span></div>
 
 </pre></div>
         </article>

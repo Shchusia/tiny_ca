@@ -255,7 +255,7 @@ serial numbers.</p>
 </section>
 <dl class="py data">
 <dt class="sig sig-object py" id="tiny_ca.const.ALLOWED_CERT_EXTENSIONS">
-<span class="sig-prename descclassname"><span class="pre">tiny_ca.const.</span></span><span class="sig-name descname"><span class="pre">ALLOWED_CERT_EXTENSIONS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('.key',</span> <span class="pre">'.pem',</span> <span class="pre">'.csr')</span></span><a class="headerlink" href="#tiny_ca.const.ALLOWED_CERT_EXTENSIONS" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">tiny_ca.const.</span></span><span class="sig-name descname"><span class="pre">ALLOWED_CERT_EXTENSIONS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('.key',</span> <span class="pre">'.pem',</span> <span class="pre">'.csr')</span></span><a class="headerlink" href="#tiny_ca.const.ALLOWED_CERT_EXTENSIONS" title="Link to this definition">¶</a></dt>
 <dd><p>Tuple of file extensions that the CA loader and storage validator accept.</p>
 <p>Any path whose suffix is not in this tuple will be rejected by
 <code class="docutils literal notranslate"><span class="pre">CAFileLoader._validate_file</span></code> with a <code class="docutils literal notranslate"><span class="pre">WrongType</span></code> exception.</p>
@@ -264,7 +264,7 @@ serial numbers.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.const.CertType">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.const.</span></span><span class="sig-name descname"><span class="pre">CertType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/const.html#CertType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.const.CertType" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
 <p>Enumeration of certificate categories issued by the CA.</p>
 <p>Each member carries a short string value that is used as a human-readable
 prefix when encoding serial numbers via <code class="docutils literal notranslate"><span class="pre">_PrefixRegistry</span></code> and
@@ -297,9 +297,9 @@ CA itself; <code class="docutils literal notranslate"><span class="pre">BasicCon
 in direct SQL queries.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="o">.</span><span class="n">value</span>
-<span class="go">&#39;SVC&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">CertType</span><span class="p">(</span><span class="s2">&quot;DEV&quot;</span><span class="p">)</span>
-<span class="go">&lt;CertType.DEVICE: &#39;DEV&#39;&gt;</span>
+<span class="go">'SVC'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">CertType</span><span class="p">(</span><span class="s2">"DEV"</span><span class="p">)</span>
+<span class="go">&lt;CertType.DEVICE: 'DEV'&gt;</span>
 </pre></div>
 </div>
 <dl class="py attribute">
@@ -325,6 +325,49 @@ in direct SQL queries.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.const.CertType.USER">
 <span class="sig-name descname"><span class="pre">USER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'USR'</span></span><a class="headerlink" href="#tiny_ca.const.CertType.USER" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tiny_ca.const.KeyAlgorithm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.const.</span></span><span class="sig-name descname"><span class="pre">KeyAlgorithm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/const.html#KeyAlgorithm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.const.KeyAlgorithm" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<p>Public-key algorithm used when generating a new key pair.</p>
+<section id="id1">
+<h2>Members<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>RSA :</dt><dd><p>RSA with the key length taken from <code class="docutils literal notranslate"><span class="pre">key_size</span></code> (2048 / 3072 / 4096).</p>
+</dd>
+<dt>EC_P256 :</dt><dd><p>ECDSA on NIST P-256 (secp256r1), signed with SHA-256.</p>
+</dd>
+<dt>EC_P384 :</dt><dd><p>ECDSA on NIST P-384 (secp384r1), signed with SHA-384.</p>
+</dd>
+<dt>ED25519 :</dt><dd><p>Ed25519 (RFC 8410).  <code class="docutils literal notranslate"><span class="pre">key_size</span></code> is ignored.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Ed25519 keys cannot be written in the <code class="docutils literal notranslate"><span class="pre">TraditionalOpenSSL</span></code> format, so
+<code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code> transparently stores them as PKCS#8.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.const.KeyAlgorithm.EC_P256">
+<span class="sig-name descname"><span class="pre">EC_P256</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ec-p256'</span></span><a class="headerlink" href="#tiny_ca.const.KeyAlgorithm.EC_P256" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.const.KeyAlgorithm.EC_P384">
+<span class="sig-name descname"><span class="pre">EC_P384</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ec-p384'</span></span><a class="headerlink" href="#tiny_ca.const.KeyAlgorithm.EC_P384" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.const.KeyAlgorithm.ED25519">
+<span class="sig-name descname"><span class="pre">ED25519</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ed25519'</span></span><a class="headerlink" href="#tiny_ca.const.KeyAlgorithm.ED25519" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.const.KeyAlgorithm.RSA">
+<span class="sig-name descname"><span class="pre">RSA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'rsa'</span></span><a class="headerlink" href="#tiny_ca.const.KeyAlgorithm.RSA" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -378,6 +421,13 @@ in direct SQL queries.</p>
 <li><a class="reference internal" href="#tiny_ca.const.CertType.INTERNAL"><code class="docutils literal notranslate"><span class="pre">CertType.INTERNAL</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.const.CertType.SERVICE"><code class="docutils literal notranslate"><span class="pre">CertType.SERVICE</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.const.CertType.USER"><code class="docutils literal notranslate"><span class="pre">CertType.USER</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tiny_ca.const.KeyAlgorithm"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.const.KeyAlgorithm.EC_P256"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.EC_P256</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.const.KeyAlgorithm.EC_P384"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.EC_P384</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.const.KeyAlgorithm.ED25519"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.ED25519</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.const.KeyAlgorithm.RSA"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.RSA</span></code></a></li>
 </ul>
 </li>
 </ul>

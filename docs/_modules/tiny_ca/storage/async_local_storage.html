@@ -233,34 +233,39 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for tiny_ca.storage.async_local_storage</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""</span>
+<span class="sd">async_local_storage.py</span>
+
+<span class="sd">Asynchronous variant of :class:`~tiny_ca.storage.local_storage.LocalStorage`.</span>
+
+<span class="sd">All path resolution, validation, serialisation and permission handling is</span>
+<span class="sd">shared with the synchronous implementation; blocking filesystem calls are run</span>
+<span class="sd">in a worker thread via :func:`asyncio.to_thread`.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coroutine</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">aiofiles</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">cryptography</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography</span><span class="w"> </span><span class="kn">import</span> <span class="n">x509</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">serialization</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.asymmetric</span><span class="w"> </span><span class="kn">import</span> <span class="n">rsa</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.exc</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileAlreadyExists</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_LOGGER</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">.base_storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseStorage</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">CryptoObject</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.local_storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalStorage</span><span class="p">,</span> <span class="n">_CertSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">PUBLIC_FILE_MODE</span><span class="p">,</span> <span class="n">CryptoObject</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.local_storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalStorage</span><span class="p">,</span> <span class="n">_write_bytes</span>
 
 
 <div class="viewcode-block" id="AsyncLocalStorage">
 <a class="viewcode-back" href="../../../modules/tiny_ca.storage.async_local_storage.html#tiny_ca.storage.async_local_storage.AsyncLocalStorage">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AsyncLocalStorage</span><span class="p">(</span><span class="n">LocalStorage</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    ``LocalStorage`` with ``async`` ``save_certificate`` /</span>
+<span class="sd">    ``delete_certificate_folder`` methods.</span>
+
+<span class="sd">    Security properties are identical to :class:`LocalStorage`: private keys</span>
+<span class="sd">    are written with mode ``0600`` and every path component is validated.</span>
+<span class="sd">    """</span>
+
 <div class="viewcode-block" id="AsyncLocalStorage.save_certificate">
 <a class="viewcode-back" href="../../../modules/tiny_ca.storage.async_local_storage.html#tiny_ca.storage.async_local_storage.AsyncLocalStorage.save_certificate">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">save_certificate</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
@@ -276,119 +281,58 @@
         <span class="n">is_add_uuid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Serialise *cert* and write the result to the local filesystem.</span>
 
-<span class="sd">        Assembles the output path as::</span>
-
-<span class="sd">            &lt;base_folder&gt; / [cert_path/] / [&lt;uuid&gt;/] / &lt;file_name&gt;&lt;ext&gt;</span>
-
-<span class="sd">        Where *ext* is determined automatically from the type of *cert*.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        cert : CryptoObject</span>
-<span class="sd">            Cryptographic object to serialise and persist.</span>
-<span class="sd">        file_name : str</span>
-<span class="sd">            Base filename without extension (e.g. ``&quot;ca&quot;``, ``&quot;nginx&quot;``).</span>
-<span class="sd">        cert_path : str | Path | None</span>
-<span class="sd">            Optional sub-directory appended after *base_folder*.</span>
-<span class="sd">        uuid_str : str | None</span>
-<span class="sd">            Reuse an existing UUID directory by passing the value returned by</span>
-<span class="sd">            a previous ``save_certificate`` call.  ``None`` auto-generates a</span>
-<span class="sd">            new UUID.  Ignored when *is_add_uuid* is ``False``.</span>
-<span class="sd">        encoding : serialization.Encoding | None</span>
-<span class="sd">            Encoding override.  ``None`` uses *base_encoding*.</span>
-<span class="sd">        private_format : serialization.PrivateFormat | None</span>
-<span class="sd">            Private-key format override.  ``None`` uses *base_private_format*.</span>
-<span class="sd">        public_format : serialization.PublicFormat | None</span>
-<span class="sd">            Public-key format override.  ``None`` uses *base_public_format*.</span>
-<span class="sd">        encryption_algorithm : serialization.KeySerializationEncryption | None</span>
-<span class="sd">            Private-key encryption override.  ``None`` uses</span>
-<span class="sd">            *base_encryption_algorithm*.</span>
-<span class="sd">        is_add_uuid : bool</span>
-<span class="sd">            When ``True`` (default), a UUID subdirectory is inserted.</span>
-<span class="sd">            Set to ``False`` for singleton files such as CRL that are</span>
-<span class="sd">            regenerated in-place.</span>
-<span class="sd">        is_overwrite : bool</span>
-<span class="sd">            When ``True``, silently replace an existing file.</span>
-<span class="sd">            When ``False`` (default), raise ``FileAlreadyExists``.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        tuple[Path, str | None]</span>
-<span class="sd">            ``(absolute_path_to_written_file, uuid_used)``.</span>
-<span class="sd">            *uuid_used* is ``None`` when *is_add_uuid* is ``False``.</span>
+<span class="sd">        See :meth:`LocalStorage.save_certificate` for the full contract.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        FileAlreadyExists</span>
-<span class="sd">            If the computed target path already exists and *is_overwrite*</span>
-<span class="sd">            is ``False``.</span>
+<span class="sd">            If the target exists and *is_overwrite* is ``False``.</span>
+<span class="sd">        InvalidPathError</span>
+<span class="sd">            If a path component would escape *base_folder*.</span>
 <span class="sd">        TypeError</span>
 <span class="sd">            If *cert* is not a supported cryptographic type.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">output_dir</span><span class="p">,</span> <span class="n">effective_uuid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_output_dir</span><span class="p">(</span>
+<span class="sd">        """</span>
+        <span class="n">output_path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">effective_uuid</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prepare</span><span class="p">,</span>
+            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
             <span class="n">cert_path</span><span class="o">=</span><span class="n">cert_path</span><span class="p">,</span>
             <span class="n">uuid_str</span><span class="o">=</span><span class="n">uuid_str</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="n">private_format</span><span class="o">=</span><span class="n">private_format</span><span class="p">,</span>
+            <span class="n">public_format</span><span class="o">=</span><span class="n">public_format</span><span class="p">,</span>
+            <span class="n">encryption_algorithm</span><span class="o">=</span><span class="n">encryption_algorithm</span><span class="p">,</span>
             <span class="n">is_add_uuid</span><span class="o">=</span><span class="n">is_add_uuid</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="n">cert_data</span><span class="p">,</span> <span class="n">extension</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
-            <span class="n">_CertSerializer</span><span class="o">.</span><span class="n">serialise</span><span class="p">,</span>
-            <span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
-            <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_encoding</span><span class="p">,</span>
-            <span class="n">private_format</span><span class="o">=</span><span class="n">private_format</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_private_format</span><span class="p">,</span>
-            <span class="n">public_format</span><span class="o">=</span><span class="n">public_format</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_public_format</span><span class="p">,</span>
-            <span class="n">encryption_algorithm</span><span class="o">=</span><span class="n">encryption_algorithm</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_encryption_algorithm</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">output_path</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_file</span><span class="p">(</span>
-            <span class="n">path</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">cert_data</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="o">=</span><span class="n">is_overwrite</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span>
         <span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="s2">&quot;Saved </span><span class="si">%s</span><span class="s2"> → </span><span class="si">%s</span><span class="s2"> (uuid=</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">effective_uuid</span>
+            <span class="s2">"Saved </span><span class="si">%s</span><span class="s2"> → </span><span class="si">%s</span><span class="s2"> (uuid=</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">effective_uuid</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">effective_uuid</span></div>
 
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_write_file</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">PUBLIC_FILE_MODE</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Write *data* to *path*, creating any missing parent directories.</span>
-
-<span class="sd">        Parent directories are created with ``mkdir(parents=True,</span>
-<span class="sd">        exist_ok=True)`` so the caller never needs to pre-create the</span>
-<span class="sd">        directory tree manually.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        path : Path</span>
-<span class="sd">            Absolute target path for the output file.</span>
-<span class="sd">        data : bytes</span>
-<span class="sd">            Raw serialised bytes to write.</span>
-<span class="sd">        is_overwrite : bool</span>
-<span class="sd">            When ``False``, raise ``FileAlreadyExists`` if *path* already</span>
-<span class="sd">            exists.  When ``True``, the existing file is silently replaced.</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Write *data* to *path* in a worker thread.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
 <span class="sd">        FileAlreadyExists</span>
 <span class="sd">            If *path* already exists on disk and *is_overwrite* is ``False``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_overwrite</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">FileAlreadyExists</span><span class="p">(</span><span class="n">path_save_cert</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
-
-        <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">async</span> <span class="k">with</span> <span class="n">aiofiles</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-            <span class="k">await</span> <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Written </span><span class="si">%d</span><span class="s2"> bytes → </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">path</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="n">_write_bytes</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Written </span><span class="si">%d</span><span class="s2"> bytes → </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">path</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AsyncLocalStorage.delete_certificate_folder">
 <a class="viewcode-back" href="../../../modules/tiny_ca.storage.async_local_storage.html#tiny_ca.storage.async_local_storage.AsyncLocalStorage.delete_certificate_folder">[docs]</a>
@@ -397,65 +341,21 @@
         <span class="n">uuid_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">cert_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Recursively remove the directory identified by *uuid_str*.</span>
 
-<span class="sd">        The target path is resolved as::</span>
-
-<span class="sd">            &lt;base_folder&gt; / [cert_path/] / &lt;uuid_str&gt;</span>
-
-<span class="sd">        The operation is idempotent: if the directory does not exist a</span>
-<span class="sd">        ``UserWarning`` is emitted and ``True`` is returned (no action needed).</span>
-<span class="sd">        If the path exists but is a regular file rather than a directory, a</span>
-<span class="sd">        ``UserWarning`` is emitted and ``True`` is returned (not our directory).</span>
-<span class="sd">        Only a genuine ``OSError`` during ``shutil.rmtree`` causes ``False``.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        uuid_str : str</span>
-<span class="sd">            UUID sub-directory name to remove.</span>
-<span class="sd">        cert_path : str | Path | None</span>
-<span class="sd">            Optional sub-path under *base_folder* containing *uuid_str*.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        bool</span>
-<span class="sd">            ``True``  — directory removed, or path was already absent.</span>
-<span class="sd">            ``False`` — ``OSError`` occurred; check logs for details.</span>
-
-<span class="sd">        Warns</span>
-<span class="sd">        -----</span>
-<span class="sd">        UserWarning</span>
-<span class="sd">            If the target path does not exist or is not a directory.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_folder</span>
-        <span class="k">if</span> <span class="n">cert_path</span><span class="p">:</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="o">/</span> <span class="n">cert_path</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="o">/</span> <span class="n">uuid_str</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Certificate folder not deleted — path does not exist: </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="ne">UserWarning</span><span class="p">,</span>
-                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="p">)</span>
+<span class="sd">        See :meth:`LocalStorage.delete_certificate_folder` for the contract.</span>
+<span class="sd">        """</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delete_target</span><span class="p">(</span><span class="n">uuid_str</span><span class="p">,</span> <span class="n">cert_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Certificate folder not deleted — path is not a directory: </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="ne">UserWarning</span><span class="p">,</span>
-                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="kc">True</span>
-
         <span class="k">try</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deleted certificate folder: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Deleted certificate folder: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">&quot;Failed to delete certificate folder </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">exc</span>
+                <span class="s2">"Failed to delete certificate folder </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">exc</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span></div>
 </div>

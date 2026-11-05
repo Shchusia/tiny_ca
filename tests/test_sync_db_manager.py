@@ -26,6 +26,7 @@ from tiny_ca.const import CertType
 from tiny_ca.db.const import CertificateStatus, RevokeStatus
 from tiny_ca.db.models import Base, CertificateRecord
 from tiny_ca.db.sync_db_manager import DatabaseManager, SyncDBHandler
+from tiny_ca.exc import DBOperationError
 from tiny_ca.settings import DEFAULT_LOGGER
 
 
@@ -136,14 +137,14 @@ class TestGetBySerial:
         assert result is not None
         assert result.serial_number == str(cert.serial_number)
 
-    def test_returns_none_on_db_error(self, handler):
-        """Force an exception by breaking the session execute."""
+    def test_raises_on_db_error(self, handler):
+        """A DB failure must not be reported as "not found" (fail closed)."""
         with patch.object(handler._db, "session") as mock_session_factory:
             mock_sess = MagicMock()
             mock_sess.execute.side_effect = RuntimeError("db boom")
             mock_session_factory.return_value = mock_sess
-            result = handler.get_by_serial(1)
-        assert result is None
+            with pytest.raises(DBOperationError, match="get_by_serial"):
+                handler.get_by_serial(1)
         mock_sess.close.assert_called_once()
 
 
@@ -171,13 +172,13 @@ class TestGetByName:
         # After revocation the VALID record is gone; get_by_name returns None
         assert handler.get_by_name("sync.test.svc") is None
 
-    def test_returns_none_on_db_error(self, handler):
+    def test_raises_on_db_error(self, handler):
         with patch.object(handler._db, "session") as mock_session_factory:
             mock_sess = MagicMock()
             mock_sess.execute.side_effect = RuntimeError("db boom")
             mock_session_factory.return_value = mock_sess
-            result = handler.get_by_name("x")
-        assert result is None
+            with pytest.raises(DBOperationError, match="get_by_name"):
+                handler.get_by_name("x")
         mock_sess.close.assert_called_once()
 
 
@@ -348,13 +349,14 @@ class TestGetRevokedCertificates:
             assert serial is not None
             assert revocation_date is not None
 
-    def test_error_logged_on_db_failure(self, handler):
+    def test_raises_on_db_failure(self, handler):
+        """An empty CRL must never be produced because the DB is down."""
         with patch.object(handler._db, "session") as mock_session_factory:
             mock_sess = MagicMock()
             mock_sess.execute.side_effect = RuntimeError("crl boom")
             mock_session_factory.return_value = mock_sess
-            rows = list(handler.get_revoked_certificates())
-        assert rows == []
+            with pytest.raises(DBOperationError, match="get_revoked_certificates"):
+                list(handler.get_revoked_certificates())
         mock_sess.close.assert_called_once()
 
 
@@ -433,15 +435,15 @@ class TestSyncDBHandlerListAll:
 
             assert len(results) == 1
 
-    def test_list_all_error_returns_empty(self):
+    def test_list_all_error_raises(self):
         with patch.object(self.handler._db, "session") as mock_session_factory:
             mock_sess = MagicMock(spec=Session)
             mock_sess.execute.side_effect = Exception("Database error")
             mock_session_factory.return_value = mock_sess
 
-            results = self.handler.list_all()
+            with pytest.raises(DBOperationError, match="list_all"):
+                self.handler.list_all()
 
-            assert results == []
             self.handler._logger.error.assert_called_once()
             mock_sess.close.assert_called_once()
 
@@ -480,15 +482,15 @@ class TestSyncDBHandlerGetExpiring:
 
             assert results == []
 
-    def test_get_expiring_error_returns_empty(self):
+    def test_get_expiring_error_raises(self):
         with patch.object(self.handler._db, "session") as mock_session_factory:
             mock_sess = MagicMock(spec=Session)
             mock_sess.execute.side_effect = Exception("Database error")
             mock_session_factory.return_value = mock_sess
 
-            results = self.handler.get_expiring(within_days=30)
+            with pytest.raises(DBOperationError, match="get_expiring"):
+                self.handler.get_expiring(within_days=30)
 
-            assert results == []
             self.handler._logger.error.assert_called_once()
             mock_sess.close.assert_called_once()
 
@@ -583,9 +585,9 @@ class TestSyncDBHandlerUpdateStatusExpired:
             mock_sess.rollback.return_value = None
             mock_session_factory.return_value = mock_sess
 
-            count = self.handler.update_status_expired()
+            with pytest.raises(DBOperationError, match="update_status_expired"):
+                self.handler.update_status_expired()
 
-            assert count == 0
             mock_sess.rollback.assert_called_once()
             self.handler._logger.error.assert_called_once()
             mock_sess.close.assert_called_once()

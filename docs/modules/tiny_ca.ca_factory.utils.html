@@ -244,7 +244,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CAFileLoader">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">CAFileLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_cert_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ca_key_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ca_key_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/file_loader.html#CAFileLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.CAFileLoader" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Loads a CA certificate and private key from PEM files on the local filesystem.</p>
 <p>Responsibility: file reading and PEM deserialisation <em>only</em>.
 Does not generate certificates, manage sessions, or perform any
@@ -263,9 +263,9 @@ available and will not change for the lifetime of the instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ca_cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the PEM-encoded CA certificate file.</p></li>
-<li><p><strong>ca_key_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the PEM-encoded CA private key file.</p></li>
-<li><p><strong>ca_key_password</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><em>bytes</em></a><em> | </em><em>None</em>) – Optional password protecting the private key.  A <code class="docutils literal notranslate"><span class="pre">str</span></code> value is
+<li><p><strong>ca_cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the PEM-encoded CA certificate file.</p></li>
+<li><p><strong>ca_key_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em>) – Path to the PEM-encoded CA private key file.</p></li>
+<li><p><strong>ca_key_password</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><em>bytes</em></a><em> | </em><em>None</em>) – Optional password protecting the private key.  A <code class="docutils literal notranslate"><span class="pre">str</span></code> value is
 encoded to <code class="docutils literal notranslate"><span class="pre">bytes</span></code> using UTF-8 before being passed to the
 cryptography library.  <code class="docutils literal notranslate"><span class="pre">None</span></code> means the key is unencrypted.</p></li>
 <li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>) – Logger instance for diagnostic messages.  Falls back to
@@ -279,10 +279,10 @@ cryptography library.  <code class="docutils literal notranslate"><span class="p
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ca_cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>)</p></li>
-<li><p><strong>ca_key_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><em>Path</em></a>)</p></li>
-<li><p><strong>ca_key_password</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><em>bytes</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ca_cert_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>ca_key_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>ca_key_password</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><em>bytes</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -322,14 +322,14 @@ cryptography library.  <code class="docutils literal notranslate"><span class="p
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CAFileLoader.ca_key">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v49.0.0.dev1)"><span class="pre">RSAPrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.CAFileLoader.ca_key" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v51.0.0-dev1)"><span class="pre">RSAPrivateKey</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey" title="(in Cryptography v51.0.0-dev1)"><span class="pre">EllipticCurvePrivateKey</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey" title="(in Cryptography v51.0.0-dev1)"><span class="pre">Ed25519PrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.CAFileLoader.ca_key" title="Link to this definition">¶</a></dt>
 <dd><p>The deserialized CA private key.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The private key loaded from <em>ca_key_path</em>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>rsa.RSAPrivateKey</p>
+<dd class="field-even"><p><a class="reference internal" href="tiny_ca.utils.keys.html#tiny_ca.utils.keys.PrivateKey" title="tiny_ca.utils.keys.PrivateKey">PrivateKey</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -339,7 +339,7 @@ cryptography library.  <code class="docutils literal notranslate"><span class="p
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.CertLifetime">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">CertLifetime</span></span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/life_time.html#CertLifetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.CertLifetime" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Stateless helper that computes and inspects X.509 certificate validity windows.</p>
 <p>All operations are pure functions (no side effects, no shared state) and are
 therefore safe to call from multiple threads simultaneously.</p>
@@ -364,7 +364,7 @@ passed (which would produce an immediately-invalid certificate).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>) – Start of the validity period as a timezone-aware <code class="docutils literal notranslate"><span class="pre">datetime</span></code>.
 Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> to use <code class="docutils literal notranslate"><span class="pre">datetime.now(timezone.utc)</span></code> automatically.</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of calendar days the certificate should remain valid.
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Number of calendar days the certificate should remain valid.
 Default: <code class="docutils literal notranslate"><span class="pre">365</span></code> (one year).</p></li>
 </ul>
 </dd>
@@ -373,7 +373,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">365</span>
 <code class="docutils literal notranslate"><span class="pre">tzinfo=timezone.utc</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[datetime, datetime]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[datetime, datetime]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate" title="tiny_ca.exc.InvalidRangeTimeCertificate"><strong>InvalidRangeTimeCertificate</strong></a> – If the computed <em>not_after</em> is earlier than the current UTC time,
@@ -397,12 +397,12 @@ Default: <code class="docutils literal notranslate"><span class="pre">365</span>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>valid_from</strong> (<em>datetime</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>hour.</strong> (<em>The beginning</em><em> of </em><em>the window</em><em> of </em><em>action</em><em> (</em><em>UTC</em><em>)</em><em>. None → exact UTC</em>)</p></li>
-<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
+<li><p><strong>days_valid</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 <li><p><strong>instructions</strong> (<em>Calendar days are trivial. For</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>]</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -488,7 +488,7 @@ aware datetimes.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -533,7 +533,7 @@ aware datetimes.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -550,7 +550,7 @@ aware datetimes.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ICALoader">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">ICALoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/file_loader.html#ICALoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.ICALoader" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Protocol" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Protocol" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
 <p>Protocol that defines the minimum contract for CA-material providers.</p>
 <p>Any object that exposes the three properties below satisfies this Protocol
 and can be injected into <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code> without any inheritance.
@@ -561,7 +561,7 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 <dl class="simple">
 <dt>ca_cert<span class="classifier">x509.Certificate</span></dt><dd><p>The loaded CA certificate object.</p>
 </dd>
-<dt>ca_key<span class="classifier">rsa.RSAPrivateKey</span></dt><dd><p>The loaded CA private key used for signing.</p>
+<dt>ca_key<span class="classifier">PrivateKey</span></dt><dd><p>The loaded CA private key used for signing.</p>
 </dd>
 <dt>base_info<span class="classifier">CertificateInfo</span></dt><dd><p>Structured metadata extracted from the CA certificate’s Subject field
 (organization, country, state, locality, organizational unit).</p>
@@ -584,7 +584,7 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ICALoader.ca_key">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v49.0.0.dev1)"><span class="pre">RSAPrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ICALoader.ca_key" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_key</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey" title="(in Cryptography v51.0.0-dev1)"><span class="pre">RSAPrivateKey</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey" title="(in Cryptography v51.0.0-dev1)"><span class="pre">EllipticCurvePrivateKey</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/#cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey" title="(in Cryptography v51.0.0-dev1)"><span class="pre">Ed25519PrivateKey</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ICALoader.ca_key" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -593,9 +593,9 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SerialWithEncoding">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">SerialWithEncoding</span></span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#SerialWithEncoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Stateless serial-number generator that encodes a short name prefix and
-a UUID-derived random fragment into a single integer.</p>
+64 bits of CSPRNG output into a single integer.</p>
 <p>Serial number layout</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="mi">16</span><span class="o">-</span><span class="n">bit</span> <span class="n">prefix</span> <span class="p">][</span> <span class="mi">80</span><span class="o">-</span><span class="n">bit</span> <span class="n">encoded</span> <span class="n">name</span> <span class="p">][</span> <span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">random</span> <span class="p">]</span>
 </pre></div>
@@ -605,45 +605,50 @@ X.509 allows up to 20 bytes / 160 bits per RFC 5280 §4.1.2.2).</p>
 <ul class="simple">
 <li><p><strong>prefix</strong>       — 2-byte ASCII code from <code class="xref py py-class docutils literal notranslate"><span class="pre">_PrefixRegistry</span></code>.</p></li>
 <li><dl class="simple">
-<dt><strong>encoded name</strong> — up to 4 ASCII characters packed into 32 bits</dt><dd><p>(little-endian byte order, zero-padded).</p>
+<dt><strong>encoded name</strong> — up to 10 ASCII characters packed into 80 bits</dt><dd><p>(little-endian byte order, zero-padded).  Non-ASCII
+characters are stored as <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code> so that every
+character occupies exactly one byte.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><strong>random</strong>       — lower 64 bits of a fresh <code class="docutils literal notranslate"><span class="pre">uuid.uuid4()</span></code> ensuring</dt><dd><p>global uniqueness without shared state.</p>
+<dt><strong>random</strong>       — 64 bits from <a class="reference external" href="https://docs.python.org/3/library/secrets.html#secrets.randbits" title="(in Python v3.15)"><code class="xref py py-func docutils literal notranslate"><span class="pre">secrets.randbits()</span></code></a> (meets the</dt><dd><p>CA/Browser Forum “≥ 64 bits of CSPRNG output” rule).</p>
 </dd>
 </dl>
 </li>
 </ul>
+<p>The 16-bit prefixes are all printable ASCII (&lt; 0x80), so the top bit of
+the 160-bit value is always zero and the DER encoding fits the 20-octet
+limit of RFC 5280 §4.1.2.2 without a padding byte.</p>
 <p>Because no mutable state is kept, this class is safe to use from multiple
 threads or processes simultaneously.</p>
 <section id="class-attributes">
 <h2>Class Attributes<a class="headerlink" href="#class-attributes" title="Link to this heading">¶</a></h2>
 <dl class="simple">
-<dt>RANDOM_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the random (UUID) portion. Default: <code class="docutils literal notranslate"><span class="pre">64</span></code>.</p>
+<dt>RANDOM_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the random portion. Default: <code class="docutils literal notranslate"><span class="pre">64</span></code>.</p>
 </dd>
-<dt>NAME_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the encoded name portion. Default: <code class="docutils literal notranslate"><span class="pre">32</span></code>
-(4 bytes × 8 bits).</p>
+<dt>NAME_BITS<span class="classifier">int</span></dt><dd><p>Number of bits reserved for the encoded name portion. Default: <code class="docutils literal notranslate"><span class="pre">80</span></code>
+(10 bytes × 8 bits).</p>
 </dd>
-<dt>MAX_NAME_LENGTH<span class="classifier">int</span></dt><dd><p>Maximum number of ASCII characters that can be encoded. Default: <code class="docutils literal notranslate"><span class="pre">4</span></code>.</p>
+<dt>MAX_NAME_LENGTH<span class="classifier">int</span></dt><dd><p>Maximum number of ASCII characters that can be encoded. Default: <code class="docutils literal notranslate"><span class="pre">10</span></code>.</p>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SerialWithEncoding.MAX_NAME_LENGTH">
-<span class="sig-name descname"><span class="pre">MAX_NAME_LENGTH</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.MAX_NAME_LENGTH" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">MAX_NAME_LENGTH</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.MAX_NAME_LENGTH" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum number of characters accepted by <code class="xref py py-meth docutils literal notranslate"><span class="pre">_encode_name()</span></code>.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SerialWithEncoding.NAME_BITS">
-<span class="sig-name descname"><span class="pre">NAME_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">80</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.NAME_BITS" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">NAME_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">80</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.NAME_BITS" title="Link to this definition">¶</a></dt>
 <dd><p>Bit-width of the encoded-name segment (10 ASCII chars × 8 bits).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SerialWithEncoding.RANDOM_BITS">
-<span class="sig-name descname"><span class="pre">RANDOM_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.RANDOM_BITS" title="Link to this definition">¶</a></dt>
-<dd><p>Bit-width of the random (UUID) segment.</p>
+<span class="sig-name descname"><span class="pre">RANDOM_BITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.RANDOM_BITS" title="Link to this definition">¶</a></dt>
+<dd><p>Bit-width of the random segment.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -651,12 +656,12 @@ threads or processes simultaneously.</p>
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#SerialWithEncoding.generate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.generate" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a globally unique serial number for <em>name</em> and <em>serial_type</em>.</p>
 <p>Only the first <a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.MAX_NAME_LENGTH" title="tiny_ca.ca_factory.utils.SerialWithEncoding.MAX_NAME_LENGTH"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MAX_NAME_LENGTH</span></code></a> characters of <em>name</em> are encoded;
-uniqueness is guaranteed by the UUID random segment, not by the name.</p>
+uniqueness is provided by the random segment, not by the name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Human-readable identifier.  Only the first 4 ASCII characters are
-embedded; the remainder is ignored (not hashed or truncated with loss).</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Human-readable identifier.  Only the first 10 characters are
+embedded; non-ASCII characters become <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code>.</p></li>
 <li><p><strong>serial_type</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType"><em>CertType</em></a>) – Certificate category; determines the 2-byte prefix.</p></li>
 </ul>
 </dd>
@@ -664,17 +669,17 @@ embedded; the remainder is ignored (not hashed or truncated with loss).</p></li>
 <dd class="field-even"><p>Non-negative integer serial suitable for X.509 certificates.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.14)"><strong>KeyError</strong></a> – If <em>serial_type</em> has no registered prefix.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.15)"><strong>KeyError</strong></a> – If <em>serial_type</em> has no registered prefix.</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;nginx&quot;</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">"nginx"</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cert_type</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cert_type</span> <span class="o">==</span> <span class="n">CertType</span><span class="o">.</span><span class="n">SERVICE</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ngin&quot;</span>  <span class="c1"># only first 4 chars are stored</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"nginx"</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -685,22 +690,22 @@ embedded; the remainder is ignored (not hashed or truncated with loss).</p></li>
 <dd><p>Decode a serial number produced by <a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.generate" title="tiny_ca.ca_factory.utils.SerialWithEncoding.generate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Integer serial number to decode.</p>
+<dd class="field-odd"><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Integer serial number to decode.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name_prefix)</span></code> where <em>name_prefix</em> is the up-to-4-char
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(cert_type,</span> <span class="pre">name_prefix)</span></code> where <em>name_prefix</em> is the up-to-10-char
 string recovered from the encoded-name segment.
 <em>cert_type</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code> if the prefix is unrecognised.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[<a class="reference internal" href="tiny_ca.html#tiny_ca.CertType" title="tiny_ca.CertType">CertType</a> | None, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>]</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;ca-root&quot;</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">serial</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">"ca-root"</span><span class="p">,</span> <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cert_type</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">SerialWithEncoding</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">cert_type</span> <span class="o">==</span> <span class="n">CertType</span><span class="o">.</span><span class="n">CA</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ca-r&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"ca-root"</span>
 </pre></div>
 </div>
 </dd></dl>

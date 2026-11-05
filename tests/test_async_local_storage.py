@@ -34,7 +34,7 @@ from tiny_ca.storage.async_local_storage import AsyncLocalStorage
 
 
 def run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 @pytest.fixture(scope="module")
@@ -228,9 +228,9 @@ class TestAsyncDeleteCertificateFolder:
         assert result is True
         assert not folder.exists()
 
-    def test_returns_true_when_not_exists(self, storage):
+    async def test_returns_true_when_not_exists(self, storage):
         with pytest.warns(UserWarning, match="does not exist"):
-            result = run(storage.delete_certificate_folder("nonexistent-uuid"))
+            result = await storage.delete_certificate_folder("nonexistent-uuid")
         assert result is True
 
     def test_returns_true_when_not_a_directory(self, storage, tmp_path):

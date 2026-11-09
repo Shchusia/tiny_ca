@@ -4,9 +4,10 @@
 [![Downloads](https://static.pepy.tech/badge/tiny-ca)](https://pepy.tech/projects/tiny-ca)
 [![Downloads/month](https://static.pepy.tech/badge/tiny-ca/month)](https://pepy.tech/projects/tiny-ca)
 
-[![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
+[![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=master)](https://coveralls.io/github/Shchusia/tiny_ca?branch=master)
 [![Docs](https://img.shields.io/badge/Docs-passing-green)](https://shchusia.github.io/tiny_ca/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+[![REST API](https://img.shields.io/pypi/v/tiny-ca-gateway?label=REST%20API%3A%20tiny-ca-gateway&color=blueviolet)](https://github.com/Shchusia/tiny-ca-gateway)
 
 
 Легковісна Python-бібліотека з **покриттям тестами 100 %** для управління повним циклом X.509-сертифікатів — від розгортання самопідписаного кореневого CA до видачі, відкликання, ротації, поновлення та співпідписання кінцевих сертифікатів, генерації та верифікації CRL, експорту PKCS#12-бандлів та видачі проміжних CA — з підтримкою синхронного й асинхронного API.
@@ -16,7 +17,7 @@
 ## REST API
 
 > Шукаєте готовий HTTP-сервер на основі **tiny-ca**?
-> Завітайте до **[tiny-ca-gateway](https://github.com/Shchusia/tiny-ca-gateway)** — фреймворк-незалежного REST API адаптера з 22 ендпоінтами для повного циклу роботи з сертифікатами.
+> Завітайте до **[tiny-ca-gateway](https://github.com/Shchusia/tiny-ca-gateway)** — фреймворк-незалежного REST API адаптера з 23 ендпоінтами для повного циклу роботи з сертифікатами.
 
 | | |
 |---|---|
@@ -32,7 +33,7 @@ pip install "tiny-ca-gateway[django]"    # Django + Django Ninja
 ```
 
 ```python
-# FastAPI — 22 CA-ендпоінти у 5 рядків
+# FastAPI — 23 CA-ендпоінти у 5 рядків
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from tiny_ca_gateway.fastapi.lifespan.manager import FastAPILifespanManager
@@ -101,7 +102,7 @@ app.include_router(router, prefix="/api/v1")
 
 ## Вимоги
 
-- **Python** 3.11 або вище
+- **Python** 3.11 або вище (перевірено до 3.15)
 - **Основні:** `cryptography >= 46`, `sqlalchemy >= 2`, `pydantic >= 2`
 - **Async-extras:** `aiosqlite`
 - **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)

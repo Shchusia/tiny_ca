@@ -5,9 +5,10 @@
 [![Downloads](https://static.pepy.tech/badge/tiny-ca)](https://pepy.tech/projects/tiny-ca)
 [![Downloads/month](https://static.pepy.tech/badge/tiny-ca/month)](https://pepy.tech/projects/tiny-ca)
 
-[![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
+[![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=master)](https://coveralls.io/github/Shchusia/tiny_ca?branch=master)
 [![Docs](https://img.shields.io/badge/Docs-passing-green)](https://shchusia.github.io/tiny_ca/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+[![REST API](https://img.shields.io/pypi/v/tiny-ca-gateway?label=REST%20API%3A%20tiny-ca-gateway&color=blueviolet)](https://github.com/Shchusia/tiny-ca-gateway)
 
 A lightweight, **100%-tested** Python library for managing the full lifecycle of X.509 certificates — from bootstrapping a self-signed root CA to issuing, revoking, rotating, renewing, and co-signing end-entity certificates, generating and verifying CRLs, exporting PKCS#12 bundles, and issuing intermediate CAs — all backed by pluggable sync/async storage and database adapters.
 
@@ -16,7 +17,7 @@ A lightweight, **100%-tested** Python library for managing the full lifecycle of
 ## REST API
 
 > Looking for a ready-to-use HTTP server built on **tiny-ca**?
-> Check out **[tiny-ca-gateway](https://github.com/Shchusia/tiny-ca-gateway)** — a framework-agnostic REST API adapter that exposes all 22 certificate lifecycle endpoints with no extra code.
+> Check out **[tiny-ca-gateway](https://github.com/Shchusia/tiny-ca-gateway)** — a framework-agnostic REST API adapter that exposes all 23 certificate lifecycle endpoints with no extra code.
 
 | | |
 |---|---|
@@ -32,7 +33,7 @@ pip install "tiny-ca-gateway[django]"    # Django + Django Ninja
 ```
 
 ```python
-# FastAPI — all 22 CA endpoints in 5 lines
+# FastAPI — all 23 CA endpoints in 5 lines
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from tiny_ca_gateway.fastapi.lifespan.manager import FastAPILifespanManager

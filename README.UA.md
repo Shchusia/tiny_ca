@@ -1,6 +1,8 @@
 # tiny_ca
 [![Python](https://img.shields.io/pypi/pyversions/tiny-ca)](https://pypi.org/project/tiny-ca/)
 [![PyPI](https://img.shields.io/pypi/v/tiny-ca?color=blue)](https://pypi.org/project/tiny-ca/)
+[![Downloads](https://static.pepy.tech/badge/tiny-ca)](https://pepy.tech/projects/tiny-ca)
+[![Downloads/month](https://static.pepy.tech/badge/tiny-ca/month)](https://pepy.tech/projects/tiny-ca)
 
 [![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
 [![Docs](https://img.shields.io/badge/Docs-passing-green)](https://shchusia.github.io/tiny_ca/)

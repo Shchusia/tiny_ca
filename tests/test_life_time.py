@@ -13,8 +13,8 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytest
 from cryptography import x509
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -35,7 +35,6 @@ def _make_cert(not_before: datetime, not_after: datetime) -> MagicMock:
 
 from tiny_ca import CertLifetime  # noqa: E402
 from tiny_ca.exc import InvalidRangeTimeCertificate  # noqa: E402
-
 
 # ===========================================================================
 # CertLifetime.compute

@@ -55,6 +55,7 @@ app.include_router(router, prefix="/api/v1")
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [High-Assurance Deployments](#high-assurance-deployments)
 - [Complete Examples](#complete-examples)
 - [Configuration Models](#configuration-models)
 - [Storage Backends](#storage-backends)
@@ -65,6 +66,7 @@ app.include_router(router, prefix="/api/v1")
 - [Migrating from Other CAs](#migrating-from-other-cas)
 - [Benchmark Results](#benchmark-results)
 - [Project Structure](#project-structure)
+- [Security Model](#security-model)
 - [Security Policy](#security-policy)
 - [License](#license)
 
@@ -76,7 +78,10 @@ app.include_router(router, prefix="/api/v1")
 |---|---|
 | **CA bootstrap** | Self-signed root CA and intermediate (sub) CA with configurable `path_length` |
 | **Issuance** | Leaf certificates with SANs (DNS + IP), EKU (Server/Client Auth), email attribute |
-| **Key algorithms** | RSA (2048+), ECDSA P-256 / P-384, Ed25519 — for the CA and for leaves |
+| **Key algorithms** | ECDSA P-384 (default), P-256, RSA 2048–8192 (default 3072), Ed25519; SHA-384 signatures for P-384 / RSA ≥ 3072 |
+| **HSM / external signers** | CA key in an HSM or smart card via PKCS#11 (`SignerCALoader`, `Pkcs11Signer`) or any `CASigner` (cloud KMS); root and subordinate CA certificates for keys that never leave the token |
+| **Policies & name constraints** | `CertificatePolicies` with CPS pointer on every certificate; critical `NameConstraints` (DNS / IP / e-mail) on intermediates, enforced at issuance and in chain validation |
+| **Audit log** | Hash-chained, signed, append-only JSONL log of every CA operation with offline verification |
 | **Lifecycle** | Revoke (RFC 5280 reasons), renew (same key), rotate (new key), hard-delete — every CA-signed certificate is registered, so it can always be revoked |
 | **CRL** | RFC 5280 CRLs with `CRLNumber`, AKI and per-entry reason codes; optional CRL Distribution Points / AIA in issued certificates |
 | **Validation** | Direct (`validate_cert`) or through intermediates (`validate_chain`, with `BasicConstraints` / `pathLen` checks); registry check is fail-closed |
@@ -100,6 +105,7 @@ app.include_router(router, prefix="/api/v1")
 - **Async extras:** `aiosqlite`
 - **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)
 - **MySQL:** `pymysql` (sync) / `aiomysql` (async)
+- **HSM:** `python-pkcs11` (`tiny-ca[hsm]`)
 
 ---
 
@@ -112,6 +118,9 @@ CertLifecycleManager / AsyncCertLifecycleManager   ← application entry-point
         │       ├── ICALoader (Protocol)
         │       │       ├── CAFileLoader            ← sync PEM file loader
         │       │       └── AsyncCAFileLoader       ← async PEM file loader
+        │       ├── ISignerCALoader (Protocol)
+        │       │       └── SignerCALoader          ← CA cert + CASigner (HSM / KMS)
+        │       ├── CASigner (Protocol)             ← KeySigner, Pkcs11Signer
         │       ├── CertLifetime                    ← validity window helpers
         │       ├── CertSerialParser                ← read serials from certs
         │       └── SerialWithEncoding              ← encode / decode serial numbers
@@ -120,9 +129,11 @@ CertLifecycleManager / AsyncCertLifecycleManager   ← application entry-point
         │       ├── LocalStorage                    ← sync filesystem (UUID-isolated)
         │       └── AsyncLocalStorage               ← async filesystem (worker threads)
         │
-        └── BaseDB (ABC)
-                ├── SyncDBHandler                   ← SQLAlchemy sync
-                └── AsyncDBHandler                  ← SQLAlchemy async (aiosqlite)
+        ├── BaseDB (ABC)
+        │       ├── SyncDBHandler                   ← SQLAlchemy sync
+        │       └── AsyncDBHandler                  ← SQLAlchemy async (aiosqlite)
+        │
+        └── AuditLog                                ← optional signed, hash-chained log
 ```
 
 Every component is injected at construction time — no global singletons, trivially testable.
@@ -145,6 +156,9 @@ pip install tiny-ca[postgres-async]     # async (asyncpg)
 # MySQL
 pip install tiny-ca[mysql]              # sync (pymysql)
 pip install tiny-ca[mysql-async]        # async (aiomysql)
+
+# HSM / smart card (PKCS#11)
+pip install tiny-ca[hsm]
 
 # Everything
 pip install tiny-ca[all]
@@ -174,7 +188,7 @@ mgr = CertLifecycleManager(storage=storage, db_handler=db)
 
 cert_path, key_path = mgr.create_self_signed_ca(
     CAConfig(common_name="My Root CA", organization="ACME Corp",
-             country="UA", key_size=4096, days_valid=3650)
+             country="UA", days_valid=3650)          # ECDSA P-384 by default
 )
 ```
 
@@ -194,8 +208,11 @@ mgr.factory = CertificateFactory(
 )
 ```
 
-`CAConfig` / `ClientConfig` accept `key_algorithm=KeyAlgorithm.EC_P256`
-(also `EC_P384`, `ED25519`, default `RSA`) — see [Configuration Models](#configuration-models).
+Keys default to ECDSA P-384 (signatures with SHA-384).  `CAConfig` /
+`ClientConfig` accept `key_algorithm=KeyAlgorithm.RSA` (3072-bit by default),
+`EC_P256` or `ED25519` — see [Configuration Models](#configuration-models).
+To keep the CA key in an HSM, see
+[High-Assurance Deployments](#high-assurance-deployments).
 
 ### 2. Issue a Leaf Certificate
 
@@ -275,6 +292,10 @@ sub_ca_cert, sub_ca_key = mgr.issue_intermediate_ca(
 mgr.verify_certificate(leaf_cert, intermediates=[sub_ca_cert])
 ```
 
+Pass `name_constraints=NameConstraintsConfig(...)` to restrict the names the
+intermediate may certify.  Use `certify_intermediate_ca(csr, ...)` when its
+key is generated elsewhere (e.g. in its own HSM).
+
 ### 8. Export PKCS#12
 
 ```python
@@ -311,7 +332,7 @@ fullchain_pem = b"".join(c.public_bytes(Encoding.PEM) for c in chain)
 records  = mgr.list_certificates(status="valid", key_type="service", limit=50)
 expiring = mgr.get_expiring_soon(within_days=30)
 updated  = mgr.refresh_expired_statuses()   # run periodically
-mgr.delete_certificate(serial=cert.serial_number)
+mgr.delete_certificate(serial=cert.serial_number)  # revoked + unexpired → CertificateRevokedError (keeps the CRL entry)
 ```
 
 ### 12. Async Usage
@@ -342,13 +363,162 @@ async def main():
 
     cert, key, csr = await mgr.issue_certificate(
         ClientConfig(common_name="api.internal", serial_type=CertType.SERVICE,
-                     key_size=2048, days_valid=365, is_server_cert=True)
+                     days_valid=365, is_server_cert=True)
     )
     details = await mgr.inspect_certificate(cert)
     p12 = await mgr.export_pkcs12(cert, key, password=b"secret")
 
 asyncio.run(main())
 ```
+
+## High-Assurance Deployments
+
+Features for PKIs that run under a formal security policy.  See
+[Security Model](#security-model) for what they do and do not guarantee.
+
+### Keep the CA key in an HSM
+
+The CA key can live in an HSM or smart card and never be loaded into the
+process.  Install the extra: `pip install 'tiny-ca[hsm]'`.
+
+```python
+import os
+from tiny_ca import CertificateFactory, SignerCALoader
+
+loader = SignerCALoader.from_pkcs11(
+    ca_cert="pki/ca.pem",                         # the certificate only, no key file
+    module_path="/usr/lib/softhsm/libsofthsm2.so",
+    token_label="ca-token",
+    pin=os.environ["CA_TOKEN_PIN"],
+    key_label="root-ca",                          # or key_id=b"\x01"
+)
+mgr.factory = CertificateFactory(loader)
+# ... issue, renew, revoke, build CRLs: every signature is made by the token
+loader.ca_signer.close()                          # end the PKCS#11 session
+```
+
+At start-up `SignerCALoader` checks three things:
+- the certificate is a CA;
+- the token key matches the certificate;
+- the token can sign a random challenge.
+
+Every signature the token returns is verified against the CA certificate
+before a certificate or CRL leaves the factory.  Any other back-end (cloud
+KMS, remote signing service) plugs in through the `CASigner` protocol:
+
+```python
+from tiny_ca import CASigner, SignerCALoader
+
+class KmsSigner:                                   # satisfies CASigner
+    def public_key(self):
+        return ca_cert.public_key()
+
+    def sign(self, data: bytes, algorithm) -> bytes:
+        # algorithm: hashes.SHA384() / SHA256(), or None for Ed25519.
+        # Return PKCS#1 v1.5 (RSA), DER ECDSA-Sig-Value (EC) or raw Ed25519.
+        return kms_client.sign(data, algorithm)
+
+loader = SignerCALoader(ca_cert, KmsSigner())
+```
+
+**Keys generated on the token.**  Create the key pair with the token's
+tooling, for example
+`pkcs11-tool --keypairgen --key-type EC:secp384r1 --label root-ca`.  Then
+certify it without the key ever leaving the token:
+
+```python
+from tiny_ca import Pkcs11Signer
+
+# Root CA: the public key comes from the token (or from a CSR made by it).
+signer = Pkcs11Signer.open(module_path, "ca-token", pin,
+                           public_key=token_public_key, key_label="root-ca")
+root_cert = CertificateFactory.build_self_signed_ca_with_signer(
+    signer, common_name="ACME Root CA", organization="ACME", country="UA")
+
+# Subordinate CA whose key lives in another HSM: certify its CSR.
+sub_cert = mgr.certify_intermediate_ca(sub_ca_csr, common_name="ACME Issuing CA")
+```
+
+`certify_intermediate_ca` checks the CSR signature as proof of possession.
+It takes the Subject from its own arguments, never from the CSR.  It stores
+and registers only the certificate.
+
+### Certificate policies and name constraints
+
+```python
+from tiny_ca import CertificateFactory, NameConstraintsConfig
+
+mgr.factory = CertificateFactory(
+    loader,
+    certificate_policies=["1.3.6.1.4.1.55555.1.1"],   # your CP OID(s)
+    cps_uri="https://pki.example.com/cps",
+)
+
+sub_cert, sub_key = mgr.issue_intermediate_ca(
+    "Issuing CA - example.com",
+    name_constraints=NameConstraintsConfig(
+        permitted_dns=["example.com"],        # example.com and sub-domains
+        excluded_dns=["secret.example.com"],
+        permitted_ip=["10.0.0.0/8"],
+        permitted_email=["example.com"],       # mailboxes @example.com
+    ),
+)
+```
+
+- `CertificatePolicies` (with an optional CPS pointer) is added to every
+  certificate the factory issues, renews, co-signs or certifies.
+- `NameConstraints` is a critical extension of the intermediate.  It is
+  enforced in two places:
+  - `validate_chain` / `verify_certificate` check every certificate below the
+    constrained CA;
+  - a factory running *on* the constrained CA refuses to issue, renew or
+    co-sign a certificate with a forbidden DNS / IP / e-mail name, and
+    raises `NameConstraintViolation`.
+- Wildcards are handled conservatively: `*.com` is refused when `evil.com`
+  is excluded.
+- Constraints on name types tiny-ca cannot evaluate (directoryName, URI,
+  otherName, registeredID) fail closed.
+
+### Tamper-evident audit log
+
+```python
+from tiny_ca import AuditLog, CertLifecycleManager
+
+audit = AuditLog("/var/log/pki/audit.jsonl",
+                 signer=audit_key,            # dedicated key or a CASigner (HSM)
+                 actor="pki-operator-1")
+mgr = CertLifecycleManager(storage=storage, db_handler=db, factory=factory,
+                           audit_log=audit)
+
+# ... later, e.g. from a daily job, with the head hash kept elsewhere:
+count = AuditLog.verify("/var/log/pki/audit.jsonl",
+                        public_key=audit_key.public_key(),
+                        expected_head=last_published_head)
+```
+
+Every state-changing operation appends one JSON line.  The operations are
+CA creation, issuance, rotation, renewal, co-signing, intermediate
+issuance or certification, revocation (including failed attempts),
+deletion, CRL generation and PKCS#12 export.  Each line holds:
+- the sequence number, UTC time, actor and event;
+- the certificate serial, subject, issuer and SHA-256 fingerprint;
+- the hash of the previous line and the line's own hash;
+- a signature, when a signing key is configured.
+
+`AuditLog.verify` detects edited, inserted, reordered and deleted entries.
+To detect deletion of the *last* entries, publish `audit.head` regularly to
+a place the CA host cannot rewrite (SIEM, ticket, second host) and pass it
+as `expected_head`.
+
+### Defaults
+
+| Setting | 1.0 default | Override |
+|---|---|---|
+| Key algorithm | ECDSA P-384 | `key_algorithm=KeyAlgorithm.RSA / EC_P256 / ED25519` |
+| RSA key size | 3072 bits (2048–8192 allowed, warning below 3072) | `key_size=` |
+| Signature digest | SHA-384 for P-384 and RSA ≥ 3072, SHA-256 for P-256 / RSA-2048 | follows the CA key |
+| Leaf validity | 365 days (1–36500 allowed) | `days_valid=` |
+| CA validity | 3650 days; issued certificates never outlive the CA | `days_valid=` |
 
 ---
 
@@ -358,10 +528,12 @@ asyncio.run(main())
 |---|---|
 | `examples/complete_example.py` | Sync API — full lifecycle |
 | `examples/acomplete_example.py` | Async API — full lifecycle |
+| `examples/high_assurance_example.py` | HSM-style signer, certificate policies, name-constrained sub-CA, signed audit log |
 
 ```bash
 python examples/complete_example.py
 python examples/acomplete_example.py
+python examples/high_assurance_example.py
 ```
 
 ---
@@ -375,9 +547,9 @@ python examples/acomplete_example.py
 | `common_name` | `str` | `"Internal CA"` | CA Common Name (CN) |
 | `organization` | `str` | `"My Company"` | Organization (O) |
 | `country` | `str` | `"UA"` | Two-letter ISO 3166-1 alpha-2 code |
-| `key_size` | `int` | `2048` | RSA key length in bits (≥ 2048; ignored for EC / Ed25519) |
-| `key_algorithm` | `KeyAlgorithm` | `RSA` | `RSA`, `EC_P256`, `EC_P384` or `ED25519` |
-| `days_valid` | `int` | `3650` | Validity period in days |
+| `key_size` | `int` | `3072` | RSA key length in bits (2048–8192; ignored for EC / Ed25519) |
+| `key_algorithm` | `KeyAlgorithm` | `EC_P384` | `EC_P384`, `EC_P256`, `RSA` or `ED25519` |
+| `days_valid` | `int` | `3650` | Validity period in days (1–36500) |
 | `valid_from` | `datetime \| None` | `None` | Explicit UTC start; `None` = now |
 
 ### `ClientConfig`
@@ -386,9 +558,9 @@ python examples/acomplete_example.py
 |---|---|---|---|
 | `common_name` | `str` | — | Certificate CN |
 | `serial_type` | `CertType` | `SERVICE` | Certificate category |
-| `key_size` | `int` | `2048` | RSA key length (≥ 2048; ignored for EC / Ed25519) |
-| `key_algorithm` | `KeyAlgorithm` | `RSA` | `RSA`, `EC_P256`, `EC_P384` or `ED25519` |
-| `days_valid` | `int` | `3650` | Validity period |
+| `key_size` | `int` | `3072` | RSA key length (2048–8192; ignored for EC / Ed25519) |
+| `key_algorithm` | `KeyAlgorithm` | `EC_P384` | `EC_P384`, `EC_P256`, `RSA` or `ED25519` |
+| `days_valid` | `int` | `365` | Validity period (1–36500; clamped to the CA's expiry) |
 | `email` | `EmailStr \| None` | `None` | `emailAddress` Subject attribute |
 | `is_server_cert` | `bool` | `True` | Adds ServerAuth EKU + CN as DNS SAN |
 | `is_client_cert` | `bool` | `False` | Adds ClientAuth EKU |
@@ -520,6 +692,10 @@ into the type prefix.  The top bit is always zero, so the DER encoding fits the
 | `DBOperationError` | Registry could not be read / written | Check the database; nothing was trusted or published |
 | `CertRevocationError` | Rotation/renewal could not revoke the old cert | Retry; the replacement was rolled back |
 | `InvalidPathError` | Storage path would escape `base_folder` | Use plain names / relative sub-paths |
+| `CertificateRevokedError` | Renew / co-sign of a revoked cert, delete of a revoked unexpired cert | Issue a new certificate; keep revoked rows until they expire |
+| `NameConstraintViolation` | A name is outside the issuer's `NameConstraints` | Use a permitted name or another issuing CA |
+| `SignerError` | External signer (HSM / KMS) failed or returned a bad signature | Check the token, PIN, key label and that the key matches the CA certificate |
+| `AuditLogError` | Audit entry could not be written, or verification failed | Treat as a security incident: the operation took effect but is not recorded |
 
 ---
 
@@ -535,6 +711,13 @@ Yes — load it with `CAFileLoader` or `AsyncCAFileLoader`.
 Since 0.3.0 a certificate issued directly by the CA must also be present in the
 registry — otherwise its revocation status is unknown.  Certificates created
 with older versions via `renew` / `cosign` were not registered; re-issue them.
+
+**Why are my new keys EC instead of RSA after upgrading to 1.0?**
+1.0 defaults to ECDSA P-384 with SHA-384.  Pass
+`key_algorithm=KeyAlgorithm.RSA` (and `key_size=`) where RSA is required.
+Existing CAs keep their algorithm; their signature digest now follows the key
+size (SHA-384 for RSA ≥ 3072).  See the 1.0.0 "Breaking changes" in
+[CHANGELOG.md](CHANGELOG.md).
 
 **How do I see the library's logs?**
 `tiny_ca` only attaches a `NullHandler`; configure the `"TinyCA"` logger in your
@@ -598,14 +781,18 @@ Key generation dominates issuance time. For >1 000 certs/hour use PostgreSQL, th
 
 ```
 tiny_ca/
-├── const.py                        # CertType, ALLOWED_CERT_EXTENSIONS
+├── const.py                        # CertType, KeyAlgorithm, secure defaults / bounds
 ├── exc.py                          # all custom exceptions
+├── signing.py                      # CASigner, KeySigner, Pkcs11Signer, sign_builder
+├── audit.py                        # AuditLog — signed, hash-chained audit log
 ├── settings.py                     # DEFAULT_LOGGER
 ├── ca_factory/
 │   ├── factory.py                  # CertificateFactory — all crypto
 │   └── utils/
 │       ├── file_loader.py          # CAFileLoader + ICALoader Protocol
 │       ├── afile_loader.py         # AsyncCAFileLoader
+│       ├── signer_loader.py        # SignerCALoader + ISignerCALoader Protocol
+│       ├── name_constraints.py     # NameConstraints building / enforcement
 │       ├── life_time.py            # CertLifetime
 │       └── serial.py               # CertSerialParser
 ├── db/
@@ -618,7 +805,7 @@ tiny_ca/
 │   ├── sync_lifecycle_manager.py   # CertLifecycleManager (20+ ops)
 │   └── async_lifecycle_manager.py  # AsyncCertLifecycleManager
 ├── models/
-│   └── certificate.py              # CAConfig, ClientConfig, CertificateDetails
+│   └── certificate.py              # CAConfig, ClientConfig, NameConstraintsConfig, CertificateDetails
 ├── storage/
 │   ├── base_storage.py             # BaseStorage ABC
 │   ├── const.py                    # CryptoObject type alias
@@ -629,6 +816,33 @@ tiny_ca/
 ```
 
 ---
+
+## Security Model
+
+tiny-ca gives you the building blocks of a high-assurance PKI:
+- an HSM-held CA key;
+- strong defaults;
+- certificate policies and name constraints;
+- fail-closed revocation checks;
+- a signed audit trail.
+
+The library itself is **not** certified against any national, NATO or
+Common Criteria scheme.  It relies on the `cryptography` package (OpenSSL),
+which is not a FIPS 140-3 validated module unless you build it against
+one.  Accreditation also covers things outside a library: the operating
+environment, role separation and dual control for CA operations, key
+ceremonies, physical security, and a published CP/CPS.  Plan those
+separately.
+
+Known limits:
+- No OCSP responder.  Publish CRLs (`generate_crl`) and point relying
+  parties at them with `crl_distribution_points`.
+- Name constraints cover DNS, IP and e-mail names.  Other types fail closed.
+- The audit log is written after an operation completes.  Its tail is
+  protected only by publishing the head hash elsewhere.  It has no
+  inter-process lock on Windows.
+- Without an HSM, the CA key is a file.  Keep it encrypted
+  (`base_encryption_algorithm`) on an offline or tightly controlled host.
 
 ## Security Policy
 
@@ -646,3 +860,4 @@ Do **not** open public issues for security vulnerabilities. Email the maintainer
 | SQLAlchemy | MIT |
 | Pydantic | MIT |
 | aiosqlite | MIT |
+| python-pkcs11 (optional, `hsm`) | MIT |

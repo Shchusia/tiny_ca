@@ -12,10 +12,12 @@ tiny_ca documentation
 
    installation
    quickstart
+   high_assurance
    modules/ca_factory
    modules/managers
    modules/storage
    modules/db
+   modules/security
    modules/utils
    modules/models
    modules/exceptions

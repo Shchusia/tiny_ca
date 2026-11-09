@@ -541,7 +541,9 @@ class TestCertificateContents:
 
     def test_rsa_leaf_keeps_key_encipherment(self, env):
         mgr, _, _ = env
-        cert, _, _ = mgr.issue_certificate(ClientConfig(common_name="svc"))
+        cert, _, _ = mgr.issue_certificate(
+            ClientConfig(common_name="svc", key_algorithm=KeyAlgorithm.RSA)
+        )
         assert cert.extensions.get_extension_for_class(
             x509.KeyUsage
         ).value.key_encipherment
@@ -553,7 +555,13 @@ class TestCertificateContents:
             ClientConfig(common_name="x", key_size=1024)
 
     def test_public_key_info(self):
-        assert public_key_info(generate_private_key().public_key()) == ("rsa", 2048)
+        assert public_key_info(
+            generate_private_key(KeyAlgorithm.RSA, 2048).public_key()
+        ) == ("rsa", 2048)
+        assert public_key_info(generate_private_key().public_key()) == (
+            "ec-secp384r1",
+            384,
+        )
         assert public_key_info(
             generate_private_key(KeyAlgorithm.ED25519).public_key()
         ) == ("ed25519", 256)
@@ -702,7 +710,12 @@ class TestMisc:
     def test_signing_hash(self):
         assert signing_hash(generate_private_key(KeyAlgorithm.ED25519)) is None
         assert signing_hash(generate_private_key(KeyAlgorithm.EC_P384)).name == "sha384"
-        assert isinstance(generate_private_key(), rsa.RSAPrivateKey)
+        assert isinstance(generate_private_key(), ec.EllipticCurvePrivateKey)
+        rsa_2048 = generate_private_key(KeyAlgorithm.RSA, 2048)
+        assert signing_hash(rsa_2048).name == "sha256"
+        assert signing_hash(rsa_2048.public_key()).name == "sha256"
+        assert signing_hash(generate_private_key(KeyAlgorithm.RSA)).name == "sha384"
+        assert signing_hash(generate_private_key(KeyAlgorithm.EC_P256)).name == "sha256"
         assert (
             certificate_common_name(
                 CertificateFactory.build_self_signed_ca(common_name="Z")[0]

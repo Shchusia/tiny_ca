@@ -13,13 +13,12 @@ from abc import ABC
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+import pytest
 
 from tiny_ca.storage.base_storage import BaseStorage
 from tiny_ca.storage.const import CryptoObject
-
 
 # ===========================================================================
 # BaseStorage is abstract

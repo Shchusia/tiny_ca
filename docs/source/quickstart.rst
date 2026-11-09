@@ -20,14 +20,16 @@ Quick Start
             common_name="My Root CA",
             organization="ACME Corp",
             country="UA",
-            key_size=4096,
             days_valid=3650,
         )
     )
 
 .. note::
 
-    This step creates a **self-signed Root CA**.
+    This step creates a **self-signed Root CA** with an ECDSA P-384 key (the
+    1.0 default; pass ``key_algorithm=KeyAlgorithm.RSA`` for RSA-3072).  To
+    keep the CA key in an HSM instead of a file, see
+    :doc:`high_assurance`.
     Store the private key securely — compromise of this key breaks trust for all issued certificates.
 
 Attach the factory:
@@ -57,7 +59,6 @@ Attach the factory:
         ClientConfig(
             common_name="nginx.internal",
             serial_type=CertType.SERVICE,
-            key_size=2048,
             days_valid=365,
             is_server_cert=True,
             san_dns=["nginx.internal", "www.nginx.internal"],

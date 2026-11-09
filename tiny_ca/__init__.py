@@ -1,9 +1,12 @@
+from .audit import AuditLog
 from .ca_factory import (
     CAFileLoader,
     CertificateFactory,
     CertLifetime,
     ICALoader,
+    ISignerCALoader,
     SerialWithEncoding,
+    SignerCALoader,
 )
 from .const import CertType, KeyAlgorithm
 from .db import (
@@ -15,7 +18,8 @@ from .db import (
     SyncDBHandler,
 )
 from .managers import CertLifecycleManager
-from .models import CAConfig, ClientConfig
+from .models import CAConfig, ClientConfig, NameConstraintsConfig
+from .signing import CASigner, KeySigner, Pkcs11Signer
 from .storage import BaseStorage, LocalStorage
 
 __all__ = [
@@ -23,6 +27,11 @@ __all__ = [
     "CertLifetime",
     "ICALoader",
     "CAFileLoader",
+    "ISignerCALoader",
+    "SignerCALoader",
+    "CASigner",
+    "KeySigner",
+    "Pkcs11Signer",
     "SerialWithEncoding",
     "CertificateRecord",
     "RevokeStatus",
@@ -36,6 +45,8 @@ __all__ = [
     "KeyAlgorithm",
     "CAConfig",
     "ClientConfig",
+    "NameConstraintsConfig",
+    "AuditLog",
 ]
 
-__version__ = "0.3.0"  # noqa
+__version__ = "1.0.0"  # noqa

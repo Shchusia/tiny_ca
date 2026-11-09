@@ -7,6 +7,175 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.0.0] — 2026-11-09
+
+First stable release.  It hardens the library for high-assurance deployments:
+the CA private key can stay inside an HSM, defaults follow current guidance
+for long-lived PKI (CNSA-style P-384 / SHA-384), subordinate CAs can be
+restricted with certificate policies and name constraints, and every CA
+operation can be written to a signed, tamper-evident audit log.
+
+These features make it possible to run tiny-ca inside an accredited PKI, but
+the library itself is **not** certified against any national or NATO
+standard and its cryptography is not a FIPS 140-3 validated module; see
+"Security model" in the README.
+
+### Added
+
+- **External CA signers / HSM support.** New `tiny_ca.signing` module:
+  - `CASigner` protocol (`public_key()`, `sign(data, algorithm)`) — any
+    signer, e.g. an HSM, smart card or cloud KMS, can sign certificates and
+    CRLs; the CA private key never has to be loaded into the process.
+  - `KeySigner` — the in-memory key implementation (used internally for
+    file-based CAs).
+  - `Pkcs11Signer` — signs through a PKCS#11 module (`Pkcs11Signer.open(
+    module_path, token_label, pin, public_key, key_label=, key_id=)`);
+    RSA PKCS#1 v1.5, ECDSA (raw `r||s` converted to DER) and EdDSA
+    mechanisms; sessions are serialised with a lock.  Install with
+    `pip install 'tiny-ca[hsm]'` (`python-pkcs11`).
+  - Every externally produced signature is verified against the CA public
+    key before a certificate or CRL is returned; signer failures raise the
+    new `SignerError`.
+- **`SignerCALoader`** (`ISignerCALoader` protocol) — pairs a CA certificate
+  with a `CASigner`; accepted by `CertificateFactory` wherever `ICALoader` is.
+  It runs the same CA checks as `CAFileLoader` and a random-challenge
+  signature self-test at start-up.  `SignerCALoader.from_pkcs11(...)` opens
+  the key on a token in one call.
+- **CA certificates for keys generated inside an HSM.**
+  - `CertificateFactory.build_self_signed_ca_with_signer(signer, ...)` builds
+    a self-signed root for a key that only a `CASigner` can use.
+  - `CertificateFactory.certify_intermediate_ca(csr_or_public_key, ...)` and
+    `certify_intermediate_ca(...)` on both managers issue a subordinate CA
+    certificate for an existing key pair (CSR signature checked as proof of
+    possession; the Subject is set by the issuing CA).  The managers store
+    only the certificate and register it.
+- **Certificate policies.** `CertificateFactory(...,
+  certificate_policies=["1.3.6.1.4.1.…"], cps_uri="https://…/cps")` adds a
+  `CertificatePolicies` extension (with an optional CPS qualifier) to every
+  issued, renewed, co-signed and intermediate certificate.  On renew /
+  co-sign the configured policies replace the original ones.
+- **Name constraints.** `issue_intermediate_ca(..., name_constraints=
+  NameConstraintsConfig(permitted_dns=[…], excluded_dns=[…], permitted_ip=[…],
+  excluded_ip=[…], permitted_email=[…], excluded_email=[…]))` (also on both
+  managers) adds a critical `NameConstraints` extension.  Constraints are
+  enforced (RFC 5280 §4.2.1.10, DNS / IP / e-mail):
+  - by `validate_chain` / `verify_certificate` for every certificate below a
+    constrained CA;
+  - at issuance: a factory running on a constrained CA refuses to issue,
+    renew or co-sign a certificate with a forbidden SAN or subject e-mail
+    (new `NameConstraintViolation`, a `ValidationCertError`);
+  - a wildcard SAN is rejected if any name it covers is excluded
+    (`*.com` vs. excluded `evil.com`);
+  - constraints on name types the library cannot evaluate (directoryName,
+    URI, otherName, registeredID) fail closed, as required for a critical
+    extension.
+- **Tamper-evident audit log.** New `tiny_ca.audit.AuditLog(path, signer=,
+  actor=)`: an append-only JSON-Lines file in which every entry carries a
+  sequence number, UTC timestamp, actor, event and data, the SHA-256 of the
+  previous entry and its own hash, and optionally a signature by a dedicated
+  audit key or any `CASigner`.  `AuditLog.verify(path, public_key=,
+  expected_head=)` detects edited, inserted, reordered or removed entries and
+  (against a head hash kept elsewhere) truncation.  Appends are serialised
+  across threads and processes (`flock`), fsynced, and the file is created
+  with mode `0640`; entries are ASCII-only canonical JSON.  A line left
+  unterminated by a crash is cut off on the next write and recorded as
+  `audit.torn_entry_removed`.  Pass `audit_log=` to `CertLifecycleManager` /
+  `AsyncCertLifecycleManager` to record `ca.created`, `certificate.issued`,
+  `certificate.rotated`, `certificate.renewed`, `certificate.cosigned`,
+  `intermediate_ca.issued`, `intermediate_ca.certified`,
+  `certificate.revoked` /
+  `certificate.revoke_failed`, `certificate.deleted`, `crl.generated` and
+  `pkcs12.exported` (serial, subject, issuer, SHA-256 fingerprint, replaced
+  serial, …).  Entries are written after the operation completes: an
+  `AuditLogError` means the operation took effect but was not recorded.
+- Exceptions: `CertificateRevokedError`, `SignerError`,
+  `NameConstraintViolation`, `AuditLogError`.
+- Constants in `tiny_ca.const`: `DEFAULT_KEY_ALGORITHM`,
+  `DEFAULT_RSA_KEY_SIZE`, `MIN_RSA_KEY_SIZE`, `MAX_RSA_KEY_SIZE`,
+  `MAX_DAYS_VALID`, `DEFAULT_LEAF_DAYS_VALID`.
+- `tiny_ca.utils.keys.signing_hash(key)` — the digest used for a key.
+- `hsm` extra (included in `all`).
+
+### Changed
+
+- **Secure defaults.** New keys default to **ECDSA P-384** (was RSA-2048)
+  for `build_self_signed_ca`, `issue_certificate`, `issue_intermediate_ca`
+  and the `CAConfig` / `ClientConfig` models.  RSA keys default to **3072**
+  bits.  The signature digest follows the key strength: **SHA-384** for
+  P-384 and RSA ≥ 3072, SHA-256 for P-256 and RSA-2048, none for Ed25519
+  (was always SHA-256).
+- **Shorter leaf lifetime.** `issue_certificate` and `ClientConfig` default to
+  **365 days** (was 3650).  CA defaults are unchanged.
+- **Parameter bounds.** RSA key size must be 2048–8192 bits (a warning is
+  logged below 3072); `days_valid` must be 1–36500 (`CertLifetime.compute`,
+  `CAConfig`, `ClientConfig`).
+
+### Security fixes
+
+- **Revoked certificates can no longer be renewed.** `renew_certificate`
+  re-signs the existing public key; for a certificate revoked with
+  `keyCompromise` this handed the attacker a fresh valid certificate.  Both
+  managers now raise the new `CertificateRevokedError`.
+- **Revoked, unexpired certificates can no longer be deleted.** The registry
+  row is the only source of the CRL entry, so `delete_certificate` silently
+  removed the certificate from the next CRL.  It now raises
+  `CertificateRevokedError`; expired or never-revoked certificates are deleted
+  as before.
+- **The CA's own validity is enforced.** `validate_cert`, `validate_chain`
+  (and therefore `verify_certificate`) fail once the CA certificate has
+  expired.  Issued, renewed, co-signed and intermediate certificates have
+  their `notAfter` clamped to the CA's expiry (a warning is logged), and
+  issuing from an expired CA raises `InvalidRangeTimeCertificate`.
+- **CA loaders check the CA material.** `CAFileLoader` and `AsyncCAFileLoader`
+  reject a key that does not match the certificate and a certificate that is
+  not a CA (`BasicConstraints.ca` unset, or `KeyUsage` without
+  `keyCertSign`); an expired CA certificate is loaded with a warning.
+- **Encrypted private keys use PKCS#8.** With a `TraditionalOpenSSL` format,
+  encrypted keys were written as legacy PEM encryption (single-round MD5 key
+  derivation).  Encrypted keys are now always serialised as PKCS#8;
+  unencrypted keys keep the configured format.
+- **Atomic, symlink-safe overwrites.** With `is_overwrite=True` files are
+  written to a temporary file (mode set before any data is written), fsynced
+  and renamed over the target, so a pre-existing world-readable file never
+  exposes a new key, a symlink at the target is replaced instead of followed,
+  and a crash never leaves a truncated CA key or CRL.
+- **PKCS#12 export:** an empty password raises `ValueError` instead of
+  silently producing an unencrypted bundle; `password=None` logs a warning.
+
+### Fixed
+
+- `mypy` error in `AsyncDBHandler.get_revoked_certificates` with SQLAlchemy
+  2.1 (row type annotation).
+- Test suite: duplicate imports and shadowed fixtures removed, the skipped
+  PKCS#12-with-password test re-enabled and strengthened, tautological
+  assertions replaced, `asyncio_default_fixture_loop_scope` set.
+- `co-sign` of a certificate that is revoked in the registry is refused
+  (`CertificateRevokedError`); without a database co-signing works as before.
+
+### Breaking changes
+
+- Default key algorithm is EC P-384 and default RSA size 3072; code that
+  relied on RSA keys (e.g. `isinstance(key, rsa.RSAPrivateKey)`) must pass
+  `key_algorithm=KeyAlgorithm.RSA`.
+- Certificates from P-384 / RSA ≥ 3072 CAs are signed with SHA-384.  Very old
+  relying parties that only accept SHA-256 need an RSA-2048 or P-256 CA.
+- `issue_certificate` / `ClientConfig` default to 365 days instead of 3650.
+- `key_size` outside 2048–8192 and `days_valid` outside 1–36500 raise
+  `ValueError` / `ValidationError`.
+- `renew_certificate` and `cosign_certificate` of a revoked certificate, and
+  `delete_certificate` of a revoked, unexpired one, raise
+  `CertificateRevokedError`.
+- Validity of issued, renewed, co-signed and intermediate certificates is
+  clamped to the CA's `notAfter`; an expired CA cannot issue, and
+  `validate_cert` / `validate_chain` reject everything under it.
+- `CAFileLoader` / `AsyncCAFileLoader` reject mismatched keys and non-CA
+  certificates.
+- `export_pkcs12(password=b"")` raises `ValueError`.
+- Encrypted keys written with `TraditionalOpenSSL` format are stored as
+  PKCS#8.
+- Internal: the private `_store_and_register` / `_issue` helpers of both
+  managers take a keyword-only `event` argument.
+
 ## [0.3.0] — 2026-11-04
 
 Security and correctness release based on a code review.  Several changes are
@@ -219,6 +388,8 @@ Initial public release.
 - `CAConfig` / `ClientConfig` / `CertificateInfo` — Pydantic v2 configuration and metadata models.
 - Custom exception hierarchy: `DBNotInitedError`, `NotUniqueCertOwner`, `CertNotFound`, `ValidationCertError`, `InvalidRangeTimeCertificate`, `FileAlreadyExists`, `NotExistCertFile`, `IsNotFile`, `WrongType`, `ErrorLoadCert`.
 
+[1.0.0]: https://github.com/Shchusia/tiny_ca/compare/v0.3.0...v1.0.0
+[0.3.0]: https://github.com/Shchusia/tiny_ca/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Shchusia/tiny_ca/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/Shchusia/tiny_ca/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Shchusia/tiny_ca/compare/v0.1.0...v0.1.1

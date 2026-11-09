@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 # ──────────────────────────────────────────────
 [project]
 name = "tiny-ca"
-version = "0.3.0"
+version = "1.0.0"
 description = "A lightweight, 100%-tested Python library for managing the full lifecycle of X.509 certificates — issuance, revocation, rotation, CRL generation, PKCS#12 export, and more."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -62,8 +62,11 @@ mysql = [
 mysql-async = [
     "aiomysql>=0.2.0",
 ]
+hsm = [
+    "python-pkcs11>=0.10.0",
+]
 all = [
-    "tiny-ca[async,postgres,postgres-async,mysql,mysql-async]",
+    "tiny-ca[async,postgres,postgres-async,mysql,mysql-async,hsm]",
 ]
 
 # ──────────────────────────────────────────────
@@ -200,3 +203,4 @@ skips = ["*/*_test.py", "*/test_*.py", "*/grafana.py", "B608"]
 pythonpath = ["."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

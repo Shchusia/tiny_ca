@@ -14,16 +14,15 @@ from __future__ import annotations
 
 import datetime
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+import pytest
 
 from tiny_ca.ca_factory import CertificateFactory
 from tiny_ca.models.certificate import CertificateInfo
-
 
 # ---------------------------------------------------------------------------
 # Module-scoped RSA key and CA certificate (generated once per session)

@@ -43,13 +43,33 @@ from cryptography.x509.oid import (
     NameOID,
 )
 
-from ..const import CertType, KeyAlgorithm
-from ..exc import ValidationCertError
-from ..models.certificate import CertificateDetails
+from ..const import (
+    DEFAULT_KEY_ALGORITHM,
+    DEFAULT_LEAF_DAYS_VALID,
+    DEFAULT_RSA_KEY_SIZE,
+    CertType,
+    KeyAlgorithm,
+)
+from ..exc import InvalidRangeTimeCertificate, ValidationCertError
+from ..models.certificate import CertificateDetails, NameConstraintsConfig
 from ..settings import DEFAULT_LOGGER
-from ..utils.keys import PrivateKey, generate_private_key, public_key_info, signing_hash
+from ..signing import CASigner, KeySigner, sign_builder
+from ..utils.keys import (
+    PUBLIC_KEY_TYPES,
+    PrivateKey,
+    PublicKey,
+    generate_private_key,
+    public_key_info,
+    signing_hash,
+)
 from ..utils.serial_generator import SerialWithEncoding
-from .utils import CertLifetime, ICALoader
+from .utils import CertLifetime, ICALoader, ISignerCALoader
+from .utils.name_constraints import (
+    build_name_constraints,
+    check_certificate,
+    check_name_constraints,
+    issuer_name_constraints,
+)
 
 #: Extensions that describe *where the issuer publishes things*.  They are
 #: dropped when a certificate is re-signed (renew / co-sign) so that stale
@@ -128,10 +148,11 @@ class CertificateFactory:
 
     Parameters
     ----------
-    ca_loader : ICALoader
-        Provider of the CA certificate, private key, and base Subject info.
-        Must satisfy the ``ICALoader`` Protocol (see ``file_loader.py``).
-        RSA, ECDSA (P-256 / P-384) and Ed25519 CA keys are supported.
+    ca_loader : ICALoader | ISignerCALoader
+        Provider of the CA certificate, base Subject info and either the CA
+        private key (``ICALoader``, e.g. ``CAFileLoader``) or an external
+        signer (``ISignerCALoader``, e.g. ``SignerCALoader`` backed by an
+        HSM).  RSA, ECDSA (P-256 / P-384) and Ed25519 CA keys are supported.
     logger : Logger | None
         Logger for operational messages.  Falls back to ``DEFAULT_LOGGER``.
     crl_distribution_points : Sequence[str] | None
@@ -145,30 +166,43 @@ class CertificateFactory:
     ocsp_urls : Sequence[str] | None
         OCSP responder URLs; added as ``OCSP`` entries of
         ``AuthorityInformationAccess``.
+    certificate_policies : Sequence[str]
+        Dotted policy OIDs (e.g. your organisation's certificate policy)
+        written as a ``CertificatePolicies`` extension into every
+        certificate this CA issues, renews or co-signs.
+    cps_uri : str | None
+        URI of the Certification Practice Statement, attached as a CPS
+        qualifier to every policy.  Requires *certificate_policies*.
 
     Raises
     ------
     TypeError
-        If *ca_loader* does not implement the ``ICALoader`` Protocol.
+        If *ca_loader* implements neither ``ICALoader`` nor ``ISignerCALoader``.
+    ValueError
+        If a policy OID is malformed or *cps_uri* is given without policies.
     """
 
     def __init__(
         self,
-        ca_loader: ICALoader,
+        ca_loader: ICALoader | ISignerCALoader,
         logger: Logger | None = None,
         crl_distribution_points: Sequence[str] | None = None,
         ca_issuers_urls: Sequence[str] | None = None,
         ocsp_urls: Sequence[str] | None = None,
+        certificate_policies: Sequence[str] = (),
+        cps_uri: str | None = None,
     ) -> None:
-        if not isinstance(ca_loader, ICALoader):
+        if not isinstance(ca_loader, ISignerCALoader | ICALoader):
             raise TypeError(
-                f"ca_loader must implement ICALoader, got {type(ca_loader)}"
+                "ca_loader must implement ICALoader or ISignerCALoader, "
+                f"got {type(ca_loader)}"
             )
         self._ca = ca_loader
         self._logger = logger or DEFAULT_LOGGER
         self._crl_urls = list(crl_distribution_points or [])
         self._ca_issuers_urls = list(ca_issuers_urls or [])
         self._ocsp_urls = list(ocsp_urls or [])
+        self._policies = self._build_policies(certificate_policies, cps_uri)
 
     # ------------------------------------------------------------------
     # Public API
@@ -179,11 +213,11 @@ class CertificateFactory:
         common_name: str = "Internal CA",
         organization: str = "My Company",
         country: str = "UA",
-        key_size: int = 2048,
+        key_size: int = DEFAULT_RSA_KEY_SIZE,
         days_valid: int = 3650,
         valid_from: datetime.datetime | None = None,
         logger: Logger | None = None,
-        key_algorithm: KeyAlgorithm = KeyAlgorithm.RSA,
+        key_algorithm: KeyAlgorithm = DEFAULT_KEY_ALGORITHM,
     ) -> tuple[x509.Certificate, PrivateKey]:
         """
         Generate a self-signed root CA certificate and its private key.
@@ -235,7 +269,66 @@ class CertificateFactory:
         )
 
         private_key = generate_private_key(key_algorithm, key_size)
-        subject = issuer = x509.Name(
+        certificate = CertificateFactory._self_signed(
+            KeySigner(private_key),
+            common_name,
+            organization,
+            country,
+            days_valid,
+            valid_from,
+            _log,
+        )
+        return certificate, private_key
+
+    @staticmethod
+    def build_self_signed_ca_with_signer(
+        signer: CASigner,
+        common_name: str = "Internal CA",
+        organization: str = "My Company",
+        country: str = "UA",
+        days_valid: int = 3650,
+        valid_from: datetime.datetime | None = None,
+        logger: Logger | None = None,
+    ) -> x509.Certificate:
+        """
+        Build a self-signed root CA certificate for a key held by *signer*.
+
+        Use this when the CA key pair was generated inside an HSM (e.g. with
+        ``pkcs11-tool --keypairgen``) and must never leave it: wrap the token
+        key in a :class:`~tiny_ca.signing.Pkcs11Signer` (its ``public_key``
+        taken from the token) and pass it here.  The resulting certificate
+        has the same extensions as :meth:`build_self_signed_ca`; load it
+        with ``SignerCALoader(cert, signer)`` to operate the CA.
+
+        Raises
+        ------
+        InvalidRangeTimeCertificate
+            If the computed expiry date is already in the past.
+        SignerError
+            If the signer fails or returns an invalid signature.
+        """
+        return CertificateFactory._self_signed(
+            signer,
+            common_name,
+            organization,
+            country,
+            days_valid,
+            valid_from,
+            logger or DEFAULT_LOGGER,
+        )
+
+    @staticmethod
+    def _self_signed(
+        signer: CASigner,
+        common_name: str,
+        organization: str,
+        country: str,
+        days_valid: int,
+        valid_from: datetime.datetime | None,
+        log: Logger,
+    ) -> x509.Certificate:
+        public_key = signer.public_key()
+        subject = x509.Name(
             [
                 x509.NameAttribute(NameOID.COUNTRY_NAME, country),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
@@ -247,12 +340,11 @@ class CertificateFactory:
             name=common_name.lower().replace(os.sep, "_"),
             serial_type=CertType.CA,
         )
-
-        certificate = (
+        builder = (
             x509.CertificateBuilder()
             .subject_name(subject)
-            .issuer_name(issuer)
-            .public_key(private_key.public_key())
+            .issuer_name(subject)
+            .public_key(public_key)
             .serial_number(serial_number)
             .not_valid_before(valid_from_dt)
             .not_valid_after(valid_to_dt)
@@ -261,32 +353,31 @@ class CertificateFactory:
             )
             .add_extension(CertificateFactory._ca_key_usage(), critical=True)
             .add_extension(
-                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+                x509.SubjectKeyIdentifier.from_public_key(public_key),
                 critical=False,
             )
-            .sign(private_key, signing_hash(private_key))  # type: ignore[arg-type]
         )
-
-        _log.info(
+        certificate = cast(x509.Certificate, sign_builder(builder, signer))
+        log.info(
             "CA certificate created: subject=%s, valid_until=%s",
             subject.rfc4514_string(),
             valid_to_dt.isoformat(),
         )
-        return certificate, private_key
+        return certificate
 
     def issue_certificate(
         self,
         common_name: str,
         serial_type: CertType = CertType.SERVICE,
-        key_size: int = 2048,
-        days_valid: int = 365,
+        key_size: int = DEFAULT_RSA_KEY_SIZE,
+        days_valid: int = DEFAULT_LEAF_DAYS_VALID,
         valid_from: datetime.datetime | None = None,
         email: str | None = None,
         is_server_cert: bool = False,
         is_client_cert: bool = False,
         san_dns: list[str] | None = None,
         san_ip: list[Any] | None = None,
-        key_algorithm: KeyAlgorithm = KeyAlgorithm.RSA,
+        key_algorithm: KeyAlgorithm = DEFAULT_KEY_ALGORITHM,
     ) -> tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]:
         """
         Issue a signed end-entity certificate for the given subject parameters.
@@ -333,6 +424,8 @@ class CertificateFactory:
         ------
         InvalidRangeTimeCertificate
             If the computed expiry date is already in the past.
+        NameConstraintViolation
+            If the subject e-mail or a SAN violates the CA's NameConstraints.
         """
         self._logger.info(
             "Issuing certificate: CN=%s, type=%s, algorithm=%s, server=%s, client=%s",
@@ -350,8 +443,20 @@ class CertificateFactory:
         extensions = self._build_extensions(
             csr, is_server_cert, is_client_cert, san_dns, san_ip
         )
+        self._check_own_name_constraints(
+            subject,
+            next(
+                (
+                    e
+                    for e, _ in extensions
+                    if isinstance(e, x509.SubjectAlternativeName)
+                ),
+                None,
+            ),
+        )
 
         valid_from_dt, valid_to_dt = CertLifetime.compute(valid_from, days_valid)
+        valid_to_dt = self._fit_ca_lifetime(valid_from_dt, valid_to_dt)
         serial_number = SerialWithEncoding.generate(
             name=common_name.lower().replace(os.sep, "_"),
             serial_type=serial_type,
@@ -469,6 +574,7 @@ class CertificateFactory:
             raise ValidationCertError(
                 "Certificate issuer does not match the CA subject."
             )
+        self._check_ca_validity()
         self._check_validity_window(cert)
         self._check_signature(cert, self._ca.ca_cert)
 
@@ -486,8 +592,9 @@ class CertificateFactory:
 
         For every link the method checks the validity window, the signature,
         that the issuer is a CA (``BasicConstraints.ca`` and
-        ``KeyUsage.key_cert_sign``) and that ``path_length`` constraints are
-        respected.  The chain must terminate at this factory's CA certificate
+        ``KeyUsage.key_cert_sign``), that ``path_length`` constraints are
+        respected and that every certificate below a CA with
+        ``NameConstraints`` uses permitted DNS / IP / e-mail names.  The chain must terminate at this factory's CA certificate
         (the trust anchor).
 
         Parameters
@@ -516,8 +623,10 @@ class CertificateFactory:
         for intermediates_below in range(_MAX_CHAIN_DEPTH):
             self._check_validity_window(current)
             if current.issuer == root.subject:
+                self._check_ca_validity()
                 self._check_signature(current, root)
                 self._check_issuer_constraints(root, intermediates_below)
+                self._check_path_names(path, root)
                 path.append(root)
                 return path
 
@@ -528,6 +637,7 @@ class CertificateFactory:
                 )
             self._check_signature(current, issuer)
             self._check_issuer_constraints(issuer, intermediates_below)
+            self._check_path_names(path, issuer)
             pool.remove(issuer)
             path.append(issuer)
             current = issuer
@@ -538,9 +648,48 @@ class CertificateFactory:
     # Private helpers
     # ------------------------------------------------------------------
 
+    @property
+    def _signer(self) -> CASigner:
+        signer = getattr(self._ca, "ca_signer", None)
+        if signer is not None:
+            return cast(CASigner, signer)
+        return KeySigner(cast(ICALoader, self._ca).ca_key)
+
     def _sign(self, builder: Any) -> Any:
-        """Sign any cryptography builder with the CA key and matching digest."""
-        return builder.sign(self._ca.ca_key, signing_hash(self._ca.ca_key))
+        """Sign a certificate or CRL builder with the CA (key or external signer)."""
+        return sign_builder(builder, self._signer)
+
+    def _fit_ca_lifetime(
+        self, not_before: datetime.datetime, not_after: datetime.datetime
+    ) -> datetime.datetime:
+        """
+        Return *not_after* clamped to the CA's own expiry (RFC 5280 path
+        validation rejects certificates that outlive their issuer).
+
+        Raises
+        ------
+        InvalidRangeTimeCertificate
+            If the CA has already expired at *not_before*.
+        """
+        ca_not_after = self._ca.ca_cert.not_valid_after_utc
+        if not_before >= ca_not_after:
+            raise InvalidRangeTimeCertificate(
+                not_before, ca_not_after, datetime.datetime.now(datetime.UTC)
+            )
+        if not_after > ca_not_after:
+            self._logger.warning(
+                "Requested not_after=%s exceeds the CA expiry %s; clamped",
+                not_after.isoformat(),
+                ca_not_after.isoformat(),
+            )
+            return ca_not_after
+        return not_after
+
+    def _check_ca_validity(self) -> None:
+        try:
+            self._check_validity_window(self._ca.ca_cert)
+        except ValidationCertError as exc:
+            raise ValidationCertError(f"CA certificate: {exc.message}") from exc
 
     @staticmethod
     def _ca_key_usage() -> x509.KeyUsage:
@@ -606,6 +755,46 @@ class CertificateFactory:
         if access:
             result.append((x509.AuthorityInformationAccess(access), False))
         return result
+
+    @staticmethod
+    def _build_policies(
+        policies: Sequence[str], cps_uri: str | None
+    ) -> x509.CertificatePolicies | None:
+        if not policies:
+            if cps_uri is not None:
+                raise ValueError("cps_uri requires at least one certificate policy")
+            return None
+        qualifiers: list[str | x509.UserNotice] | None = (
+            [cps_uri] if cps_uri is not None else None
+        )
+        return x509.CertificatePolicies(
+            [
+                x509.PolicyInformation(x509.ObjectIdentifier(oid), qualifiers)
+                for oid in policies
+            ]
+        )
+
+    def _policy_extensions(self) -> list[tuple[x509.ExtensionType, bool]]:
+        """CertificatePolicies (non-critical), when configured."""
+        return [] if self._policies is None else [(self._policies, False)]
+
+    def _check_own_name_constraints(
+        self, subject: x509.Name, san: x509.SubjectAlternativeName | None
+    ) -> None:
+        """Refuse to sign names this CA's own NameConstraints forbid."""
+        constraints = issuer_name_constraints(self._ca.ca_cert)
+        if constraints is not None:
+            check_name_constraints(
+                constraints, subject, san, self._ca.ca_cert.subject.rfc4514_string()
+            )
+
+    @staticmethod
+    def _check_path_names(
+        below: Sequence[x509.Certificate], issuer: x509.Certificate
+    ) -> None:
+        """Apply *issuer*'s NameConstraints to every certificate below it."""
+        for cert in below:
+            check_certificate(cert, issuer)
 
     @staticmethod
     def _revoked_entry(record: Any) -> x509.RevokedCertificate:
@@ -762,8 +951,9 @@ class CertificateFactory:
         - ``SubjectAlternativeName`` — non-critical (the Subject is never
           empty, RFC 5280 §4.2.1.6).  For server certificates the CN is
           prepended as a DNS SAN.
-        - ``CRLDistributionPoints`` / ``AuthorityInformationAccess`` — when
-          the factory was configured with the corresponding URLs.
+        - ``CRLDistributionPoints`` / ``AuthorityInformationAccess`` /
+          ``CertificatePolicies`` — when the factory was configured with the
+          corresponding URLs / policy OIDs.
         """
         result: list[tuple[x509.ExtensionType, bool]] = [
             (x509.BasicConstraints(ca=False, path_length=None), True),
@@ -797,6 +987,7 @@ class CertificateFactory:
         )
         result.append((self._authority_key_identifier(), False))
         result.extend(self._distribution_extensions())
+        result.extend(self._policy_extensions())
 
         return result
 
@@ -916,7 +1107,8 @@ class CertificateFactory:
             The private key corresponding to *cert*'s public key.
         password : bytes | None
             Password to encrypt the bundle.  ``None`` produces an unencrypted
-            bundle (not recommended for production).
+            bundle and logs a warning (not recommended for production); an
+            empty password raises ``ValueError``.
         name : str | None
             Friendly name (alias).  Defaults to the certificate's Common Name.
 
@@ -925,14 +1117,24 @@ class CertificateFactory:
         bytes
             Raw DER-encoded PKCS#12 bytes.
         """
+        if password is not None and not password:
+            raise ValueError(
+                "PKCS#12 password must not be empty; pass None to export an "
+                "unencrypted bundle explicitly"
+            )
         if name is None:
             name = _first_cn(cert.subject) or "certificate"
 
-        encryption_algorithm = (
-            serialization.BestAvailableEncryption(password)
-            if password
-            else serialization.NoEncryption()
-        )
+        encryption_algorithm: serialization.KeySerializationEncryption
+        if password is None:
+            self._logger.warning(
+                "Exporting an unencrypted PKCS#12 bundle (CN=%s): the private "
+                "key is stored in plaintext",
+                name,
+            )
+            encryption_algorithm = serialization.NoEncryption()
+        else:
+            encryption_algorithm = serialization.BestAvailableEncryption(password)
 
         p12_bytes = pkcs12.serialize_key_and_certificates(
             name=name.encode(),
@@ -966,8 +1168,13 @@ class CertificateFactory:
         Re-sign *cert*'s Subject, public key and extensions with this CA.
 
         Issuer-bound extensions (AKI, CRL distribution points, AIA) are
-        replaced with ones that point at this CA.
+        replaced with ones that point at this CA, as are CertificatePolicies
+        when this factory has policies configured.  ``not_after`` is clamped
+        to the CA's own expiry, and the names are checked against this CA's
+        NameConstraints before anything is signed.
         """
+        check_certificate(cert, self._ca.ca_cert)
+        not_after = self._fit_ca_lifetime(not_before, not_after)
         cn_raw = _first_cn(cert.subject) or fallback_name
         new_serial = SerialWithEncoding.generate(
             name=cn_raw.lower().replace(os.sep, "_"),
@@ -983,15 +1190,20 @@ class CertificateFactory:
             .not_valid_before(not_before)
             .not_valid_after(not_after)
         )
+        replaced = set(_ISSUER_BOUND_EXTENSIONS)
+        if self._policies is not None:
+            replaced.add(ExtensionOID.CERTIFICATE_POLICIES)
         for ext in cert.extensions:
-            if ext.oid in _ISSUER_BOUND_EXTENSIONS:
+            if ext.oid in replaced:
                 continue
             builder = builder.add_extension(ext.value, critical=ext.critical)
 
         builder = builder.add_extension(
             self._authority_key_identifier(), critical=False
         )
-        for ext_value, critical in self._distribution_extensions():
+        for ext_value, critical in (
+            self._distribution_extensions() + self._policy_extensions()
+        ):
             builder = builder.add_extension(ext_value, critical=critical)
 
         return cast(x509.Certificate, self._sign(builder))
@@ -1044,7 +1256,8 @@ class CertificateFactory:
         path_length: int | None = 0,
         organization: str | None = None,
         country: str | None = None,
-        key_algorithm: KeyAlgorithm = KeyAlgorithm.RSA,
+        key_algorithm: KeyAlgorithm = DEFAULT_KEY_ALGORITHM,
+        name_constraints: NameConstraintsConfig | None = None,
     ) -> tuple[x509.Certificate, PrivateKey]:
         """
         Issue a subordinate (intermediate) CA certificate signed by this CA.
@@ -1054,7 +1267,14 @@ class CertificateFactory:
         limits how deep the sub-hierarchy can go (``0`` = may only sign
         leaves, ``None`` = unlimited).  When configured, the CRL distribution
         point / AIA of this CA are included so the intermediate itself can be
-        checked for revocation.
+        checked for revocation, and the configured certificate policies are
+        added.
+
+        *name_constraints* adds a critical ``NameConstraints`` extension that
+        limits which DNS names, IP addresses and e-mail addresses the
+        intermediate (and anything below it) may certify.  It is enforced by
+        :meth:`validate_chain` and by a ``CertificateFactory`` running on the
+        intermediate when it issues, renews or co-signs.
 
         Returns
         -------
@@ -1064,9 +1284,83 @@ class CertificateFactory:
         self._logger.info(
             "Issuing intermediate CA: CN=%s, path_length=%s", common_name, path_length
         )
-
         private_key = generate_private_key(key_algorithm, key_size)
+        cert = self._build_intermediate(
+            private_key.public_key(),
+            common_name,
+            days_valid,
+            valid_from,
+            path_length,
+            organization,
+            country,
+            name_constraints,
+        )
+        return cert, private_key
 
+    def certify_intermediate_ca(
+        self,
+        subject_key: x509.CertificateSigningRequest | PublicKey,
+        common_name: str,
+        days_valid: int = 1825,
+        valid_from: datetime.datetime | None = None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+        name_constraints: NameConstraintsConfig | None = None,
+    ) -> x509.Certificate:
+        """
+        Issue a subordinate CA certificate for an existing key pair.
+
+        Unlike :meth:`issue_intermediate_ca` no key is generated: the key
+        stays wherever it lives (typically an HSM of the subordinate CA).
+        *subject_key* is either a CSR — its signature is checked as proof of
+        possession — or a bare public key.  The Subject is always built from
+        *common_name* / *organization* / *country*; a CSR's own Subject and
+        extensions are ignored.  Extensions are the same as for
+        :meth:`issue_intermediate_ca`.
+
+        Raises
+        ------
+        ValidationCertError
+            If the CSR signature is invalid.
+        TypeError
+            If the key type is not RSA, EC or Ed25519.
+        """
+        if isinstance(subject_key, x509.CertificateSigningRequest):
+            if not subject_key.is_signature_valid:
+                raise ValidationCertError("CSR signature is invalid.")
+            public_key = subject_key.public_key()
+        else:
+            public_key = subject_key
+        if not isinstance(public_key, PUBLIC_KEY_TYPES):
+            raise TypeError(f"unsupported key type {type(public_key).__name__}")
+        self._logger.info(
+            "Certifying intermediate CA: CN=%s, path_length=%s",
+            common_name,
+            path_length,
+        )
+        return self._build_intermediate(
+            cast(PublicKey, public_key),
+            common_name,
+            days_valid,
+            valid_from,
+            path_length,
+            organization,
+            country,
+            name_constraints,
+        )
+
+    def _build_intermediate(
+        self,
+        public_key: PublicKey,
+        common_name: str,
+        days_valid: int,
+        valid_from: datetime.datetime | None,
+        path_length: int | None,
+        organization: str | None,
+        country: str | None,
+        name_constraints: NameConstraintsConfig | None,
+    ) -> x509.Certificate:
         info = self._ca.base_info
         attrs: list[x509.NameAttribute[Any]] = []
         resolved_country = country or info.country
@@ -1079,6 +1373,7 @@ class CertificateFactory:
         subject = x509.Name(attrs)
 
         not_before, not_after = CertLifetime.compute(valid_from, days_valid)
+        not_after = self._fit_ca_lifetime(not_before, not_after)
         serial_number = SerialWithEncoding.generate(
             name=common_name.lower().replace(os.sep, "_"),
             serial_type=CertType.CA,
@@ -1088,7 +1383,7 @@ class CertificateFactory:
             x509.CertificateBuilder()
             .subject_name(subject)
             .issuer_name(self._ca.ca_cert.subject)
-            .public_key(private_key.public_key())
+            .public_key(public_key)
             .serial_number(serial_number)
             .not_valid_before(not_before)
             .not_valid_after(not_after)
@@ -1098,13 +1393,19 @@ class CertificateFactory:
             )
             .add_extension(self._ca_key_usage(), critical=True)
             .add_extension(
-                x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+                x509.SubjectKeyIdentifier.from_public_key(public_key),
                 critical=False,
             )
             .add_extension(self._authority_key_identifier(), critical=False)
         )
-        for ext_value, critical in self._distribution_extensions():
+        for ext_value, critical in (
+            self._distribution_extensions() + self._policy_extensions()
+        ):
             builder = builder.add_extension(ext_value, critical=critical)
+        if name_constraints is not None:
+            builder = builder.add_extension(
+                build_name_constraints(name_constraints), critical=True
+            )
 
         cert: x509.Certificate = self._sign(builder)
         self._logger.info(
@@ -1113,7 +1414,7 @@ class CertificateFactory:
             cert.serial_number,
             not_after.isoformat(),
         )
-        return cert, private_key
+        return cert
 
     def verify_crl(self, crl: x509.CertificateRevocationList) -> None:
         """

@@ -106,3 +106,25 @@ class KeyAlgorithm(Enum):
     EC_P256 = "ec-p256"
     EC_P384 = "ec-p384"
     ED25519 = "ed25519"
+
+
+#: Algorithm used when the caller does not choose one: ECDSA P-384 with
+#: SHA-384 (the curve/hash pair required by high-assurance profiles such as
+#: CNSA).  It is also much faster to generate than RSA-3072.
+DEFAULT_KEY_ALGORITHM = KeyAlgorithm.EC_P384
+
+#: Default RSA modulus when RSA is chosen explicitly (≈128-bit security).
+DEFAULT_RSA_KEY_SIZE = 3072
+
+#: Smallest RSA modulus accepted at all; below ``DEFAULT_RSA_KEY_SIZE`` a
+#: warning is logged.
+MIN_RSA_KEY_SIZE = 2048
+
+#: Largest RSA modulus accepted (bounds key-generation time).
+MAX_RSA_KEY_SIZE = 8192
+
+#: Upper bound for ``days_valid`` (100 years); larger values overflow dates.
+MAX_DAYS_VALID = 36500
+
+#: Default validity of end-entity certificates.
+DEFAULT_LEAF_DAYS_VALID = 365

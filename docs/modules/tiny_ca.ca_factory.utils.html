@@ -6,41 +6,41 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.ca_factory.utils package - tiny_ca 0.2.0 documentation</title>
+        <title>tiny_ca.ca_factory.utils package - tiny_ca 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-
-
+    
+    
 
 
 <style>
   body {
     --color-code-background: #f2f2f2;
   --color-code-foreground: #1e1e1e;
-
+  
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
       }
     }
   }
 </style></head>
   <body>
-
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
-
+    
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">tiny_ca 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -179,11 +179,11 @@
   </header>
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
-
+      
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
-
-  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
-
+  
+  <span class="sidebar-brand-text">tiny_ca 1.0.0 documentation</span>
+  
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
@@ -194,10 +194,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../high_assurance.html">High-Assurance Deployments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ca_factory.html">ca_factory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="managers.html">Lifecycle Managers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="storage.html">Storage Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security.html">Signing and Audit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Configuration Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
@@ -207,7 +209,7 @@
 </div>
 
       </div>
-
+      
     </div>
   </aside>
   <div class="main">
@@ -591,6 +593,35 @@ in-memory stub, an HSM-backed loader, or a mock in unit tests.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ISignerCALoader">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">ISignerCALoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/signer_loader.html#ISignerCALoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.ISignerCALoader" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Protocol" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
+<p>CA-material provider that signs through a <a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.CASigner" title="tiny_ca.signing.CASigner"><code class="xref py py-class docutils literal notranslate"><span class="pre">CASigner</span></code></a>
+instead of exposing a private key.  Accepted by <code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code>
+wherever an <code class="docutils literal notranslate"><span class="pre">ICALoader</span></code> is.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ISignerCALoader.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ISignerCALoader.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ISignerCALoader.base_info">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">base_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo" title="tiny_ca.models.certificate.CertificateInfo"><span class="pre">CertificateInfo</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ISignerCALoader.base_info" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ISignerCALoader.ca_cert">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_cert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Certificate</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ISignerCALoader.ca_cert" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.ISignerCALoader.ca_signer">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_signer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.CASigner" title="tiny_ca.signing.CASigner"><span class="pre">CASigner</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.ISignerCALoader.ca_signer" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SerialWithEncoding">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">SerialWithEncoding</span></span><a class="reference internal" href="../_modules/tiny_ca/utils/serial_generator.html#SerialWithEncoding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.SerialWithEncoding" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
@@ -713,6 +744,90 @@ string recovered from the encoded-name segment.
 </section>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SignerCALoader">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.ca_factory.utils.</span></span><span class="sig-name descname"><span class="pre">SignerCALoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/signer_loader.html#SignerCALoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.SignerCALoader" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Pairs a CA certificate with an external <a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.CASigner" title="tiny_ca.signing.CASigner"><code class="xref py py-class docutils literal notranslate"><span class="pre">CASigner</span></code></a>.</p>
+<p>On construction the loader runs the same checks as <code class="docutils literal notranslate"><span class="pre">CAFileLoader</span></code>
+(the certificate is a CA, the signer’s public key matches it, expiry
+warning) and then asks the signer to sign a random challenge, verifying
+the result against the certificate.  A misconfigured token (wrong key
+label, wrong PIN, wrong slot) is therefore detected at start-up rather
+than on the first issuance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ca_cert</strong> (<em>x509.Certificate</em><em> | </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>Path</em>) – The CA certificate, or the path of a PEM file containing it.</p></li>
+<li><p><strong>signer</strong> (<a class="reference internal" href="tiny_ca.html#tiny_ca.CASigner" title="tiny_ca.CASigner"><em>CASigner</em></a>) – Signer holding the CA private key.</p></li>
+<li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>) – Logger for diagnostic messages.  Falls back to <code class="docutils literal notranslate"><span class="pre">DEFAULT_LOGGER</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ErrorLoadCert" title="tiny_ca.exc.ErrorLoadCert"><strong>ErrorLoadCert</strong></a> – If the certificate cannot be read or is not a CA matching <em>signer</em>.</p></li>
+<li><p><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.SignerError" title="tiny_ca.exc.SignerError"><strong>SignerError</strong></a> – If the signer fails the challenge signature.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SignerCALoader.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/signer_loader.html#SignerCALoader.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.SignerCALoader.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ca_cert</strong> (<em>Certificate</em><em> | </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>signer</strong> (<a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.CASigner" title="tiny_ca.signing.CASigner"><em>CASigner</em></a>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SignerCALoader.base_info">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">base_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo" title="tiny_ca.models.certificate.CertificateInfo"><span class="pre">CertificateInfo</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SignerCALoader.base_info" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SignerCALoader.ca_cert">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_cert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Certificate</span></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SignerCALoader.ca_cert" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SignerCALoader.ca_signer">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ca_signer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.CASigner" title="tiny_ca.signing.CASigner"><span class="pre">CASigner</span></a></span><a class="headerlink" href="#tiny_ca.ca_factory.utils.SignerCALoader.ca_signer" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.ca_factory.utils.SignerCALoader.from_pkcs11">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_pkcs11</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ca_cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/ca_factory/utils/signer_loader.html#SignerCALoader.from_pkcs11"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.ca_factory.utils.SignerCALoader.from_pkcs11" title="Link to this definition">¶</a></dt>
+<dd><p>Open the CA key on a PKCS#11 token and build the loader.</p>
+<p>Requires <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'tiny-ca[hsm]'</span></code>.  Call
+<code class="docutils literal notranslate"><span class="pre">loader.ca_signer.close()</span></code> to end the PKCS#11 session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader" title="tiny_ca.ca_factory.utils.signer_loader.SignerCALoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">SignerCALoader</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ca_cert</strong> (<em>Certificate</em><em> | </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>module_path</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>token_label</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>pin</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>key_label</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>key_id</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><em>bytes</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.15)"><em>Logger</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -744,6 +859,8 @@ string recovered from the encoded-name segment.
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.ICALoader.ca_key"><code class="docutils literal notranslate"><span class="pre">ICALoader.ca_key</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.certificate_info"><code class="docutils literal notranslate"><span class="pre">certificate_info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.file_loader.html#tiny_ca.ca_factory.utils.file_loader.check_ca_material"><code class="docutils literal notranslate"><span class="pre">check_ca_material()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tiny_ca.ca_factory.utils.life_time.html">tiny_ca.ca_factory.utils.life_time module</a><ul>
@@ -759,12 +876,38 @@ string recovered from the encoded-name segment.
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="tiny_ca.ca_factory.utils.name_constraints.html">tiny_ca.ca_factory.utils.name_constraints module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.name_constraints.html#tiny_ca.ca_factory.utils.name_constraints.build_name_constraints"><code class="docutils literal notranslate"><span class="pre">build_name_constraints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.name_constraints.html#tiny_ca.ca_factory.utils.name_constraints.check_certificate"><code class="docutils literal notranslate"><span class="pre">check_certificate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.name_constraints.html#tiny_ca.ca_factory.utils.name_constraints.check_name_constraints"><code class="docutils literal notranslate"><span class="pre">check_name_constraints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.name_constraints.html#tiny_ca.ca_factory.utils.name_constraints.issuer_name_constraints"><code class="docutils literal notranslate"><span class="pre">issuer_name_constraints()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.name_constraints.html#tiny_ca.ca_factory.utils.name_constraints.subject_alt_name"><code class="docutils literal notranslate"><span class="pre">subject_alt_name()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="tiny_ca.ca_factory.utils.serial.html">tiny_ca.ca_factory.utils.serial module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.serial.html#tiny_ca.ca_factory.utils.serial.CertSerialParser"><code class="docutils literal notranslate"><span class="pre">CertSerialParser</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.serial.html#tiny_ca.ca_factory.utils.serial.CertSerialParser.raw"><code class="docutils literal notranslate"><span class="pre">CertSerialParser.raw()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.serial.html#tiny_ca.ca_factory.utils.serial.CertSerialParser.raw_async"><code class="docutils literal notranslate"><span class="pre">CertSerialParser.raw_async()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.serial.html#tiny_ca.ca_factory.utils.serial.CertSerialParser.typed"><code class="docutils literal notranslate"><span class="pre">CertSerialParser.typed()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.serial.html#tiny_ca.ca_factory.utils.serial.CertSerialParser.typed_async"><code class="docutils literal notranslate"><span class="pre">CertSerialParser.typed_async()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html">tiny_ca.ca_factory.utils.signer_loader module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.ISignerCALoader"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.ISignerCALoader.__init__"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.ISignerCALoader.base_info"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.base_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.ISignerCALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.ca_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.ISignerCALoader.ca_signer"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.ca_signer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader"><code class="docutils literal notranslate"><span class="pre">SignerCALoader</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader.__init__"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader.base_info"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.base_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.ca_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader.ca_signer"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.ca_signer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.ca_factory.utils.signer_loader.html#tiny_ca.ca_factory.utils.signer_loader.SignerCALoader.from_pkcs11"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.from_pkcs11()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -777,10 +920,10 @@ string recovered from the encoded-name segment.
         </article>
       </div>
       <footer>
-
+        
         <div class="related-pages">
-
-
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -788,20 +931,20 @@ string recovered from the encoded-name segment.
                 Copyright &#169; 2026, Denis Shchutskyi
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-
+            
             <a href="https://github.com/pradyunsg/furo">Furo</a>
-
+            
           </div>
           <div class="right-details">
-
+            
           </div>
         </div>
-
+        
       </footer>
     </div>
     <aside class="toc-drawer">
-
-
+      
+      
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
@@ -836,12 +979,27 @@ string recovered from the encoded-name segment.
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.ICALoader.ca_key"><code class="docutils literal notranslate"><span class="pre">ICALoader.ca_key</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.ISignerCALoader"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.ISignerCALoader.__init__"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.ISignerCALoader.base_info"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.base_info</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.ISignerCALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.ca_cert</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.ISignerCALoader.ca_signer"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.ca_signer</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.MAX_NAME_LENGTH"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.MAX_NAME_LENGTH</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.NAME_BITS"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.NAME_BITS</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.RANDOM_BITS"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.RANDOM_BITS</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.generate"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.generate()</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SerialWithEncoding.parse"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.parse()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SignerCALoader"><code class="docutils literal notranslate"><span class="pre">SignerCALoader</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SignerCALoader.__init__"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SignerCALoader.base_info"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.base_info</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SignerCALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.ca_cert</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SignerCALoader.ca_signer"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.ca_signer</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.ca_factory.utils.SignerCALoader.from_pkcs11"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.from_pkcs11()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
@@ -852,11 +1010,11 @@ string recovered from the encoded-name segment.
           </div>
         </div>
       </div>
-
-
+      
+      
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=938c9ccc"></script>
+</div><script src="../_static/documentation_options.js?v=8d563738"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

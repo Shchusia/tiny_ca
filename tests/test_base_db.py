@@ -12,13 +12,12 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Generator
 
-import pytest
 from cryptography import x509
+import pytest
 
 from tiny_ca.const import CertType
 from tiny_ca.db.base_db import BaseDB
 from tiny_ca.db.models import CertificateRecord
-
 
 # ===========================================================================
 # BaseDB is abstract

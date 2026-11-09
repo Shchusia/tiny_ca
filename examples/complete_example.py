@@ -50,6 +50,28 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def make_external_certificate(common_name: str) -> x509.Certificate:
+    """A self-signed certificate standing in for one issued by a partner CA."""
+    from datetime import timedelta
+
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
+    now = datetime.now(UTC)
+    return (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now)
+        .not_valid_after(now + timedelta(days=30))
+        .sign(key, hashes.SHA256())
+    )
+
+
 def print_section(title: str):
     """Print a formatted section header."""
     print("\n" + "=" * 70)
@@ -532,8 +554,11 @@ def run_complete_demo():
         # Renew certificate
         renewed_cert = demo.renew_certificate(server_cert.serial_number)
 
-        # Co-sign certificate
-        cosigned = demo.cosign_certificate(client_cert)
+        # Co-sign a certificate issued elsewhere (revoked certificates
+        # cannot be co-signed: that would re-certify a compromised key)
+        cosigned = demo.cosign_certificate(
+            make_external_certificate("partner.demo.com")
+        )
 
         # Rotate certificate
         new_config = ClientConfig(
@@ -567,8 +592,9 @@ def run_complete_demo():
         print("  ✅ Certificate rotation tested")
         print("  ✅ All verifications passed")
 
-        # Optional: delete test certificate
-        demo.delete_certificate(client_cert.serial_number)
+        # Optional: delete a test certificate (revoked, unexpired certificates
+        # cannot be deleted: they must stay on the CRL)
+        demo.delete_certificate(cosigned.serial_number)
 
     except Exception as e:
         logger.error(f"Demo failed: {e}", exc_info=True)

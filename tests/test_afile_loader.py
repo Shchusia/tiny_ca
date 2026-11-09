@@ -10,21 +10,20 @@ Run with:
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from datetime import UTC, datetime, timedelta
+import pytest
 
 from tiny_ca.ca_factory.utils.afile_loader import AsyncCAFileLoader
 from tiny_ca.exc import ErrorLoadCert
-
 
 # ---------------------------------------------------------------------------
 # Module-scoped CA fixtures (generated once for the whole test session)
@@ -306,13 +305,17 @@ class TestLoadSyncErrors:
         with pytest.raises(TypeError, match="CA key must be"):
             run(loader.load())
 
-    def test_ec_key_is_accepted(self, tmp_path, ca_cert):
+    def test_ec_key_is_accepted(self, tmp_path):
         from cryptography.hazmat.primitives.asymmetric import ec
 
-        ec_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+        from tiny_ca import CertificateFactory, KeyAlgorithm
+
+        ec_cert, ec_key = CertificateFactory.build_self_signed_ca(
+            key_algorithm=KeyAlgorithm.EC_P256
+        )
         cert_file = tmp_path / "ca.pem"
         key_file = tmp_path / "ec.pem"
-        cert_file.write_bytes(ca_cert.public_bytes(serialization.Encoding.PEM))
+        cert_file.write_bytes(ec_cert.public_bytes(serialization.Encoding.PEM))
         key_file.write_bytes(
             ec_key.private_bytes(
                 serialization.Encoding.PEM,

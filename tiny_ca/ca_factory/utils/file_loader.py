@@ -14,6 +14,7 @@ This module provides two public symbols:
 
 from __future__ import annotations
 
+import datetime
 from logging import Logger
 from pathlib import Path
 from typing import Protocol, cast, runtime_checkable
@@ -28,7 +29,78 @@ from tiny_ca.const import ALLOWED_CERT_EXTENSIONS
 from tiny_ca.exc import ErrorLoadCert, IsNotFile, NotExistCertFile, WrongType
 from tiny_ca.models.certificate import CertificateInfo
 from tiny_ca.settings import DEFAULT_LOGGER
-from tiny_ca.utils.keys import PRIVATE_KEY_TYPES, PrivateKey
+from tiny_ca.utils.keys import PRIVATE_KEY_TYPES, PrivateKey, PublicKey
+
+_SPKI = (serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+
+
+def certificate_info(cert: x509.Certificate) -> CertificateInfo:
+    """Organisation / location attributes of *cert*'s Subject."""
+
+    def _attr(oid: ObjectIdentifier) -> str | None:
+        attrs = cert.subject.get_attributes_for_oid(oid)
+        return cast(str, attrs[0].value) if attrs else None
+
+    return CertificateInfo(
+        organization=_attr(NameOID.ORGANIZATION_NAME),
+        organizational_unit=_attr(NameOID.ORGANIZATIONAL_UNIT_NAME),
+        country=_attr(NameOID.COUNTRY_NAME),
+        state=_attr(NameOID.STATE_OR_PROVINCE_NAME),
+        locality=_attr(NameOID.LOCALITY_NAME),
+    )
+
+
+def check_ca_material(
+    ca_cert: x509.Certificate,
+    public_key: PublicKey,
+    cert_path: Path | str,
+    key_path: Path | str,
+    logger: Logger,
+) -> None:
+    """
+    Verify that *ca_cert* and the CA key whose public half is *public_key*
+    form a usable CA pair.
+
+    Raises
+    ------
+    ErrorLoadCert
+        If the key does not match the certificate, or the certificate is not
+        a CA (``BasicConstraints.ca`` unset, or ``KeyUsage`` without
+        ``keyCertSign``).
+    """
+    if public_key.public_bytes(*_SPKI) != ca_cert.public_key().public_bytes(*_SPKI):
+        raise ErrorLoadCert(
+            path_to_file=key_path,
+            exc="private key does not match the CA certificate",
+        )
+    try:
+        is_ca = ca_cert.extensions.get_extension_for_class(
+            x509.BasicConstraints
+        ).value.ca
+    except x509.ExtensionNotFound:
+        is_ca = False
+    if not is_ca:
+        raise ErrorLoadCert(
+            path_to_file=cert_path,
+            exc="certificate is not a CA (BasicConstraints.ca is not set)",
+        )
+    try:
+        usage = ca_cert.extensions.get_extension_for_class(x509.KeyUsage).value
+    except x509.ExtensionNotFound:
+        usage = None
+    if usage is not None and not usage.key_cert_sign:
+        raise ErrorLoadCert(
+            path_to_file=cert_path,
+            exc="certificate is not a CA (KeyUsage lacks keyCertSign)",
+        )
+    if ca_cert.not_valid_after_utc < datetime.datetime.now(datetime.UTC):
+        logger.warning(
+            "CA certificate %s expired at %s; it cannot issue or validate "
+            "certificates",
+            cert_path,
+            ca_cert.not_valid_after_utc.isoformat(),
+        )
+
 
 # ---------------------------------------------------------------------------
 # ISP / DIP: minimal interface for CA-material providers
@@ -263,31 +335,15 @@ class CAFileLoader:
                 "CA key must be RSA, ECDSA (P-256 / P-384) or Ed25519, "
                 f"got {type(ca_key).__name__}"
             )
+        check_ca_material(
+            ca_cert,
+            cast(PrivateKey, ca_key).public_key(),
+            Path(self._ca_cert_path),
+            Path(self._ca_key_path),
+            self._logger,
+        )
         return ca_cert, cast(PrivateKey, ca_key)
 
     def _extract_info(self) -> CertificateInfo:
-        """
-        Parse the CA certificate's Subject and return a structured info object.
-
-        Iterates over well-known OIDs (organization, organizational unit,
-        country, state, locality) and reads the first matching attribute value
-        for each.  Missing attributes are stored as ``None``.
-
-        Returns
-        -------
-        CertificateInfo
-            Dataclass populated with Subject attribute values extracted from
-            ``self._ca_cert``.
-        """
-
-        def _attr(oid: ObjectIdentifier) -> str | None:
-            attrs = self._ca_cert.subject.get_attributes_for_oid(oid)
-            return cast(str, attrs[0].value) if attrs else None
-
-        return CertificateInfo(
-            organization=_attr(NameOID.ORGANIZATION_NAME),
-            organizational_unit=_attr(NameOID.ORGANIZATIONAL_UNIT_NAME),
-            country=_attr(NameOID.COUNTRY_NAME),
-            state=_attr(NameOID.STATE_OR_PROVINCE_NAME),
-            locality=_attr(NameOID.LOCALITY_NAME),
-        )
+        """Subject attributes of the loaded CA certificate."""
+        return certificate_info(self._ca_cert)  # type: ignore[arg-type]

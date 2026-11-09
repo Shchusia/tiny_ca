@@ -25,6 +25,22 @@ AsyncCAFileLoader
    :undoc-members:
    :show-inheritance:
 
+SignerCALoader
+--------------
+
+.. automodule:: tiny_ca.ca_factory.utils.signer_loader
+   :members:
+   :no-index:
+   :show-inheritance:
+
+Name constraints
+----------------
+
+.. automodule:: tiny_ca.ca_factory.utils.name_constraints
+   :members:
+   :no-index:
+   :show-inheritance:
+
 CertLifetime
 ------------
 

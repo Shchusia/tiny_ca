@@ -6,41 +6,41 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.exc module - tiny_ca 0.2.0 documentation</title>
+        <title>tiny_ca.exc module - tiny_ca 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-
-
+    
+    
 
 
 <style>
   body {
     --color-code-background: #f2f2f2;
   --color-code-foreground: #1e1e1e;
-
+  
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
       }
     }
   }
 </style></head>
   <body>
-
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
-
+    
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">tiny_ca 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -179,11 +179,11 @@
   </header>
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
-
+      
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
-
-  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
-
+  
+  <span class="sidebar-brand-text">tiny_ca 1.0.0 documentation</span>
+  
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
@@ -194,10 +194,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../high_assurance.html">High-Assurance Deployments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ca_factory.html">ca_factory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="managers.html">Lifecycle Managers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="storage.html">Storage Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security.html">Signing and Audit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Configuration Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
@@ -207,7 +209,7 @@
 </div>
 
       </div>
-
+      
     </div>
   </aside>
   <div class="main">
@@ -241,6 +243,34 @@
         <article role="main" id="furo-main-content">
           <section id="module-tiny_ca.exc">
 <span id="tiny-ca-exc-module"></span><h1>tiny_ca.exc module<a class="headerlink" href="#module-tiny_ca.exc" title="Link to this heading">¶</a></h1>
+<dl class="py exception">
+<dt class="sig sig-object py" id="tiny_ca.exc.AuditLogError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.exc.</span></span><span class="sig-name descname"><span class="pre">AuditLogError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#AuditLogError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.AuditLogError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tiny_ca.exc.CryptoException" title="tiny_ca.exc.CryptoException"><code class="xref py py-class docutils literal notranslate"><span class="pre">CryptoException</span></code></a></p>
+<p>Raised when the audit log cannot be written or fails verification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.exc.AuditLogError.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#AuditLogError.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.AuditLogError.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py exception">
 <dt class="sig sig-object py" id="tiny_ca.exc.CertNotFound">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.exc.</span></span><span class="sig-name descname"><span class="pre">CertNotFound</span></span><a class="reference internal" href="../_modules/tiny_ca/exc.html#CertNotFound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.CertNotFound" title="Link to this definition">¶</a></dt>
@@ -286,6 +316,40 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 <li><p><strong>reason</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="tiny_ca.exc.CertificateRevokedError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.exc.</span></span><span class="sig-name descname"><span class="pre">CertificateRevokedError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#CertificateRevokedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.CertificateRevokedError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tiny_ca.exc.CryptoException" title="tiny_ca.exc.CryptoException"><code class="xref py py-class docutils literal notranslate"><span class="pre">CryptoException</span></code></a></p>
+<p>Raised when an operation is not allowed on a revoked certificate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>operation</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.exc.CertificateRevokedError.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#CertificateRevokedError.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.CertificateRevokedError.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>serial</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>operation</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -538,6 +602,21 @@ publishing an empty CRL (fail-open).</p>
 </dd></dl>
 
 <dl class="py exception">
+<dt class="sig sig-object py" id="tiny_ca.exc.NameConstraintViolation">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.exc.</span></span><span class="sig-name descname"><span class="pre">NameConstraintViolation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#NameConstraintViolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.NameConstraintViolation" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tiny_ca.exc.ValidationCertError" title="tiny_ca.exc.ValidationCertError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidationCertError</span></code></a></p>
+<p>Raised when a certificate name falls outside an issuer’s NameConstraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py exception">
 <dt class="sig sig-object py" id="tiny_ca.exc.NotExistCertFile">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.exc.</span></span><span class="sig-name descname"><span class="pre">NotExistCertFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#NotExistCertFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.NotExistCertFile" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#tiny_ca.exc.CryptoException" title="tiny_ca.exc.CryptoException"><code class="xref py py-class docutils literal notranslate"><span class="pre">CryptoException</span></code></a></p>
@@ -582,6 +661,34 @@ publishing an empty CRL (fail-open).</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>common_name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="tiny_ca.exc.SignerError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.exc.</span></span><span class="sig-name descname"><span class="pre">SignerError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#SignerError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.SignerError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tiny_ca.exc.CryptoException" title="tiny_ca.exc.CryptoException"><code class="xref py py-class docutils literal notranslate"><span class="pre">CryptoException</span></code></a></p>
+<p>Raised when an external CA signer (e.g. an HSM) fails or misbehaves.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="tiny_ca.exc.SignerError.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/exc.html#SignerError.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.exc.SignerError.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -656,10 +763,10 @@ publishing an empty CRL (fail-open).</p>
         </article>
       </div>
       <footer>
-
+        
         <div class="related-pages">
-
-
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -667,20 +774,20 @@ publishing an empty CRL (fail-open).</p>
                 Copyright &#169; 2026, Denis Shchutskyi
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-
+            
             <a href="https://github.com/pradyunsg/furo">Furo</a>
-
+            
           </div>
           <div class="right-details">
-
+            
           </div>
         </div>
-
+        
       </footer>
     </div>
     <aside class="toc-drawer">
-
-
+      
+      
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
@@ -691,12 +798,20 @@ publishing an empty CRL (fail-open).</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">tiny_ca.exc module</a><ul>
+<li><a class="reference internal" href="#tiny_ca.exc.AuditLogError"><code class="docutils literal notranslate"><span class="pre">AuditLogError</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.exc.AuditLogError.__init__"><code class="docutils literal notranslate"><span class="pre">AuditLogError.__init__()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#tiny_ca.exc.CertNotFound"><code class="docutils literal notranslate"><span class="pre">CertNotFound</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.exc.CertNotFound.__init__"><code class="docutils literal notranslate"><span class="pre">CertNotFound.__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#tiny_ca.exc.CertRevocationError"><code class="docutils literal notranslate"><span class="pre">CertRevocationError</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.exc.CertRevocationError.__init__"><code class="docutils literal notranslate"><span class="pre">CertRevocationError.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tiny_ca.exc.CertificateRevokedError"><code class="docutils literal notranslate"><span class="pre">CertificateRevokedError</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.exc.CertificateRevokedError.__init__"><code class="docutils literal notranslate"><span class="pre">CertificateRevokedError.__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#tiny_ca.exc.CryptoException"><code class="docutils literal notranslate"><span class="pre">CryptoException</span></code></a><ul>
@@ -732,12 +847,17 @@ publishing an empty CRL (fail-open).</p>
 <li><a class="reference internal" href="#tiny_ca.exc.IsNotFile.__init__"><code class="docutils literal notranslate"><span class="pre">IsNotFile.__init__()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#tiny_ca.exc.NameConstraintViolation"><code class="docutils literal notranslate"><span class="pre">NameConstraintViolation</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.exc.NotExistCertFile"><code class="docutils literal notranslate"><span class="pre">NotExistCertFile</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.exc.NotExistCertFile.__init__"><code class="docutils literal notranslate"><span class="pre">NotExistCertFile.__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#tiny_ca.exc.NotUniqueCertOwner"><code class="docutils literal notranslate"><span class="pre">NotUniqueCertOwner</span></code></a><ul>
 <li><a class="reference internal" href="#tiny_ca.exc.NotUniqueCertOwner.__init__"><code class="docutils literal notranslate"><span class="pre">NotUniqueCertOwner.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tiny_ca.exc.SignerError"><code class="docutils literal notranslate"><span class="pre">SignerError</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.exc.SignerError.__init__"><code class="docutils literal notranslate"><span class="pre">SignerError.__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#tiny_ca.exc.ValidationCertError"><code class="docutils literal notranslate"><span class="pre">ValidationCertError</span></code></a><ul>
@@ -755,11 +875,11 @@ publishing an empty CRL (fail-open).</p>
           </div>
         </div>
       </div>
-
-
+      
+      
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=938c9ccc"></script>
+</div><script src="../_static/documentation_options.js?v=8d563738"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

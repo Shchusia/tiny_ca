@@ -1,0 +1,678 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>tiny_ca.signing - tiny_ca 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">tiny_ca 1.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">tiny_ca 1.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../high_assurance.html">High-Assurance Deployments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/ca_factory.html">ca_factory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/managers.html">Lifecycle Managers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/storage.html">Storage Backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/security.html">Signing and Audit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/models.html">Configuration Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/exceptions.html">Exceptions</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for tiny_ca.signing</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">signing.py</span>
+
+<span class="sd">Pluggable CA signing: the CA private key does not have to live in this</span>
+<span class="sd">process.</span>
+
+<span class="sd">* :class:`CASigner` — the protocol every signer implements: expose the CA</span>
+<span class="sd">  public key and sign raw bytes.</span>
+<span class="sd">* :class:`KeySigner` — a signer backed by an in-memory private key (the</span>
+<span class="sd">  classic file-based CA).</span>
+<span class="sd">* :class:`Pkcs11Signer` — a signer backed by a key inside a hardware security</span>
+<span class="sd">  module or smart card, reached through a PKCS#11 module (``tiny-ca[hsm]``).</span>
+<span class="sd">* :func:`sign_builder` — signs any ``cryptography`` certificate or CRL builder</span>
+<span class="sd">  with a :class:`CASigner`.</span>
+
+<span class="sd">``cryptography`` can only sign with its own key objects.  For external</span>
+<span class="sd">signers :func:`sign_builder` therefore builds the to-be-signed structure with</span>
+<span class="sd">a throw-away key of the same algorithm, has the external signer sign those</span>
+<span class="sd">exact bytes, splices the real signature into the DER encoding and verifies</span>
+<span class="sd">the result against the CA public key before returning it.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography</span><span class="w"> </span><span class="kn">import</span> <span class="n">x509</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvalidSignature</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">hashes</span><span class="p">,</span> <span class="n">serialization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.asymmetric</span><span class="w"> </span><span class="kn">import</span> <span class="n">ec</span><span class="p">,</span> <span class="n">ed25519</span><span class="p">,</span> <span class="n">padding</span><span class="p">,</span> <span class="n">rsa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.asymmetric.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">encode_dss_signature</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.exc</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignerError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiny_ca.utils.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateKey</span><span class="p">,</span> <span class="n">PublicKey</span><span class="p">,</span> <span class="n">signing_hash</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"CASigner"</span><span class="p">,</span>
+    <span class="s2">"KeySigner"</span><span class="p">,</span>
+    <span class="s2">"Pkcs11Signer"</span><span class="p">,</span>
+    <span class="s2">"sign_builder"</span><span class="p">,</span>
+    <span class="s2">"sign_bytes"</span><span class="p">,</span>
+    <span class="s2">"verify_signature"</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="CASigner">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.CASigner">[docs]</a>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CASigner</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Anything that can sign on behalf of the CA.</span>
+
+<span class="sd">    ``sign`` receives the exact bytes to sign and the digest chosen by</span>
+<span class="sd">    :func:`tiny_ca.utils.keys.signing_hash` (``None`` for Ed25519) and must</span>
+<span class="sd">    return the signature in X.509 form: PKCS#1 v1.5 for RSA, DER-encoded</span>
+<span class="sd">    ``ECDSA-Sig-Value`` for ECDSA, the raw 64 bytes for Ed25519.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="CASigner.public_key">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.CASigner.public_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">public_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PublicKey</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="CASigner.sign">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.CASigner.sign">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">hashes</span><span class="o">.</span><span class="n">HashAlgorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span> <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="sign_bytes">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.sign_bytes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sign_bytes</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n">PrivateKey</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">hashes</span><span class="o">.</span><span class="n">HashAlgorithm</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sign *data* with a software private key in X.509 signature form."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPrivateKey</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">padding</span><span class="o">.</span><span class="n">PKCS1v15</span><span class="p">(),</span> <span class="n">algorithm</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ec</span><span class="o">.</span><span class="n">EllipticCurvePrivateKey</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ec</span><span class="o">.</span><span class="n">ECDSA</span><span class="p">(</span><span class="n">algorithm</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">key</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="verify_signature">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.verify_signature">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_signature</span><span class="p">(</span>
+    <span class="n">public_key</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>
+    <span class="n">signature</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="n">hashes</span><span class="o">.</span><span class="n">HashAlgorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return True if *signature* over *data* is valid for *public_key*."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">public_key</span><span class="p">,</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPublicKey</span><span class="p">):</span>
+            <span class="n">public_key</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span>
+                <span class="n">signature</span><span class="p">,</span>
+                <span class="n">data</span><span class="p">,</span>
+                <span class="n">padding</span><span class="o">.</span><span class="n">PKCS1v15</span><span class="p">(),</span>
+                <span class="n">algorithm</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">public_key</span><span class="p">,</span> <span class="n">ec</span><span class="o">.</span><span class="n">EllipticCurvePublicKey</span><span class="p">):</span>
+            <span class="n">public_key</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">ec</span><span class="o">.</span><span class="n">ECDSA</span><span class="p">(</span><span class="n">algorithm</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">public_key</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">InvalidSignature</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="KeySigner">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.KeySigner">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeySigner</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A :class:`CASigner` backed by an in-memory private key."""</span>
+
+<div class="viewcode-block" id="KeySigner.__init__">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.KeySigner.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">private_key</span><span class="p">:</span> <span class="n">PrivateKey</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">private_key</span> <span class="o">=</span> <span class="n">private_key</span></div>
+
+
+<div class="viewcode-block" id="KeySigner.public_key">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.KeySigner.public_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">public_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PublicKey</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">private_key</span><span class="o">.</span><span class="n">public_key</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="KeySigner.sign">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.KeySigner.sign">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">hashes</span><span class="o">.</span><span class="n">HashAlgorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sign_bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">private_key</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># External signatures: DER surgery on certificates and CRLs</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="n">_SEQUENCE</span> <span class="o">=</span> <span class="mh">0x30</span>
+<span class="n">_BIT_STRING</span> <span class="o">=</span> <span class="mh">0x03</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_der_length</span><span class="p">(</span><span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="mh">0x80</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">([</span><span class="n">length</span><span class="p">])</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">length</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">((</span><span class="n">length</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">"big"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x80</span> <span class="o">|</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)])</span> <span class="o">+</span> <span class="n">raw</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_tlv</span><span class="p">(</span><span class="n">der</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return ``(tag, content_start, end)`` of the TLV starting at *pos*."""</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">der</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">der</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">first</span> <span class="o">&lt;</span> <span class="mh">0x80</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tag</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">first</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">first</span> <span class="o">&amp;</span> <span class="mh">0x7F</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">der</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">2</span> <span class="p">:</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span> <span class="s2">"big"</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">count</span>
+    <span class="k">return</span> <span class="n">tag</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">length</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_signed</span><span class="p">(</span><span class="n">der</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Split a signed X.509 structure (``SEQUENCE { tbs, algorithm, signature }``)</span>
+<span class="sd">    into the encoded *tbs* and *algorithm* elements.</span>
+<span class="sd">    """</span>
+    <span class="n">tag</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">_read_tlv</span><span class="p">(</span><span class="n">der</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tag</span> <span class="o">!=</span> <span class="n">_SEQUENCE</span> <span class="ow">or</span> <span class="n">end</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">der</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">SignerError</span><span class="p">(</span><span class="s2">"unexpected DER structure while re-signing"</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">tbs_end</span> <span class="o">=</span> <span class="n">_read_tlv</span><span class="p">(</span><span class="n">der</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">alg_end</span> <span class="o">=</span> <span class="n">_read_tlv</span><span class="p">(</span><span class="n">der</span><span class="p">,</span> <span class="n">tbs_end</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">der</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">tbs_end</span><span class="p">],</span> <span class="n">der</span><span class="p">[</span><span class="n">tbs_end</span><span class="p">:</span><span class="n">alg_end</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assemble</span><span class="p">(</span><span class="n">tbs</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+    <span class="n">bit_string</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">bytes</span><span class="p">([</span><span class="n">_BIT_STRING</span><span class="p">])</span> <span class="o">+</span> <span class="n">_der_length</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="o">+</span> <span class="n">signature</span>
+    <span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">tbs</span> <span class="o">+</span> <span class="n">algorithm</span> <span class="o">+</span> <span class="n">bit_string</span>
+    <span class="k">return</span> <span class="nb">bytes</span><span class="p">([</span><span class="n">_SEQUENCE</span><span class="p">])</span> <span class="o">+</span> <span class="n">_der_length</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span> <span class="o">+</span> <span class="n">body</span>
+
+
+<span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_template_key</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrivateKey</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A throw-away key whose only job is to produce the right algorithm OID."""</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPublicKey</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rsa</span><span class="o">.</span><span class="n">generate_private_key</span><span class="p">(</span><span class="n">public_exponent</span><span class="o">=</span><span class="mi">65537</span><span class="p">,</span> <span class="n">key_size</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">ec</span><span class="o">.</span><span class="n">EllipticCurvePublicKey</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ec</span><span class="o">.</span><span class="n">generate_private_key</span><span class="p">(</span><span class="n">ec</span><span class="o">.</span><span class="n">SECP256R1</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">ed25519</span><span class="o">.</span><span class="n">Ed25519PrivateKey</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_key_kind</span><span class="p">(</span><span class="n">public_key</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">rsa</span><span class="o">.</span><span class="n">RSAPublicKey</span><span class="p">,</span> <span class="n">ec</span><span class="o">.</span><span class="n">EllipticCurvePublicKey</span><span class="p">,</span> <span class="n">ed25519</span><span class="o">.</span><span class="n">Ed25519PublicKey</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">public_key</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">kind</span>
+    <span class="k">raise</span> <span class="n">SignerError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported CA public key type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="n">_LOADERS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">bytes</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">load_der_x509_certificate</span><span class="p">,</span>
+    <span class="n">x509</span><span class="o">.</span><span class="n">CertificateRevocationList</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">load_der_x509_crl</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="sign_builder">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.sign_builder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sign_builder</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">signer</span><span class="p">:</span> <span class="n">CASigner</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Sign a ``CertificateBuilder`` or ``CertificateRevocationListBuilder``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    SignerError</span>
+<span class="sd">        If the external signer fails or returns a signature that does not</span>
+<span class="sd">        verify against its public key.</span>
+<span class="sd">    """</span>
+    <span class="n">public_key</span> <span class="o">=</span> <span class="n">signer</span><span class="o">.</span><span class="n">public_key</span><span class="p">()</span>
+    <span class="n">algorithm</span> <span class="o">=</span> <span class="n">signing_hash</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signer</span><span class="p">,</span> <span class="n">KeySigner</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">signer</span><span class="o">.</span><span class="n">private_key</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
+
+    <span class="n">template</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">_template_key</span><span class="p">(</span><span class="n">_key_kind</span><span class="p">(</span><span class="n">public_key</span><span class="p">)),</span> <span class="n">algorithm</span><span class="p">)</span>
+    <span class="n">tbs</span><span class="p">,</span> <span class="n">algorithm_id</span> <span class="o">=</span> <span class="n">_split_signed</span><span class="p">(</span><span class="n">template</span><span class="o">.</span><span class="n">public_bytes</span><span class="p">(</span><span class="n">serialization</span><span class="o">.</span><span class="n">Encoding</span><span class="o">.</span><span class="n">DER</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">signer</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">tbs</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SignerError</span><span class="p">:</span>
+        <span class="k">raise</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SignerError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"external signer failed: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">verify_signature</span><span class="p">(</span><span class="n">public_key</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">tbs</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">SignerError</span><span class="p">(</span>
+            <span class="s2">"external signer returned a signature that does not match the CA "</span>
+            <span class="s2">"public key"</span>
+        <span class="p">)</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">load</span> <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">load</span> <span class="ow">in</span> <span class="n">_LOADERS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">kind</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="p">(</span><span class="n">_assemble</span><span class="p">(</span><span class="n">tbs</span><span class="p">,</span> <span class="n">algorithm_id</span><span class="p">,</span> <span class="n">signature</span><span class="p">))</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># PKCS#11 (HSM / smart card)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="n">_RSA_MECHANISMS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"SHA256_RSA_PKCS"</span><span class="p">,</span>
+    <span class="s2">"sha384"</span><span class="p">:</span> <span class="s2">"SHA384_RSA_PKCS"</span><span class="p">,</span>
+    <span class="s2">"sha512"</span><span class="p">:</span> <span class="s2">"SHA512_RSA_PKCS"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">_ECDSA_MECHANISMS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"ECDSA_SHA256"</span><span class="p">,</span>
+    <span class="s2">"sha384"</span><span class="p">:</span> <span class="s2">"ECDSA_SHA384"</span><span class="p">,</span>
+    <span class="s2">"sha512"</span><span class="p">:</span> <span class="s2">"ECDSA_SHA512"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_import_pkcs11</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">"pkcs11"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - depends on the environment</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">"PKCS#11 support requires python-pkcs11: pip install 'tiny-ca[hsm]'"</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+
+<div class="viewcode-block" id="Pkcs11Signer">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Pkcs11Signer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    A :class:`CASigner` whose private key never leaves a PKCS#11 token</span>
+<span class="sd">    (HSM, smart card, SoftHSM, cloud HSM with a PKCS#11 module).</span>
+
+<span class="sd">    Use :meth:`open` to log in to a token, or wrap an already opened</span>
+<span class="sd">    ``python-pkcs11`` private key object.  The CA public key is taken from the</span>
+<span class="sd">    CA certificate, so the token only needs to hold the private key.</span>
+<span class="sd">    Signing is serialised with a lock because PKCS#11 sessions are not</span>
+<span class="sd">    thread-safe.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    key :</span>
+<span class="sd">        A ``python-pkcs11`` private key object (anything with</span>
+<span class="sd">        ``sign(data, mechanism=...)``).</span>
+<span class="sd">    public_key : PublicKey</span>
+<span class="sd">        The CA public key (``ca_cert.public_key()``).</span>
+<span class="sd">    mechanisms :</span>
+<span class="sd">        Namespace holding the PKCS#11 mechanism constants; defaults to</span>
+<span class="sd">        ``pkcs11.Mechanism``.</span>
+<span class="sd">    session :</span>
+<span class="sd">        Session to close in :meth:`close` (set by :meth:`open`).</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="Pkcs11Signer.__init__">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">public_key</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>
+        <span class="n">mechanisms</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">session</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_public_key</span> <span class="o">=</span> <span class="n">public_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="o">=</span> <span class="n">_key_kind</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mechanisms</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mechanisms</span> <span class="k">if</span> <span class="n">mechanisms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_import_pkcs11</span><span class="p">()</span><span class="o">.</span><span class="n">Mechanism</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Pkcs11Signer.open">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer.open">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">module_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">token_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">pin</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">public_key</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>
+        <span class="n">key_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pkcs11Signer</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Log in to *token_label* through the PKCS#11 *module_path* and find the</span>
+<span class="sd">        CA private key by *key_label* and/or *key_id*.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">key_label</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"key_label or key_id is required"</span><span class="p">)</span>
+        <span class="n">pkcs11</span> <span class="o">=</span> <span class="n">_import_pkcs11</span><span class="p">()</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">pkcs11</span><span class="o">.</span><span class="n">lib</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">module_path</span><span class="p">))</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span><span class="n">token_label</span><span class="o">=</span><span class="n">token_label</span><span class="p">)</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">user_pin</span><span class="o">=</span><span class="n">pin</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span>
+                <span class="n">object_class</span><span class="o">=</span><span class="n">pkcs11</span><span class="o">.</span><span class="n">ObjectClass</span><span class="o">.</span><span class="n">PRIVATE_KEY</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="n">key_label</span><span class="p">,</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">key_id</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">raise</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">public_key</span><span class="p">,</span> <span class="n">pkcs11</span><span class="o">.</span><span class="n">Mechanism</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Pkcs11Signer.public_key">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer.public_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">public_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PublicKey</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_public_key</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mechanism</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">hashes</span><span class="o">.</span><span class="n">HashAlgorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="ow">is</span> <span class="n">ed25519</span><span class="o">.</span><span class="n">Ed25519PublicKey</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s2">"EDDSA"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">table</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">_RSA_MECHANISMS</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="ow">is</span> <span class="n">rsa</span><span class="o">.</span><span class="n">RSAPublicKey</span> <span class="k">else</span> <span class="n">_ECDSA_MECHANISMS</span>
+            <span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">algorithm</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SignerError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"no PKCS#11 mechanism for digest </span><span class="si">{</span><span class="n">algorithm</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mechanisms</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Pkcs11Signer.sign">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer.sign">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">hashes</span><span class="o">.</span><span class="n">HashAlgorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="n">mechanism</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mechanism</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mechanism</span><span class="o">=</span><span class="n">mechanism</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="ow">is</span> <span class="n">ec</span><span class="o">.</span><span class="n">EllipticCurvePublicKey</span><span class="p">:</span>
+            <span class="c1"># PKCS#11 returns ECDSA signatures as r || s; X.509 wants DER.</span>
+            <span class="n">half</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="n">encode_dss_signature</span><span class="p">(</span>
+                <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">[:</span><span class="n">half</span><span class="p">],</span> <span class="s2">"big"</span><span class="p">),</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="n">half</span><span class="p">:],</span> <span class="s2">"big"</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">raw</span></div>
+
+
+<div class="viewcode-block" id="Pkcs11Signer.close">
+<a class="viewcode-back" href="../../modules/tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer.close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Close the PKCS#11 session opened by :meth:`open` (if any)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pkcs11Signer</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc_info</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Denis Shchutskyi
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

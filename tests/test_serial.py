@@ -10,20 +10,19 @@ Run with:
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from datetime import UTC, datetime, timedelta
+import pytest
 
 from tiny_ca.ca_factory.utils.serial import CertSerialParser
 from tiny_ca.const import CertType
 from tiny_ca.utils.serial_generator import SerialWithEncoding
-
 
 # ---------------------------------------------------------------------------
 # Helpers

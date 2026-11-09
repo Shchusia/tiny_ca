@@ -19,7 +19,6 @@ from tiny_ca.const import CertType
 from tiny_ca.db.const import CertificateStatus
 from tiny_ca.db.models import Base, CertificateRecord
 
-
 # ---------------------------------------------------------------------------
 # In-memory SQLite engine shared for all model tests
 # ---------------------------------------------------------------------------
@@ -49,16 +48,16 @@ def session(engine):
 
 def _make_record(**overrides) -> CertificateRecord:
     now = datetime.datetime.utcnow()
-    defaults = dict(
-        serial_number="123456789",
-        common_name="test.example.com",
-        not_valid_before=now,
-        not_valid_after=now + datetime.timedelta(days=365),
-        certificate_pem="-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----",
-        status=CertificateStatus.VALID,
-        key_type=CertType.DEVICE.value,
-        uuid="aaaabbbb-0000-1111-2222-ccccddddeeee",
-    )
+    defaults = {
+        "serial_number": "123456789",
+        "common_name": "test.example.com",
+        "not_valid_before": now,
+        "not_valid_after": now + datetime.timedelta(days=365),
+        "certificate_pem": "-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----",
+        "status": CertificateStatus.VALID,
+        "key_type": CertType.DEVICE.value,
+        "uuid": "aaaabbbb-0000-1111-2222-ccccddddeeee",
+    }
     defaults.update(overrides)
     return CertificateRecord(**defaults)
 
@@ -204,7 +203,6 @@ class TestDefaults:
         assert fetched.key_type is None or fetched.key_type == CertType.DEVICE.value
 
     def test_all_fields_stored_and_retrieved(self, session):
-        now = datetime.datetime.utcnow()
         rec = _make_record(serial_number="full-1", uuid="uuid-full-1")
         session.add(rec)
         session.commit()

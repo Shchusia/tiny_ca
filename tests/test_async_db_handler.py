@@ -2,13 +2,13 @@ from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat._oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509 import ReasonFlags
-from sqlalchemy import Row
+import pytest
+from sqlalchemy import Row, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tiny_ca.const import CertType
@@ -17,18 +17,6 @@ from tiny_ca.db.const import CertificateStatus, RevokeStatus
 from tiny_ca.db.models import CertificateRecord
 from tiny_ca.exc import DBOperationError
 from tiny_ca.settings import DEFAULT_LOGGER
-
-from datetime import UTC, timedelta, datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-from cryptography import x509
-from cryptography.x509 import ReasonFlags
-from sqlalchemy import select
-
-from tiny_ca.db.async_db_manager import AsyncDBHandler
-from tiny_ca.db.const import CertificateStatus, RevokeStatus
-from tiny_ca.db.models import CertificateRecord
 
 
 @pytest.fixture
@@ -110,9 +98,7 @@ class TestAsyncDBHandler:
     async def test_init_with_custom_logger(self):
         """Test initialization with custom logger."""
         mock_logger = MagicMock()
-        with patch(
-            "tiny_ca.db.async_db_manager.DatabaseManager"
-        ) as mock_db_manager_class:
+        with patch("tiny_ca.db.async_db_manager.DatabaseManager"):
             handler = AsyncDBHandler(
                 db_url="sqlite+aiosqlite:///:memory:", logger=mock_logger
             )
@@ -421,36 +407,6 @@ class TestAsyncDBHandler:
     #     handler._db.get_session.assert_called_once()
     #     mock_session.__aenter__.assert_called_once()
     #     mock_session.__aexit__.assert_called_once()
-
-
-@pytest.fixture
-def mock_session():
-    session = AsyncMock()
-    session.commit = AsyncMock()
-    session.rollback = AsyncMock()
-    session.execute = AsyncMock()
-    session.stream = AsyncMock()
-    session.add = MagicMock()
-    return session
-
-
-@pytest.fixture
-def mock_db_manager(mock_session):
-    manager = MagicMock()
-    manager.get_session.return_value.__aenter__.return_value = mock_session
-    return manager
-
-
-@pytest.fixture
-def handler(mock_db_manager):
-    with patch(
-        "tiny_ca.db.async_db_manager.DatabaseManager", return_value=mock_db_manager
-    ):
-        handler = AsyncDBHandler(
-            db_url="sqlite+aiosqlite:///:memory:", logger=MagicMock()
-        )
-        handler._db = mock_db_manager
-        return handler
 
 
 class TestAsyncDBHandlerListAll:

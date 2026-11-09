@@ -65,3 +65,20 @@ def build_record(
         key_type=key_type.value,
         uuid=uuid,
     )
+
+
+def is_revoked(record: CertificateRecord) -> bool:
+    """True if *record* has been revoked (its status may since be ``expired``)."""
+    return (
+        record.revocation_date is not None or record.status == CertificateStatus.REVOKED
+    )
+
+
+def is_listed_in_crl(record: CertificateRecord) -> bool:
+    """
+    True if *record* still belongs on the CRL: revoked and not yet expired.
+
+    Such rows are the only source of CRL entries, so deleting one would make
+    a revoked certificate trusted again by CRL-based relying parties.
+    """
+    return is_revoked(record) and record.not_valid_after > utc_now_naive()

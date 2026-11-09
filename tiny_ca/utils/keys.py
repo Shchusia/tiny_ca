@@ -12,7 +12,14 @@ from __future__ import annotations
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519, rsa
 
-from tiny_ca.const import KeyAlgorithm
+from tiny_ca.const import (
+    DEFAULT_KEY_ALGORITHM,
+    DEFAULT_RSA_KEY_SIZE,
+    MAX_RSA_KEY_SIZE,
+    MIN_RSA_KEY_SIZE,
+    KeyAlgorithm,
+)
+from tiny_ca.settings import DEFAULT_LOGGER
 
 #: Private key types this library can generate, store, load and sign with.
 PrivateKey = rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey | ed25519.Ed25519PrivateKey
@@ -39,7 +46,8 @@ _CURVES: dict[KeyAlgorithm, ec.EllipticCurve] = {
 
 
 def generate_private_key(
-    algorithm: KeyAlgorithm = KeyAlgorithm.RSA, key_size: int = 2048
+    algorithm: KeyAlgorithm = DEFAULT_KEY_ALGORITHM,
+    key_size: int = DEFAULT_RSA_KEY_SIZE,
 ) -> PrivateKey:
     """
     Generate a new private key.
@@ -47,9 +55,10 @@ def generate_private_key(
     Parameters
     ----------
     algorithm : KeyAlgorithm
-        Algorithm of the key pair.  Default: RSA.
+        Algorithm of the key pair.  Default: ECDSA P-384.
     key_size : int
-        RSA modulus length in bits; ignored for EC and Ed25519.
+        RSA modulus length in bits (2048–8192, default 3072); ignored for
+        EC and Ed25519.  Sizes below 3072 log a warning.
 
     Returns
     -------
@@ -59,29 +68,40 @@ def generate_private_key(
     Raises
     ------
     ValueError
-        If *key_size* is below 2048 for RSA.
+        If *key_size* is outside 2048–8192 for RSA.
     """
     if algorithm is KeyAlgorithm.RSA:
-        if key_size < 2048:
-            raise ValueError(f"RSA key_size must be >= 2048, got {key_size}")
+        if not MIN_RSA_KEY_SIZE <= key_size <= MAX_RSA_KEY_SIZE:
+            raise ValueError(
+                f"RSA key_size must be between {MIN_RSA_KEY_SIZE} and "
+                f"{MAX_RSA_KEY_SIZE}, got {key_size}"
+            )
+        if key_size < DEFAULT_RSA_KEY_SIZE:
+            DEFAULT_LOGGER.warning(
+                "RSA-%d is below the recommended %d bits",
+                key_size,
+                DEFAULT_RSA_KEY_SIZE,
+            )
         return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
     if algorithm is KeyAlgorithm.ED25519:
         return ed25519.Ed25519PrivateKey.generate()
     return ec.generate_private_key(_CURVES[algorithm])
 
 
-def signing_hash(private_key: PrivateKey) -> hashes.HashAlgorithm | None:
+def signing_hash(key: PrivateKey | PublicKey) -> hashes.HashAlgorithm | None:
     """
-    Return the digest to use when signing with *private_key*.
+    Return the digest to use when signing with *key* (private or public half).
 
-    Ed25519 signs the message directly (``None``); P-384 uses SHA-384;
-    everything else uses SHA-256.
+    Ed25519 signs the message directly (``None``); P-384 and RSA keys of
+    3072 bits or more use SHA-384; P-256 and smaller RSA keys use SHA-256.
     """
-    if isinstance(private_key, ed25519.Ed25519PrivateKey):
+    if isinstance(key, ed25519.Ed25519PrivateKey | ed25519.Ed25519PublicKey):
         return None
-    if isinstance(private_key, ec.EllipticCurvePrivateKey) and isinstance(
-        private_key.curve, ec.SECP384R1
-    ):
+    if isinstance(key, ec.EllipticCurvePrivateKey | ec.EllipticCurvePublicKey):
+        if isinstance(key.curve, ec.SECP384R1):
+            return hashes.SHA384()
+        return hashes.SHA256()
+    if key.key_size >= DEFAULT_RSA_KEY_SIZE:
         return hashes.SHA384()
     return hashes.SHA256()
 

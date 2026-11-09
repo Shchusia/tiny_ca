@@ -5,41 +5,41 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Search" href="../../../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.storage.local_storage - tiny_ca 0.2.0 documentation</title>
+        <title>tiny_ca.storage.local_storage - tiny_ca 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
-
-
+    
+    
 
 
 <style>
   body {
     --color-code-background: #f2f2f2;
   --color-code-foreground: #1e1e1e;
-
+  
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
       }
     }
   }
 </style></head>
   <body>
-
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
-
+    
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">tiny_ca 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -178,11 +178,11 @@
   </header>
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
-
+      
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
-
-  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
-
+  
+  <span class="sidebar-brand-text">tiny_ca 1.0.0 documentation</span>
+  
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
@@ -193,10 +193,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../high_assurance.html">High-Assurance Deployments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ca_factory.html">ca_factory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/managers.html">Lifecycle Managers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/storage.html">Storage Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/security.html">Signing and Audit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">Configuration Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/exceptions.html">Exceptions</a></li>
@@ -206,7 +208,7 @@
 </div>
 
       </div>
-
+      
     </div>
   </aside>
   <div class="main">
@@ -273,10 +275,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">Logger</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
@@ -312,6 +316,9 @@
 <span class="sd">    ~~~~~~~~~~~~~~~~~~</span>
 <span class="sd">    - Ed25519 private keys cannot be written as ``TraditionalOpenSSL`` — PKCS#8</span>
 <span class="sd">      is used instead.</span>
+<span class="sd">    - Encrypted private keys are always written as PKCS#8: encrypted</span>
+<span class="sd">      ``TraditionalOpenSSL`` PEM derives the key with a single MD5 round</span>
+<span class="sd">      (``EVP_BytesToKey``), which makes offline password guessing cheap.</span>
 <span class="sd">    - The ``PKCS1`` public format only exists for RSA — non-RSA public keys</span>
 <span class="sd">      fall back to ``SubjectPublicKeyInfo``.</span>
 <span class="sd">    """</span>
@@ -346,8 +353,9 @@
             <span class="n">cert</span><span class="p">,</span>
             <span class="p">(</span><span class="n">rsa</span><span class="o">.</span><span class="n">RSAPrivateKey</span><span class="p">,</span> <span class="n">ec</span><span class="o">.</span><span class="n">EllipticCurvePrivateKey</span><span class="p">,</span> <span class="n">ed25519</span><span class="o">.</span><span class="n">Ed25519PrivateKey</span><span class="p">),</span>
         <span class="p">):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">ed25519</span><span class="o">.</span><span class="n">Ed25519PrivateKey</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">private_format</span> <span class="ow">is</span> <span class="n">serialization</span><span class="o">.</span><span class="n">PrivateFormat</span><span class="o">.</span><span class="n">TraditionalOpenSSL</span>
+            <span class="k">if</span> <span class="n">private_format</span> <span class="ow">is</span> <span class="n">serialization</span><span class="o">.</span><span class="n">PrivateFormat</span><span class="o">.</span><span class="n">TraditionalOpenSSL</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">ed25519</span><span class="o">.</span><span class="n">Ed25519PrivateKey</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">encryption_algorithm</span><span class="p">,</span> <span class="n">serialization</span><span class="o">.</span><span class="n">NoEncryption</span><span class="p">)</span>
             <span class="p">):</span>
                 <span class="n">private_format</span> <span class="o">=</span> <span class="n">serialization</span><span class="o">.</span><span class="n">PrivateFormat</span><span class="o">.</span><span class="n">PKCS8</span>
             <span class="k">return</span> <span class="p">(</span>
@@ -404,26 +412,49 @@
     <span class="k">return</span> <span class="n">text</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_fill</span><span class="p">(</span><span class="n">fd</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set *mode* on the open file before writing *data*, then fsync and close."""</span>
+    <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s2">"fchmod"</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">fchmod</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s2">"fchmod"</span><span class="p">):</span>  <span class="c1"># Windows</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_bytes</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">is_overwrite</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Write *data* to *path* with permissions *mode*.</span>
 
 <span class="sd">    Missing parent directories are created.  Without *is_overwrite* the file</span>
-<span class="sd">    is opened with ``O_EXCL`` so an existing file is never replaced.</span>
+<span class="sd">    is created with ``O_EXCL`` so an existing file (or symlink) is never</span>
+<span class="sd">    replaced.  With *is_overwrite* the data goes to a temporary file in the</span>
+<span class="sd">    same directory that is atomically renamed over *path*: readers never see</span>
+<span class="sd">    a truncated file, a pre-existing file's looser permissions are never</span>
+<span class="sd">    applied to the new content, and a symlink at *path* is replaced rather</span>
+<span class="sd">    than followed.  In both cases *mode* is set before any data is written.</span>
 <span class="sd">    """</span>
     <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">O_WRONLY</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_TRUNC</span> <span class="o">|</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s2">"O_BINARY"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">is_overwrite</span><span class="p">:</span>
-        <span class="n">flags</span> <span class="o">|=</span> <span class="n">os</span><span class="o">.</span><span class="n">O_EXCL</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">O_WRONLY</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_EXCL</span> <span class="o">|</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s2">"O_BINARY"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FileAlreadyExists</span><span class="p">(</span><span class="n">path_save_cert</span><span class="o">=</span><span class="n">path</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="n">_fill</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">fd</span><span class="p">,</span> <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span>
+        <span class="nb">dir</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">".tmp"</span>
+    <span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">fd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FileAlreadyExists</span><span class="p">(</span><span class="n">path_save_cert</span><span class="o">=</span><span class="n">path</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
-    <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="c1"># ``mode`` passed to os.open is filtered by the umask and ignored for</span>
-    <span class="c1"># pre-existing files — enforce it explicitly.</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="n">_fill</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">),</span> <span class="n">data</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">)</span>
+        <span class="k">raise</span>
 
 
 <div class="viewcode-block" id="LocalStorage">
@@ -457,7 +488,7 @@
 <span class="sd">        Default encoding for all serialised objects.  Default: PEM.</span>
 <span class="sd">    base_private_format : serialization.PrivateFormat</span>
 <span class="sd">        Default format for private-key files.  Default: ``TraditionalOpenSSL``</span>
-<span class="sd">        (Ed25519 keys always use PKCS#8).</span>
+<span class="sd">        (Ed25519 keys and encrypted keys always use PKCS#8).</span>
 <span class="sd">    base_public_format : serialization.PublicFormat</span>
 <span class="sd">        Default format for public-key files.  Default: ``SubjectPublicKeyInfo``.</span>
 <span class="sd">    base_encryption_algorithm : serialization.KeySerializationEncryption</span>
@@ -723,10 +754,10 @@
         </article>
       </div>
       <footer>
-
+        
         <div class="related-pages">
-
-
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -734,24 +765,24 @@
                 Copyright &#169; 2026, Denis Shchutskyi
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-
+            
             <a href="https://github.com/pradyunsg/furo">Furo</a>
-
+            
           </div>
           <div class="right-details">
-
+            
           </div>
         </div>
-
+        
       </footer>
     </div>
     <aside class="toc-drawer no-toc">
-
-
-
+      
+      
+      
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+</div><script src="../../../_static/documentation_options.js?v=8d563738"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>

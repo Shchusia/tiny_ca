@@ -95,6 +95,9 @@ standard and its cryptography is not a FIPS 140-3 validated module; see
   `MAX_DAYS_VALID`, `DEFAULT_LEAF_DAYS_VALID`.
 - `tiny_ca.utils.keys.signing_hash(key)` — the digest used for a key.
 - `hsm` extra (included in `all`).
+- `py.typed` marker (PEP 561): type checkers now use the library's
+  annotations instead of treating every tiny-ca object as `Any`.
+- Python 3.14 and 3.15 support (the test suite passes on 3.14.4 and 3.15.2).
 
 ### Changed
 

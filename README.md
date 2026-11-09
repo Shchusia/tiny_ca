@@ -102,7 +102,7 @@ app.include_router(router, prefix="/api/v1")
 
 ## Requirements
 
-- **Python** 3.11 or higher
+- **Python** 3.11 or higher (tested up to 3.15)
 - **Core:** `cryptography >= 46`, `sqlalchemy >= 2`, `pydantic >= 2`
 - **Async extras:** `aiosqlite`
 - **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)

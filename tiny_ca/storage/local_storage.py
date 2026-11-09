@@ -38,10 +38,12 @@ DIP : Consumers depend on ``BaseStorage``; ``LocalStorage`` is injected
 
 from __future__ import annotations
 
+import contextlib
 from logging import Logger
 import os
 from pathlib import Path
 import shutil
+import tempfile
 from uuid import uuid4
 import warnings
 
@@ -77,6 +79,9 @@ class _CertSerializer:
     ~~~~~~~~~~~~~~~~~~
     - Ed25519 private keys cannot be written as ``TraditionalOpenSSL`` — PKCS#8
       is used instead.
+    - Encrypted private keys are always written as PKCS#8: encrypted
+      ``TraditionalOpenSSL`` PEM derives the key with a single MD5 round
+      (``EVP_BytesToKey``), which makes offline password guessing cheap.
     - The ``PKCS1`` public format only exists for RSA — non-RSA public keys
       fall back to ``SubjectPublicKeyInfo``.
     """
@@ -111,8 +116,9 @@ class _CertSerializer:
             cert,
             (rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey, ed25519.Ed25519PrivateKey),
         ):
-            if isinstance(cert, ed25519.Ed25519PrivateKey) and (
-                private_format is serialization.PrivateFormat.TraditionalOpenSSL
+            if private_format is serialization.PrivateFormat.TraditionalOpenSSL and (
+                isinstance(cert, ed25519.Ed25519PrivateKey)
+                or not isinstance(encryption_algorithm, serialization.NoEncryption)
             ):
                 private_format = serialization.PrivateFormat.PKCS8
             return (
@@ -169,26 +175,49 @@ def _validate_component(value: str, *, allow_nested: bool = False) -> str:
     return text
 
 
+def _fill(fd: int, path: Path, data: bytes, mode: int) -> None:
+    """Set *mode* on the open file before writing *data*, then fsync and close."""
+    with os.fdopen(fd, "wb") as fh:
+        if hasattr(os, "fchmod"):
+            os.fchmod(fd, mode)
+        fh.write(data)
+        fh.flush()
+        os.fsync(fh.fileno())
+    if not hasattr(os, "fchmod"):  # Windows
+        os.chmod(path, mode)
+
+
 def _write_bytes(path: Path, data: bytes, is_overwrite: bool, mode: int) -> None:
     """
     Write *data* to *path* with permissions *mode*.
 
     Missing parent directories are created.  Without *is_overwrite* the file
-    is opened with ``O_EXCL`` so an existing file is never replaced.
+    is created with ``O_EXCL`` so an existing file (or symlink) is never
+    replaced.  With *is_overwrite* the data goes to a temporary file in the
+    same directory that is atomically renamed over *path*: readers never see
+    a truncated file, a pre-existing file's looser permissions are never
+    applied to the new content, and a symlink at *path* is replaced rather
+    than followed.  In both cases *mode* is set before any data is written.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_BINARY", 0)
     if not is_overwrite:
-        flags |= os.O_EXCL
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
+        try:
+            fd = os.open(path, flags, mode)
+        except FileExistsError:
+            raise FileAlreadyExists(path_save_cert=path) from None
+        _fill(fd, path, data, mode)
+        return
+    fd, tmp_name = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
+    )
     try:
-        fd = os.open(path, flags, mode)
-    except FileExistsError:
-        raise FileAlreadyExists(path_save_cert=path) from None
-    with os.fdopen(fd, "wb") as fh:
-        fh.write(data)
-    # ``mode`` passed to os.open is filtered by the umask and ignored for
-    # pre-existing files — enforce it explicitly.
-    os.chmod(path, mode)
+        _fill(fd, Path(tmp_name), data, mode)
+        os.replace(tmp_name, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp_name)
+        raise
 
 
 class LocalStorage(BaseStorage):
@@ -220,7 +249,7 @@ class LocalStorage(BaseStorage):
         Default encoding for all serialised objects.  Default: PEM.
     base_private_format : serialization.PrivateFormat
         Default format for private-key files.  Default: ``TraditionalOpenSSL``
-        (Ed25519 keys always use PKCS#8).
+        (Ed25519 keys and encrypted keys always use PKCS#8).
     base_public_format : serialization.PublicFormat
         Default format for public-key files.  Default: ``SubjectPublicKeyInfo``.
     base_encryption_algorithm : serialization.KeySerializationEncryption

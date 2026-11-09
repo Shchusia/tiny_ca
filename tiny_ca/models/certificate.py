@@ -34,10 +34,21 @@ from pydantic import (
     EmailStr,
     Field,
     IPvAnyAddress,
+    IPvAnyNetwork,
     field_validator,
+    model_validator,
 )
 
-from tiny_ca.const import CertType, KeyAlgorithm
+from tiny_ca.const import (
+    DEFAULT_KEY_ALGORITHM,
+    DEFAULT_LEAF_DAYS_VALID,
+    DEFAULT_RSA_KEY_SIZE,
+    MAX_DAYS_VALID,
+    MAX_RSA_KEY_SIZE,
+    MIN_RSA_KEY_SIZE,
+    CertType,
+    KeyAlgorithm,
+)
 
 #: Allowed characters for an explicit storage file basename.
 _SAFE_FILE_NAME = re.compile(r"^[\w.\-]+$")
@@ -108,11 +119,13 @@ class BaseCertificateConfig(BaseModel):
     Attributes
     ----------
     key_size : int
-        RSA key length in bits.  Use ``2048`` for standard security or
-        ``4096`` for long-lived CA certificates.  Default: ``2048``.
+        RSA key length in bits (2048–8192); ignored for EC / Ed25519.
+        Default: ``3072``.
+    key_algorithm : KeyAlgorithm
+        Key pair algorithm.  Default: ECDSA P-384.
     days_valid : int
-        Number of calendar days the certificate should remain valid.
-        Default: ``3650`` (≈10 years; appropriate for a root CA).
+        Number of calendar days the certificate should remain valid
+        (1–36500).  Default: ``3650`` (≈10 years; appropriate for a root CA).
     valid_from : datetime.datetime | None
         Explicit start of the validity period as a timezone-aware
         ``datetime``.  When ``None``, the cryptographic layer uses the
@@ -125,16 +138,19 @@ class BaseCertificateConfig(BaseModel):
     """
 
     key_size: int = Field(
-        default=2048,
-        ge=2048,
-        description="RSA key length in bits (2048 or 4096). Ignored for EC / Ed25519.",
+        default=DEFAULT_RSA_KEY_SIZE,
+        ge=MIN_RSA_KEY_SIZE,
+        le=MAX_RSA_KEY_SIZE,
+        description="RSA key length in bits (2048–8192). Ignored for EC / Ed25519.",
     )
     key_algorithm: KeyAlgorithm = Field(
-        default=KeyAlgorithm.RSA,
+        default=DEFAULT_KEY_ALGORITHM,
         description="Key pair algorithm: RSA, ECDSA P-256 / P-384 or Ed25519.",
     )
     days_valid: int = Field(
         default=3650,
+        ge=1,
+        le=MAX_DAYS_VALID,
         description="Certificate validity period in calendar days.",
     )
     valid_from: datetime | None = Field(
@@ -171,7 +187,7 @@ class CAConfig(BaseCertificateConfig, BaseCertificateDataModel):
     country : str
         C field (ISO 3166-1 alpha-2).  Default: ``"UA"``.
     key_size : int
-        RSA key size in bits.  Default: ``2048``.
+        RSA key size in bits.  Default: ``3072``.
     days_valid : int
         Validity in days.  Default: ``3650``.
     valid_from : datetime | None
@@ -193,9 +209,9 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
         ``CommonNameCertificate``.  Default: ``"Internal CA"``.
     key_size : int
         RSA key size in bits.  Inherited from ``BaseCertificateConfig``.
-        Default: ``2048``.
+        Default: ``3072``.
     days_valid : int
-        Validity period in calendar days.  Default: ``3650``.
+        Validity period in calendar days.  Default: ``365``.
     valid_from : datetime | None
         Explicit validity start.  Default: ``None``.
     serial_type : CertType
@@ -224,6 +240,12 @@ class ClientConfig(CommonNameCertificate, BaseCertificateConfig):
         Default: ``None``.
     """
 
+    days_valid: int = Field(
+        default=DEFAULT_LEAF_DAYS_VALID,
+        ge=1,
+        le=MAX_DAYS_VALID,
+        description="Certificate validity period in calendar days.",
+    )
     serial_type: CertType = Field(
         default=CertType.SERVICE,
         description="Certificate category encoded into the serial number.",
@@ -409,3 +431,47 @@ class CertificateDetails(BaseModel):
         default=None,
         description="Public key algorithm: 'rsa', 'ec-<curve>' or 'ed25519'.",
     )
+
+
+class NameConstraintsConfig(BaseModel):
+    """
+    Name constraints for a subordinate CA (RFC 5280 §4.2.1.10).
+
+    Every certificate below a CA carrying these constraints must use names
+    inside the *permitted* subtrees and outside the *excluded* ones.  Names
+    are matched per type: a constraint on DNS names does not restrict IP
+    addresses, and so on.
+
+    Attributes
+    ----------
+    permitted_dns / excluded_dns : list[str]
+        DNS subtrees.  ``"example.com"`` covers ``example.com`` and all of
+        its sub-domains; ``".example.com"`` covers sub-domains only.
+    permitted_ip / excluded_ip : list[IPvAnyNetwork]
+        IPv4 / IPv6 networks, e.g. ``"10.0.0.0/8"``.
+    permitted_email / excluded_email : list[str]
+        ``"user@host"`` (one mailbox), ``"host"`` (all mailboxes on the
+        host) or ``".host"`` (all mailboxes on sub-domains of the host).
+    """
+
+    permitted_dns: list[str] = Field(default_factory=list)
+    excluded_dns: list[str] = Field(default_factory=list)
+    permitted_ip: list[IPvAnyNetwork] = Field(default_factory=list)
+    excluded_ip: list[IPvAnyNetwork] = Field(default_factory=list)
+    permitted_email: list[str] = Field(default_factory=list)
+    excluded_email: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _not_empty(self) -> NameConstraintsConfig:
+        if not any(
+            (
+                self.permitted_dns,
+                self.excluded_dns,
+                self.permitted_ip,
+                self.excluded_ip,
+                self.permitted_email,
+                self.excluded_email,
+            )
+        ):
+            raise ValueError("at least one permitted or excluded subtree is required")
+        return self

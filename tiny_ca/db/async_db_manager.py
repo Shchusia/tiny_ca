@@ -6,12 +6,13 @@ Asynchronous SQLAlchemy-backed implementation of the certificate registry
 :class:`tiny_ca.db.sync_db_manager.SyncDBHandler`.
 """
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Sequence
 from datetime import datetime, timedelta
 from logging import Logger
+from typing import Any
 
 from cryptography import x509
-from sqlalchemy import Row, asc, delete, desc, select, update
+from sqlalchemy import asc, delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from tiny_ca.const import CertType
@@ -234,7 +235,7 @@ class AsyncDBHandler(BaseDB):
 
     async def get_revoked_certificates(  # type: ignore
         self,
-    ) -> AsyncGenerator[Row[tuple[str, datetime, str]], None]:
+    ) -> AsyncGenerator[Sequence[Any], None]:
         """
         Yield every revoked certificate that has not yet expired.
 

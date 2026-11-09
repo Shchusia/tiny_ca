@@ -17,7 +17,7 @@ from tiny_ca.models.certificate import CertificateInfo
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.utils.keys import PRIVATE_KEY_TYPES, PrivateKey
 
-from .file_loader import CAFileLoader
+from .file_loader import CAFileLoader, certificate_info, check_ca_material
 
 
 class AsyncCAFileLoader:
@@ -142,19 +142,15 @@ class AsyncCAFileLoader:
                 "CA key must be RSA, ECDSA (P-256 / P-384) or Ed25519, "
                 f"got {type(ca_key).__name__}"
             )
+        check_ca_material(
+            ca_cert,
+            cast(PrivateKey, ca_key).public_key(),
+            Path(self._ca_cert_path),
+            Path(self._ca_key_path),
+            self._logger,
+        )
         return ca_cert, cast(PrivateKey, ca_key)
 
     def _extract_info(self) -> CertificateInfo:
-        # assert self._ca_cert is not None
-
-        def _attr(oid: ObjectIdentifier) -> str | None:
-            attrs = self._ca_cert.subject.get_attributes_for_oid(oid)  # type: ignore[union-attr]
-            return cast(str, attrs[0].value) if attrs else None
-
-        return CertificateInfo(
-            organization=_attr(NameOID.ORGANIZATION_NAME),
-            organizational_unit=_attr(NameOID.ORGANIZATIONAL_UNIT_NAME),
-            country=_attr(NameOID.COUNTRY_NAME),
-            state=_attr(NameOID.STATE_OR_PROVINCE_NAME),
-            locality=_attr(NameOID.LOCALITY_NAME),
-        )
+        """Subject attributes of the loaded CA certificate."""
+        return certificate_info(self._ca_cert)  # type: ignore[arg-type]

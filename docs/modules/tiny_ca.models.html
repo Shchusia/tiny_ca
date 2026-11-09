@@ -6,41 +6,41 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca.models package - tiny_ca 0.2.0 documentation</title>
+        <title>tiny_ca.models package - tiny_ca 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-
-
+    
+    
 
 
 <style>
   body {
     --color-code-background: #f2f2f2;
   --color-code-foreground: #1e1e1e;
-
+  
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
       }
     }
   }
 </style></head>
   <body>
-
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
-
+    
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">tiny_ca 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -179,11 +179,11 @@
   </header>
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
-
+      
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
-
-  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
-
+  
+  <span class="sidebar-brand-text">tiny_ca 1.0.0 documentation</span>
+  
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
@@ -194,10 +194,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../high_assurance.html">High-Assurance Deployments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ca_factory.html">ca_factory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="managers.html">Lifecycle Managers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="storage.html">Storage Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security.html">Signing and Audit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Configuration Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
@@ -207,7 +209,7 @@
 </div>
 
       </div>
-
+      
     </div>
   </aside>
   <div class="main">
@@ -259,7 +261,7 @@ Passed directly to <code class="docutils literal notranslate"><span class="pre">
 </dd>
 <dt>country<span class="classifier">str</span></dt><dd><p>C field (ISO 3166-1 alpha-2).  Default: <code class="docutils literal notranslate"><span class="pre">&quot;UA&quot;</span></code>.</p>
 </dd>
-<dt>key_size<span class="classifier">int</span></dt><dd><p>RSA key size in bits.  Default: <code class="docutils literal notranslate"><span class="pre">2048</span></code>.</p>
+<dt>key_size<span class="classifier">int</span></dt><dd><p>RSA key size in bits.  Default: <code class="docutils literal notranslate"><span class="pre">3072</span></code>.</p>
 </dd>
 <dt>days_valid<span class="classifier">int</span></dt><dd><p>Validity in days.  Default: <code class="docutils literal notranslate"><span class="pre">3650</span></code>.</p>
 </dd>
@@ -272,7 +274,7 @@ validated to form a valid model.</p>
 <p><cite>self</cite> is explicitly positional-only to allow <cite>self</cite> as a field name.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.models.CAConfig.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.models.CAConfig.model_config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.models.CAConfig.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
@@ -311,8 +313,8 @@ validated to form a valid model.</p>
 <li><p><strong>is_client_cert</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 <li><p><strong>is_server_cert</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 <li><p><strong>san_dns</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic v0.0.0)"><em>IPvAnyAddress</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>email</strong> (<a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.EmailStr" title="(in Pydantic v0.0.0)"><em>EmailStr</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>san_ip</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic v0.0.0)"><em>IPvAnyAddress</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>email</strong> (<a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.EmailStr" title="(in Pydantic v0.0.0)"><em>EmailStr</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -333,7 +335,7 @@ validated to form a valid model.</p>
 <dt class="sig sig-object py" id="tiny_ca.models.ClientConfig.key_size">
 <span class="sig-name descname"><span class="pre">key_size</span></span><a class="headerlink" href="#tiny_ca.models.ClientConfig.key_size" title="Link to this definition">¶</a></dt>
 <dd><p>RSA key size in bits.  Inherited from <code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code>.
-Default: <code class="docutils literal notranslate"><span class="pre">2048</span></code>.</p>
+Default: <code class="docutils literal notranslate"><span class="pre">3072</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
@@ -344,7 +346,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">2048</span
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.models.ClientConfig.days_valid">
 <span class="sig-name descname"><span class="pre">days_valid</span></span><a class="headerlink" href="#tiny_ca.models.ClientConfig.days_valid" title="Link to this definition">¶</a></dt>
-<dd><p>Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">3650</span></code>.</p>
+<dd><p>Validity period in calendar days.  Default: <code class="docutils literal notranslate"><span class="pre">365</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)">int</a></p>
@@ -456,43 +458,146 @@ validated to form a valid model.</p>
 <p><cite>self</cite> is explicitly positional-only to allow <cite>self</cite> as a field name.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">email</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.EmailStr" title="(in Pydantic v0.0.0)"><span class="pre">EmailStr</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">days_valid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">is_client_cert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></span><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">email</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.EmailStr" title="(in Pydantic v0.0.0)"><span class="pre">EmailStr</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id2">
-<span class="sig-name descname"><span class="pre">is_server_cert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></span><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">is_client_cert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></span><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">is_server_cert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></span><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="tiny_ca.models.ClientConfig.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.models.ClientConfig.model_config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#tiny_ca.models.ClientConfig.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="id3">
-<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="id4">
-<span class="sig-name descname"><span class="pre">san_dns</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id5">
-<span class="sig-name descname"><span class="pre">san_ip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic v0.0.0)"><span class="pre">IPvAnyAddress</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">san_dns</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id6">
-<span class="sig-name descname"><span class="pre">serial_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType" title="tiny_ca.const.CertType"><span class="pre">CertType</span></a></span><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">san_ip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.IPvAnyAddress" title="(in Pydantic v0.0.0)"><span class="pre">IPvAnyAddress</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">serial_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType" title="tiny_ca.const.CertType"><span class="pre">CertType</span></a></span><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">tiny_ca.models.</span></span><span class="sig-name descname"><span class="pre">NameConstraintsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tiny_ca/models/certificate.html#NameConstraintsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/base_model/#pydantic.BaseModel" title="(in Pydantic v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></a></p>
+<p>Name constraints for a subordinate CA (RFC 5280 §4.2.1.10).</p>
+<p>Every certificate below a CA carrying these constraints must use names
+inside the <em>permitted</em> subtrees and outside the <em>excluded</em> ones.  Names
+are matched per type: a constraint on DNS names does not restrict IP
+addresses, and so on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>permitted_dns</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>]</em>)</p></li>
+<li><p><strong>excluded_dns</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>]</em>)</p></li>
+<li><p><strong>permitted_ip</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.IPvAnyNetwork" title="(in Pydantic v0.0.0)"><em>IPvAnyNetwork</em></a><em>]</em>)</p></li>
+<li><p><strong>excluded_ip</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.IPvAnyNetwork" title="(in Pydantic v0.0.0)"><em>IPvAnyNetwork</em></a><em>]</em>)</p></li>
+<li><p><strong>permitted_email</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>]</em>)</p></li>
+<li><p><strong>excluded_email</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">permitted_dns</span> <span class="pre">/</span> <span class="pre">excluded_dns</span></span></dt>
+<dd><p>DNS subtrees.  <code class="docutils literal notranslate"><span class="pre">&quot;example.com&quot;</span></code> covers <code class="docutils literal notranslate"><span class="pre">example.com</span></code> and all of
+its sub-domains; <code class="docutils literal notranslate"><span class="pre">&quot;.example.com&quot;</span></code> covers sub-domains only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)">list</a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">permitted_ip</span> <span class="pre">/</span> <span class="pre">excluded_ip</span></span></dt>
+<dd><p>IPv4 / IPv6 networks, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;10.0.0.0/8&quot;</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)">list</a>[IPvAnyNetwork]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">permitted_email</span> <span class="pre">/</span> <span class="pre">excluded_email</span></span></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">&quot;user&#64;host&quot;</span></code> (one mailbox), <code class="docutils literal notranslate"><span class="pre">&quot;host&quot;</span></code> (all mailboxes on the
+host) or <code class="docutils literal notranslate"><span class="pre">&quot;.host&quot;</span></code> (all mailboxes on sub-domains of the host).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)">list</a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises [<cite>ValidationError</cite>][pydantic_core.ValidationError] if the input data cannot be
+validated to form a valid model.</p>
+<p><cite>self</cite> is explicitly positional-only to allow <cite>self</cite> as a field name.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.excluded_dns">
+<span class="sig-name descname"><span class="pre">excluded_dns</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.excluded_dns" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.excluded_email">
+<span class="sig-name descname"><span class="pre">excluded_email</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.excluded_email" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.excluded_ip">
+<span class="sig-name descname"><span class="pre">excluded_ip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.IPvAnyNetwork" title="(in Pydantic v0.0.0)"><span class="pre">IPvAnyNetwork</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.excluded_ip" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/config/#pydantic.config.ConfigDict" title="(in Pydantic v0.0.0)"><span class="pre">ConfigDict</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.permitted_dns">
+<span class="sig-name descname"><span class="pre">permitted_dns</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.permitted_dns" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.permitted_email">
+<span class="sig-name descname"><span class="pre">permitted_email</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.permitted_email" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tiny_ca.models.NameConstraintsConfig.permitted_ip">
+<span class="sig-name descname"><span class="pre">permitted_ip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pydantic.dev/latest/api/pydantic/networks/#pydantic.networks.IPvAnyNetwork" title="(in Pydantic v0.0.0)"><span class="pre">IPvAnyNetwork</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#tiny_ca.models.NameConstraintsConfig.permitted_ip" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -505,22 +610,23 @@ validated to form a valid model.</p>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#class-hierarchy">Class hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.key_size"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.key_algorithm"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_algorithm</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.days_valid"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.days_valid</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.valid_from"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id0"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.days_valid</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.key_algorithm"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_algorithm</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id1"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id1"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_algorithm</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id2"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.key_size</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateConfig.model_config"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id2"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id3"><code class="docutils literal notranslate"><span class="pre">BaseCertificateConfig.valid_from</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.common_name"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.common_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.organization"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.country"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id3"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id4"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.country</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.BaseCertificateDataModel.model_config"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id4"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id5"><code class="docutils literal notranslate"><span class="pre">BaseCertificateDataModel.organization</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CAConfig"><code class="docutils literal notranslate"><span class="pre">CAConfig</span></code></a><ul>
@@ -553,12 +659,12 @@ validated to form a valid model.</p>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.country"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.state"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.locality"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id5"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id6"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id6"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.country</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id7"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.locality</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CertificateInfo.model_config"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id7"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organization</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id8"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organizational_unit</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id9"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id8"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id9"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.organizational_unit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id10"><code class="docutils literal notranslate"><span class="pre">CertificateInfo.state</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig"><code class="docutils literal notranslate"><span class="pre">ClientConfig</span></code></a><ul>
@@ -573,20 +679,31 @@ validated to form a valid model.</p>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.san_ip"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.email"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id10"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id11"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id12"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id11"><code class="docutils literal notranslate"><span class="pre">ClientConfig.days_valid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id12"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id13"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id14"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.ClientConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ClientConfig.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id13"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id14"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id15"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id16"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id15"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id16"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id17"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id18"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate.common_name"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id17"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#id19"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.common_name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.CommonNameCertificate.model_config"><code class="docutils literal notranslate"><span class="pre">CommonNameCertificate.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.excluded_dns"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.excluded_email"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.excluded_ip"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.model_config"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.permitted_dns"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.permitted_email"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.certificate.html#tiny_ca.models.certificate.NameConstraintsConfig.permitted_ip"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_ip</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -599,10 +716,10 @@ validated to form a valid model.</p>
         </article>
       </div>
       <footer>
-
+        
         <div class="related-pages">
-
-
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -610,20 +727,20 @@ validated to form a valid model.</p>
                 Copyright &#169; 2026, Denis Shchutskyi
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-
+            
             <a href="https://github.com/pradyunsg/furo">Furo</a>
-
+            
           </div>
           <div class="right-details">
-
+            
           </div>
         </div>
-
+        
       </footer>
     </div>
     <aside class="toc-drawer">
-
-
+      
+      
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
@@ -650,14 +767,25 @@ validated to form a valid model.</p>
 <li><a class="reference internal" href="#tiny_ca.models.ClientConfig.san_ip"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.models.ClientConfig.email"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.models.ClientConfig.name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
-<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
-<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">ClientConfig.days_valid</span></code></a></li>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
 <li><a class="reference internal" href="#tiny_ca.models.ClientConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ClientConfig.model_config</span></code></a></li>
-<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
-<li><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
-<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
+<li><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
+<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig</span></code></a><ul>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.excluded_dns"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_dns</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.excluded_email"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_email</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.excluded_ip"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_ip</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.model_config"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.model_config</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.permitted_dns"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_dns</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.permitted_email"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_email</span></code></a></li>
+<li><a class="reference internal" href="#tiny_ca.models.NameConstraintsConfig.permitted_ip"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_ip</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
@@ -668,11 +796,11 @@ validated to form a valid model.</p>
           </div>
         </div>
       </div>
-
-
+      
+      
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=938c9ccc"></script>
+</div><script src="../_static/documentation_options.js?v=8d563738"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

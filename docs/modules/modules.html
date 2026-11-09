@@ -6,41 +6,41 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>tiny_ca - tiny_ca 0.2.0 documentation</title>
+        <title>tiny_ca - tiny_ca 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
-
-
+    
+    
 
 
 <style>
   body {
     --color-code-background: #f2f2f2;
   --color-code-foreground: #1e1e1e;
-
+  
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
-
+  
       }
     }
   }
 </style></head>
   <body>
-
+    
     <script>
       document.body.dataset.theme = localStorage.getItem("theme") || "auto";
     </script>
-
+    
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
   <symbol id="svg-toc" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">tiny_ca 0.2.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">tiny_ca 1.0.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -179,11 +179,11 @@
   </header>
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
-
+      
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
-
-  <span class="sidebar-brand-text">tiny_ca 0.2.0 documentation</span>
-
+  
+  <span class="sidebar-brand-text">tiny_ca 1.0.0 documentation</span>
+  
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
@@ -194,10 +194,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../high_assurance.html">High-Assurance Deployments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ca_factory.html">ca_factory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="managers.html">Lifecycle Managers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="storage.html">Storage Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="db.html">Database Layer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security.html">Signing and Audit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Configuration Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
@@ -207,7 +209,7 @@
 </div>
 
       </div>
-
+      
     </div>
   </aside>
   <div class="main">
@@ -244,6 +246,14 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tiny_ca.html">tiny_ca package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.AuditLog"><code class="docutils literal notranslate"><span class="pre">AuditLog</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.AuditLog.__init__"><code class="docutils literal notranslate"><span class="pre">AuditLog.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.AuditLog.entries"><code class="docutils literal notranslate"><span class="pre">AuditLog.entries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.AuditLog.head"><code class="docutils literal notranslate"><span class="pre">AuditLog.head</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.AuditLog.record"><code class="docutils literal notranslate"><span class="pre">AuditLog.record()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.AuditLog.verify"><code class="docutils literal notranslate"><span class="pre">AuditLog.verify()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB"><code class="docutils literal notranslate"><span class="pre">BaseDB</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.delete_by_uuid"><code class="docutils literal notranslate"><span class="pre">BaseDB.delete_by_uuid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.BaseDB.get_by_name"><code class="docutils literal notranslate"><span class="pre">BaseDB.get_by_name()</span></code></a></li>
@@ -272,6 +282,12 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CAFileLoader.ca_key"><code class="docutils literal notranslate"><span class="pre">CAFileLoader.ca_key</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.CASigner"><code class="docutils literal notranslate"><span class="pre">CASigner</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CASigner.__init__"><code class="docutils literal notranslate"><span class="pre">CASigner.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CASigner.public_key"><code class="docutils literal notranslate"><span class="pre">CASigner.public_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CASigner.sign"><code class="docutils literal notranslate"><span class="pre">CASigner.sign()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime"><code class="docutils literal notranslate"><span class="pre">CertLifetime</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.compute"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertLifetime.compute_async"><code class="docutils literal notranslate"><span class="pre">CertLifetime.compute_async()</span></code></a></li>
@@ -295,6 +311,8 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.abuild_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.abuild_crl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.build_crl"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_crl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.build_self_signed_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.build_self_signed_ca_with_signer"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.build_self_signed_ca_with_signer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.certify_intermediate_ca"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.certify_intermediate_ca()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.cosign_certificate"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.cosign_certificate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.export_pkcs12"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.export_pkcs12()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.CertificateFactory.get_cert_chain"><code class="docutils literal notranslate"><span class="pre">CertificateFactory.get_cert_chain()</span></code></a></li>
@@ -341,14 +359,15 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ClientConfig.san_ip"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ClientConfig.email"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ClientConfig.name"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id0"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id2"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id3"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id0"><code class="docutils literal notranslate"><span class="pre">ClientConfig.days_valid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id2"><code class="docutils literal notranslate"><span class="pre">ClientConfig.email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id3"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_client_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id4"><code class="docutils literal notranslate"><span class="pre">ClientConfig.is_server_cert</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ClientConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ClientConfig.model_config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id4"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id5"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id6"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id7"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id5"><code class="docutils literal notranslate"><span class="pre">ClientConfig.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id6"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id7"><code class="docutils literal notranslate"><span class="pre">ClientConfig.san_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#id8"><code class="docutils literal notranslate"><span class="pre">ClientConfig.serial_type</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.ICALoader"><code class="docutils literal notranslate"><span class="pre">ICALoader</span></code></a><ul>
@@ -358,6 +377,13 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ICALoader.ca_key"><code class="docutils literal notranslate"><span class="pre">ICALoader.ca_key</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.ISignerCALoader"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ISignerCALoader.__init__"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ISignerCALoader.base_info"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.base_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ISignerCALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.ca_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.ISignerCALoader.ca_signer"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader.ca_signer</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.EC_P256"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.EC_P256</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.EC_P384"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.EC_P384</span></code></a></li>
@@ -365,10 +391,34 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeyAlgorithm.RSA"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm.RSA</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeySigner"><code class="docutils literal notranslate"><span class="pre">KeySigner</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeySigner.__init__"><code class="docutils literal notranslate"><span class="pre">KeySigner.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeySigner.public_key"><code class="docutils literal notranslate"><span class="pre">KeySigner.public_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.KeySigner.sign"><code class="docutils literal notranslate"><span class="pre">KeySigner.sign()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.LocalStorage"><code class="docutils literal notranslate"><span class="pre">LocalStorage</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.LocalStorage.__init__"><code class="docutils literal notranslate"><span class="pre">LocalStorage.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.LocalStorage.delete_certificate_folder"><code class="docutils literal notranslate"><span class="pre">LocalStorage.delete_certificate_folder()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.LocalStorage.save_certificate"><code class="docutils literal notranslate"><span class="pre">LocalStorage.save_certificate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.excluded_dns"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.excluded_email"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.excluded_ip"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.excluded_ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.model_config"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.model_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.permitted_dns"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_dns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.permitted_email"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_email</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.NameConstraintsConfig.permitted_ip"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig.permitted_ip</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.Pkcs11Signer"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.Pkcs11Signer.__init__"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.Pkcs11Signer.close"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer.close()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.Pkcs11Signer.open"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer.open()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.Pkcs11Signer.public_key"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer.public_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.Pkcs11Signer.sign"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer.sign()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.RevokeStatus"><code class="docutils literal notranslate"><span class="pre">RevokeStatus</span></code></a><ul>
@@ -383,6 +433,14 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SerialWithEncoding.RANDOM_BITS"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.RANDOM_BITS</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SerialWithEncoding.generate"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.generate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SerialWithEncoding.parse"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding.parse()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.SignerCALoader"><code class="docutils literal notranslate"><span class="pre">SignerCALoader</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SignerCALoader.__init__"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SignerCALoader.base_info"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.base_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SignerCALoader.ca_cert"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.ca_cert</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SignerCALoader.ca_signer"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.ca_signer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.html#tiny_ca.SignerCALoader.from_pkcs11"><code class="docutils literal notranslate"><span class="pre">SignerCALoader.from_pkcs11()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#tiny_ca.SyncDBHandler"><code class="docutils literal notranslate"><span class="pre">SyncDBHandler</span></code></a><ul>
@@ -405,7 +463,9 @@
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertLifetime"><code class="docutils literal notranslate"><span class="pre">CertLifetime</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.CertificateFactory"><code class="docutils literal notranslate"><span class="pre">CertificateFactory</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.ICALoader"><code class="docutils literal notranslate"><span class="pre">ICALoader</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.ISignerCALoader"><code class="docutils literal notranslate"><span class="pre">ISignerCALoader</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.SerialWithEncoding"><code class="docutils literal notranslate"><span class="pre">SerialWithEncoding</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#tiny_ca.ca_factory.SignerCALoader"><code class="docutils literal notranslate"><span class="pre">SignerCALoader</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.ca_factory.html#submodules">Submodules</a></li>
 </ul>
@@ -428,6 +488,7 @@
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.models.html">tiny_ca.models package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.html#tiny_ca.models.CAConfig"><code class="docutils literal notranslate"><span class="pre">CAConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.html#tiny_ca.models.ClientConfig"><code class="docutils literal notranslate"><span class="pre">ClientConfig</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.html#tiny_ca.models.NameConstraintsConfig"><code class="docutils literal notranslate"><span class="pre">NameConstraintsConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.models.html#submodules">Submodules</a></li>
 </ul>
 </li>
@@ -444,16 +505,31 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="tiny_ca.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.audit.html">tiny_ca.audit module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.audit.html#tiny_ca.audit.AuditLog"><code class="docutils literal notranslate"><span class="pre">AuditLog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.audit.html#tiny_ca.audit.GENESIS_HASH"><code class="docutils literal notranslate"><span class="pre">GENESIS_HASH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.audit.html#tiny_ca.audit.certificate_fields"><code class="docutils literal notranslate"><span class="pre">certificate_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.audit.html#tiny_ca.audit.crl_fields"><code class="docutils literal notranslate"><span class="pre">crl_fields()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.const.html">tiny_ca.const module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#module-level-contents">Module-level contents</a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.ALLOWED_CERT_EXTENSIONS"><code class="docutils literal notranslate"><span class="pre">ALLOWED_CERT_EXTENSIONS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.CertType"><code class="docutils literal notranslate"><span class="pre">CertType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.DEFAULT_KEY_ALGORITHM"><code class="docutils literal notranslate"><span class="pre">DEFAULT_KEY_ALGORITHM</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.DEFAULT_LEAF_DAYS_VALID"><code class="docutils literal notranslate"><span class="pre">DEFAULT_LEAF_DAYS_VALID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.DEFAULT_RSA_KEY_SIZE"><code class="docutils literal notranslate"><span class="pre">DEFAULT_RSA_KEY_SIZE</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.KeyAlgorithm"><code class="docutils literal notranslate"><span class="pre">KeyAlgorithm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.MAX_DAYS_VALID"><code class="docutils literal notranslate"><span class="pre">MAX_DAYS_VALID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.MAX_RSA_KEY_SIZE"><code class="docutils literal notranslate"><span class="pre">MAX_RSA_KEY_SIZE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.const.html#tiny_ca.const.MIN_RSA_KEY_SIZE"><code class="docutils literal notranslate"><span class="pre">MIN_RSA_KEY_SIZE</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.exc.html">tiny_ca.exc module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.AuditLogError"><code class="docutils literal notranslate"><span class="pre">AuditLogError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertNotFound"><code class="docutils literal notranslate"><span class="pre">CertNotFound</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertRevocationError"><code class="docutils literal notranslate"><span class="pre">CertRevocationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CertificateRevokedError"><code class="docutils literal notranslate"><span class="pre">CertificateRevokedError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.CryptoException"><code class="docutils literal notranslate"><span class="pre">CryptoException</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBNotInitedError"><code class="docutils literal notranslate"><span class="pre">DBNotInitedError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.DBOperationError"><code class="docutils literal notranslate"><span class="pre">DBOperationError</span></code></a></li>
@@ -462,13 +538,24 @@
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidPathError"><code class="docutils literal notranslate"><span class="pre">InvalidPathError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.InvalidRangeTimeCertificate"><code class="docutils literal notranslate"><span class="pre">InvalidRangeTimeCertificate</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.IsNotFile"><code class="docutils literal notranslate"><span class="pre">IsNotFile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NameConstraintViolation"><code class="docutils literal notranslate"><span class="pre">NameConstraintViolation</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotExistCertFile"><code class="docutils literal notranslate"><span class="pre">NotExistCertFile</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.NotUniqueCertOwner"><code class="docutils literal notranslate"><span class="pre">NotUniqueCertOwner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.SignerError"><code class="docutils literal notranslate"><span class="pre">SignerError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.ValidationCertError"><code class="docutils literal notranslate"><span class="pre">ValidationCertError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="tiny_ca.exc.html#tiny_ca.exc.WrongType"><code class="docutils literal notranslate"><span class="pre">WrongType</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="tiny_ca.settings.html">tiny_ca.settings module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tiny_ca.signing.html">tiny_ca.signing module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.CASigner"><code class="docutils literal notranslate"><span class="pre">CASigner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.KeySigner"><code class="docutils literal notranslate"><span class="pre">KeySigner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.Pkcs11Signer"><code class="docutils literal notranslate"><span class="pre">Pkcs11Signer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.sign_builder"><code class="docutils literal notranslate"><span class="pre">sign_builder()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.sign_bytes"><code class="docutils literal notranslate"><span class="pre">sign_bytes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tiny_ca.signing.html#tiny_ca.signing.verify_signature"><code class="docutils literal notranslate"><span class="pre">verify_signature()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -480,10 +567,10 @@
         </article>
       </div>
       <footer>
-
+        
         <div class="related-pages">
-
-
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -491,24 +578,24 @@
                 Copyright &#169; 2026, Denis Shchutskyi
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-
+            
             <a href="https://github.com/pradyunsg/furo">Furo</a>
-
+            
           </div>
           <div class="right-details">
-
+            
           </div>
         </div>
-
+        
       </footer>
     </div>
     <aside class="toc-drawer no-toc">
-
-
-
+      
+      
+      
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=938c9ccc"></script>
+</div><script src="../_static/documentation_options.js?v=8d563738"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

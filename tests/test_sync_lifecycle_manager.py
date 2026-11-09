@@ -11,29 +11,16 @@ Run with:
 from __future__ import annotations
 
 import datetime
-from unittest.mock import MagicMock, patch
-
-import pytest
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import NameOID
-
-from tiny_ca.db.const import CertificateStatus
-from tiny_ca.exc import ValidationCertError
-
-import datetime
 import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.x509.oid import NameOID
+import pytest
 
 from tiny_ca.ca_factory import CertificateFactory
 from tiny_ca.const import CertType
@@ -50,7 +37,6 @@ from tiny_ca.models.certificate import CAConfig, ClientConfig
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage.base_storage import BaseStorage
 from tiny_ca.storage.local_storage import LocalStorage
-
 
 # ---------------------------------------------------------------------------
 # Shared real crypto fixtures
@@ -150,31 +136,39 @@ def mgr(storage, factory, mock_db):
     return CertLifecycleManager(storage=storage, factory=factory, db_handler=mock_db)
 
 
+def _active_record() -> MagicMock:
+    """A mocked registry row for a VALID, unrevoked certificate."""
+    record = MagicMock()
+    record.revocation_date = None
+    record.status = CertificateStatus.VALID
+    return record
+
+
 def _client_config(**kwargs) -> ClientConfig:
-    defaults = dict(
-        common_name="test.svc",
-        serial_type=CertType.SERVICE,
-        key_size=2048,
-        days_valid=365,
-        email=None,
-        is_server_cert=False,
-        is_client_cert=False,
-        san_dns=None,
-        san_ip=None,
-        name=None,
-    )
+    defaults = {
+        "common_name": "test.svc",
+        "serial_type": CertType.SERVICE,
+        "key_size": 2048,
+        "days_valid": 365,
+        "email": None,
+        "is_server_cert": False,
+        "is_client_cert": False,
+        "san_dns": None,
+        "san_ip": None,
+        "name": None,
+    }
     defaults.update(kwargs)
     return ClientConfig(**defaults)
 
 
 def _ca_config(**kwargs) -> CAConfig:
-    defaults = dict(
-        common_name="Test CA",
-        organization="Test Corp",
-        country="UA",
-        key_size=2048,
-        days_valid=3650,
-    )
+    defaults = {
+        "common_name": "Test CA",
+        "organization": "Test Corp",
+        "country": "UA",
+        "key_size": 2048,
+        "days_valid": 3650,
+    }
     defaults.update(kwargs)
     return CAConfig(**defaults)
 
@@ -320,7 +314,10 @@ class TestIssueCertificate:
     def test_returns_cert_key_csr(self, mgr):
         cert, key, csr = mgr.issue_certificate(_client_config())
         assert isinstance(cert, x509.Certificate)
-        assert isinstance(key, rsa.RSAPrivateKey)
+        assert (
+            isinstance(key, ec.EllipticCurvePrivateKey)
+            and key.curve.name == "secp384r1"
+        )
 
     def test_files_written_to_storage(self, mgr, storage):
         mgr.issue_certificate(_client_config())
@@ -677,7 +674,7 @@ class TestDeleteCertificate:
     """Test delete_certificate method."""
 
     def test_delete_certificate_success(self, mgr, mock_db, storage):
-        mock_record = MagicMock()
+        mock_record = _active_record()
         mock_record.uuid = "test-uuid"
         mock_db.get_by_serial.return_value = mock_record
         mock_db.delete_by_uuid.return_value = True
@@ -696,7 +693,7 @@ class TestDeleteCertificate:
             storage=mock_storage, factory=factory, db_handler=mock_db
         )
 
-        mock_record = MagicMock()
+        mock_record = _active_record()
         mock_record.uuid = "uuid-to-clean"
         mock_db.get_by_serial.return_value = mock_record
         mock_db.delete_by_uuid.return_value = True
@@ -723,7 +720,7 @@ class TestDeleteCertificate:
             storage=mock_storage, factory=factory, db_handler=mock_db
         )
 
-        mock_record = MagicMock()
+        mock_record = _active_record()
         mock_record.uuid = None  # falsy → `if deleted and uuid` evaluates to False
         mock_db.get_by_serial.return_value = mock_record
         mock_db.delete_by_uuid.return_value = True
@@ -748,10 +745,13 @@ class TestIssueIntermediateCA:
 
     def test_issue_intermediate_ca_basic(self, mgr, storage):
         cert, key = mgr.issue_intermediate_ca(
-            common_name="Sync Intermediate", key_size=4096, days_valid=1825
+            common_name="Sync Intermediate", days_valid=1825
         )
         assert isinstance(cert, x509.Certificate)
-        assert isinstance(key, rsa.RSAPrivateKey)
+        assert (
+            isinstance(key, ec.EllipticCurvePrivateKey)
+            and key.curve.name == "secp384r1"
+        )
 
     def test_issue_intermediate_ca_with_custom_params(self, mgr):
         cert, key = mgr.issue_intermediate_ca(
@@ -815,7 +815,7 @@ class TestRenewCertificate:
     def test_renew_certificate_success(self, mgr, mock_db):
         cert, _, _ = mgr.issue_certificate(_client_config(common_name="renew.svc"))
 
-        mock_record = MagicMock()
+        mock_record = _active_record()
         mock_record.certificate_pem = cert.public_bytes(
             serialization.Encoding.PEM
         ).decode("utf-8")

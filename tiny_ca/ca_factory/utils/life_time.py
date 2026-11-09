@@ -15,6 +15,7 @@ from typing import cast
 
 from cryptography import x509
 
+from tiny_ca.const import MAX_DAYS_VALID
 from tiny_ca.exc import InvalidRangeTimeCertificate
 
 
@@ -73,6 +74,10 @@ class CertLifetime:
         >>> start, end = CertLifetime.compute(days_valid=90)
         >>> assert (end - start).days == 90
         """
+        if not 1 <= days_valid <= MAX_DAYS_VALID:
+            raise ValueError(
+                f"days_valid must be between 1 and {MAX_DAYS_VALID}, got {days_valid}"
+            )
         now = datetime.now(UTC)
         # A naive *valid_from* is interpreted as UTC (comparing naive and
         # aware datetimes would raise TypeError).

@@ -9,23 +9,22 @@ Run with:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import MagicMock, patch
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from datetime import UTC, datetime, timedelta
+import pytest
 
 from tiny_ca import CAFileLoader, ICALoader
 from tiny_ca.exc import ErrorLoadCert, IsNotFile, NotExistCertFile, WrongType
 from tiny_ca.models.certificate import CertificateInfo
-
 
 # ---------------------------------------------------------------------------
 # Fixtures: generate a real in-memory CA cert + key, write to tmp PEM files
@@ -272,14 +271,18 @@ class TestCAFileLoaderLoadErrors:
         with pytest.raises(TypeError, match="CA key must be"):
             CAFileLoader(ca_cert_path=cert_file, ca_key_path=key_file)
 
-    def test_ec_key_is_accepted(self, tmp_path, ca_cert):
+    def test_ec_key_is_accepted(self, tmp_path):
         from cryptography.hazmat.primitives import serialization as ser
         from cryptography.hazmat.primitives.asymmetric import ec
 
-        ec_key = ec.generate_private_key(ec.SECP256R1())
+        from tiny_ca import CertificateFactory, KeyAlgorithm
+
+        ec_cert, ec_key = CertificateFactory.build_self_signed_ca(
+            key_algorithm=KeyAlgorithm.EC_P256
+        )
         cert_file = tmp_path / "ca.pem"
         key_file = tmp_path / "ec_key.pem"
-        cert_file.write_bytes(ca_cert.public_bytes(ser.Encoding.PEM))
+        cert_file.write_bytes(ec_cert.public_bytes(ser.Encoding.PEM))
         key_file.write_bytes(
             ec_key.private_bytes(
                 ser.Encoding.PEM,

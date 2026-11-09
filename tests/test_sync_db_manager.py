@@ -9,17 +9,17 @@ Run with:
 
 from __future__ import annotations
 
+from collections.abc import Generator
 import datetime
 import logging
-from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+import pytest
 from sqlalchemy.orm import Session
 
 from tiny_ca.const import CertType
@@ -28,7 +28,6 @@ from tiny_ca.db.models import Base, CertificateRecord
 from tiny_ca.db.sync_db_manager import DatabaseManager, SyncDBHandler
 from tiny_ca.exc import DBOperationError
 from tiny_ca.settings import DEFAULT_LOGGER
-
 
 # ---------------------------------------------------------------------------
 # SQLite in-memory URL used by all tests — fast and isolated

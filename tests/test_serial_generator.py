@@ -20,7 +20,6 @@ from tiny_ca.utils.serial_generator import (
     _PrefixRegistry,
 )
 
-
 # ===========================================================================
 # ISerialGenerator Protocol
 # ===========================================================================
@@ -202,8 +201,8 @@ class TestSerialGeneratorParse:
     def test_parse_unknown_serial_returns_none(self):
         gen = SerialGenerator()
         cert_type, value = gen.parse(0xDEADBEEFCAFE)
-        # prefix may not match any known type
-        assert value is None or cert_type is None or True  # just must not raise
+        assert cert_type is None
+        assert value is None
 
     def test_parse_unregistered_serial_id_map_miss(self):
         gen = SerialGenerator()

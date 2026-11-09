@@ -135,3 +135,32 @@ class InvalidPathError(CryptoException, ValueError):
         message = f"Unsafe path component `{value}`"
         super().__init__(message)
         self.message = message
+
+
+class CertificateRevokedError(CryptoException):
+    """Raised when an operation is not allowed on a revoked certificate."""
+
+    def __init__(self, serial: int, operation: str) -> None:
+        message = f"Cannot {operation} certificate serial={serial}: it is revoked"
+        super().__init__(message)
+        self.message = message
+
+
+class SignerError(CryptoException):
+    """Raised when an external CA signer (e.g. an HSM) fails or misbehaves."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
+class NameConstraintViolation(ValidationCertError):
+    """Raised when a certificate name falls outside an issuer's NameConstraints."""
+
+
+class AuditLogError(CryptoException):
+    """Raised when the audit log cannot be written or fails verification."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message

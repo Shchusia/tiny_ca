@@ -40,18 +40,25 @@ from datetime import UTC, datetime
 from logging import Logger
 from pathlib import Path
 import re
+from typing import Any
 import warnings
 
 from cryptography import x509
 
 from tiny_ca import CertificateRecord
+from tiny_ca.audit import AuditLog, certificate_fields, crl_fields
 from tiny_ca.ca_factory import CertificateFactory
 from tiny_ca.ca_factory.utils.life_time import CertLifetime
-from tiny_ca.const import CertType, KeyAlgorithm
+from tiny_ca.const import DEFAULT_KEY_ALGORITHM, CertType, KeyAlgorithm
 from tiny_ca.db.base_db import BaseDB
 from tiny_ca.db.const import CertificateStatus, RevokeStatus
-from tiny_ca.db.utils import certificate_common_name
+from tiny_ca.db.utils import (
+    certificate_common_name,
+    is_listed_in_crl,
+    is_revoked,
+)
 from tiny_ca.exc import (
+    CertificateRevokedError,
     CertNotFound,
     CertRevocationError,
     DBNotInitedError,
@@ -59,11 +66,16 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certificate import CAConfig, CertificateDetails, ClientConfig
+from tiny_ca.models.certificate import (
+    CAConfig,
+    CertificateDetails,
+    ClientConfig,
+    NameConstraintsConfig,
+)
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage import BaseStorage, LocalStorage
 from tiny_ca.storage.const import CryptoObject
-from tiny_ca.utils.keys import PrivateKey
+from tiny_ca.utils.keys import PrivateKey, PublicKey
 from tiny_ca.utils.serial_generator import SerialWithEncoding
 
 _UNSAFE_FILE_CHARS = re.compile(r"[\\/\x00]")
@@ -105,12 +117,18 @@ class CertLifecycleManager:
         ``DBNotInitedError``.
     logger : Logger | None
         Logger for operational messages.  Falls back to ``DEFAULT_LOGGER``.
+    audit_log : AuditLog | None
+        Tamper-evident audit log.  When set, every state-changing operation
+        (CA creation, issuance, rotation, renewal, co-signing, intermediate
+        CA issuance, revocation, deletion, CRL generation, PKCS#12 export)
+        appends a signed, hash-chained entry.  A failure to write the entry
+        raises ``AuditLogError`` after the operation itself has completed.
 
     Raises
     ------
     TypeError
-        If *storage* is not a ``BaseStorage`` instance, or *db_handler* is
-        provided but is not a ``BaseDB`` instance.
+        If *storage* is not a ``BaseStorage`` instance, or *db_handler* /
+        *audit_log* is provided but has the wrong type.
     """
 
     def __init__(
@@ -119,7 +137,13 @@ class CertLifecycleManager:
         factory: CertificateFactory | None = None,
         db_handler: BaseDB | None = None,
         logger: Logger | None = None,
+        audit_log: AuditLog | None = None,
     ) -> None:
+        if audit_log is not None and not isinstance(audit_log, AuditLog):
+            raise TypeError(
+                f"audit_log must be an AuditLog instance, got {type(audit_log)}"
+            )
+        self._audit_log = audit_log
         if storage is None:
             storage = LocalStorage()
         if not isinstance(storage, BaseStorage):
@@ -207,6 +231,7 @@ class CertLifecycleManager:
             **config.model_dump(), logger=self._logger
         )
         paths, _ = self._store_and_register(
+            event="ca.created",
             artefacts=[(certificate, "ca"), (private_key, "ca")],
             certificate=certificate,
             cert_type=CertType.CA,
@@ -276,6 +301,7 @@ class CertLifecycleManager:
         replaced = self._find_conflict(config.common_name, is_overwrite)
         return self._issue(
             config,
+            event="certificate.issued",
             file_name=file_name,
             cert_path=cert_path,
             uuid_str=uuid_str,
@@ -322,6 +348,14 @@ class CertLifecycleManager:
             )
         else:
             self._logger.info("Certificate serial=%d revoked successfully", serial)
+        self._audit(
+            "certificate.revoked" if is_success else "certificate.revoke_failed",
+            {
+                "serial": str(serial),
+                "reason": reason.value,
+                "status": getattr(status, "value", str(status)),
+            },
+        )
 
         return bool(is_success)
 
@@ -375,6 +409,7 @@ class CertLifecycleManager:
             is_add_uuid=False,
         )
         self._logger.info("CRL saved to %s", path)
+        self._audit("crl.generated", crl_fields(crl))
         return crl
 
     # ------------------------------------------------------------------
@@ -530,6 +565,7 @@ class CertLifecycleManager:
         self._find_conflict(config.common_name, is_overwrite=False, exclude=serial)
         new_cert, new_key, new_csr = self._issue(
             config,
+            event="certificate.rotated",
             file_name=self._derive_file_name(config),
             cert_path=cert_path,
             uuid_str=None,
@@ -564,6 +600,9 @@ class CertLifecycleManager:
             If no ``db_handler`` was provided.
         CertNotFound
             If no record exists for *serial*.
+        CertificateRevokedError
+            If the certificate has been revoked: renewal re-uses its key, so a
+            revoked (possibly compromised) key must never be re-certified.
         CertRevocationError
             If the original could not be revoked (the renewal is rolled back).
         ValueError
@@ -575,6 +614,8 @@ class CertLifecycleManager:
         record = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
         if record is None:
             raise CertNotFound()
+        if is_revoked(record):
+            raise CertificateRevokedError(serial, "renew")
 
         cert_obj = x509.load_pem_x509_certificate(record.certificate_pem.encode())
         renewed = self._factory.renew_certificate(  # type: ignore[union-attr]
@@ -583,6 +624,7 @@ class CertLifecycleManager:
         common_name = certificate_common_name(renewed)
         self._find_conflict(common_name, is_overwrite=False, exclude=serial)
         self._store_and_register(
+            event="certificate.renewed",
             artefacts=[(renewed, safe_file_name(common_name, "renewed"))],
             certificate=renewed,
             cert_type=cert_type_from_record(record),
@@ -625,6 +667,8 @@ class CertLifecycleManager:
 
         Raises
         ------
+        CertificateRevokedError
+            If *cert* was issued by this CA and has been revoked.
         NotUniqueCertOwner
             If the CN already belongs to a VALID certificate and
             *is_overwrite* is ``False``.
@@ -632,6 +676,10 @@ class CertLifecycleManager:
             If registration fails.
         """
         self._require_factory()
+        if self._db:
+            record = self._db.get_by_serial(serial=cert.serial_number)
+            if record is not None and is_revoked(record):
+                raise CertificateRevokedError(cert.serial_number, "co-sign")
         cosigned = self._factory.cosign_certificate(  # type: ignore[union-attr]
             cert=cert,
             days_valid=days_valid,
@@ -642,6 +690,7 @@ class CertLifecycleManager:
         replaced = self._find_conflict(common_name, is_overwrite)
         cert_type = SerialWithEncoding.parse(cosigned.serial_number)[0]
         self._store_and_register(
+            event="certificate.cosigned",
             artefacts=[(cosigned, safe_file_name(common_name, "cosigned"))],
             certificate=cosigned,
             cert_type=cert_type or CertType.SERVICE,
@@ -662,9 +711,14 @@ class CertLifecycleManager:
     ) -> bytes:
         """Pack cert + key into a PKCS#12 bundle. Delegates to the factory."""
         self._require_factory()
-        return self._factory.export_pkcs12(  # type: ignore[union-attr]
+        bundle = self._factory.export_pkcs12(  # type: ignore[union-attr]
             cert=cert, private_key=private_key, password=password, name=name
         )
+        self._audit(
+            "pkcs12.exported",
+            {**certificate_fields(cert), "encrypted": password is not None},
+        )
+        return bundle
 
     def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
         """Return the ``[cert, ca_cert]`` chain. Delegates to the factory."""
@@ -682,8 +736,9 @@ class CertLifecycleManager:
         country: str | None = None,
         cert_path: str | None = None,
         uuid_str: str | None = None,
-        key_algorithm: KeyAlgorithm = KeyAlgorithm.RSA,
+        key_algorithm: KeyAlgorithm = DEFAULT_KEY_ALGORITHM,
         is_overwrite: bool = False,
+        name_constraints: NameConstraintsConfig | None = None,
     ) -> tuple[x509.Certificate, PrivateKey]:
         """
         Issue a subordinate CA signed by this CA, store it and register it.
@@ -708,8 +763,10 @@ class CertLifecycleManager:
             organization=organization,
             country=country,
             key_algorithm=key_algorithm,
+            name_constraints=name_constraints,
         )
         self._store_and_register(
+            event="intermediate_ca.issued",
             artefacts=[(cert, "intermediate_ca"), (key, "intermediate_ca")],
             certificate=cert,
             cert_type=CertType.CA,
@@ -720,6 +777,61 @@ class CertLifecycleManager:
             delete_replaced_folder=True,
         )
         return cert, key
+
+    def certify_intermediate_ca(
+        self,
+        subject_key: x509.CertificateSigningRequest | PublicKey,
+        common_name: str,
+        days_valid: int = 1825,
+        valid_from: datetime | None = None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+        cert_path: str | None = None,
+        uuid_str: str | None = None,
+        is_overwrite: bool = False,
+        name_constraints: NameConstraintsConfig | None = None,
+    ) -> x509.Certificate:
+        """
+        Certify an externally held subordinate CA key and register it.
+
+        *subject_key* is a CSR (its signature is checked) or a public key —
+        typically of a key pair generated inside the subordinate CA's HSM.
+        Only the certificate is stored (``intermediate_ca.pem``); no private
+        key is generated or written.  See
+        ``CertificateFactory.certify_intermediate_ca``.
+
+        Raises
+        ------
+        NotUniqueCertOwner
+            If the CN is in use and *is_overwrite* is ``False``.
+        ValidationCertError
+            If the CSR signature is invalid.
+        """
+        self._require_factory()
+        replaced = self._find_conflict(common_name, is_overwrite)
+        cert: x509.Certificate = self._factory.certify_intermediate_ca(  # type: ignore[union-attr]
+            subject_key=subject_key,
+            common_name=common_name,
+            days_valid=days_valid,
+            valid_from=valid_from,
+            path_length=path_length,
+            organization=organization,
+            country=country,
+            name_constraints=name_constraints,
+        )
+        self._store_and_register(
+            event="intermediate_ca.certified",
+            artefacts=[(cert, "intermediate_ca")],
+            certificate=cert,
+            cert_type=CertType.CA,
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=True,
+        )
+        return cert
 
     def list_certificates(
         self,
@@ -744,15 +856,28 @@ class CertLifecycleManager:
         Hard-delete a certificate from the DB and its artefact folder from storage.
 
         Returns True if the DB row was deleted (storage deletion is best-effort).
+
+        Raises
+        ------
+        CertificateRevokedError
+            If the certificate is revoked and not yet expired: its row is the
+            only source of its CRL entry, so deleting it would make it trusted
+            again by CRL-based relying parties.
         """
         self._require_db()
         record = self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
         if record is None:
             return False
+        if is_listed_in_crl(record):
+            raise CertificateRevokedError(serial, "delete")
         uuid = record.uuid
         deleted = self._db.delete_by_uuid(uuid=uuid)  # type: ignore[union-attr]
         if deleted and uuid:
             self._storage.delete_certificate_folder(uuid_str=uuid, cert_path=cert_path)
+        self._audit(
+            "certificate.deleted",
+            {"serial": str(serial), "uuid": uuid, "deleted": bool(deleted)},
+        )
         return bool(deleted)
 
     def refresh_expired_statuses(self) -> int:
@@ -779,11 +904,13 @@ class CertLifecycleManager:
         is_overwrite: bool,
         replaced: CertificateRecord | None,
         delete_replaced_folder: bool,
+        event: str,
     ) -> tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]:
         certificate, private_key, csr = self._factory.issue_certificate(  # type: ignore[union-attr]
             **config.model_dump(exclude={"name"})
         )
         paths, _ = self._store_and_register(
+            event=event,
             artefacts=[
                 (certificate, file_name),
                 (private_key, file_name),
@@ -841,6 +968,7 @@ class CertLifecycleManager:
         is_overwrite: bool,
         replaced: CertificateRecord | None,
         delete_replaced_folder: bool,
+        event: str,
     ) -> tuple[list[Path], str | None]:
         """
         Persist *artefacts*, register *certificate* and retire *replaced*.
@@ -898,6 +1026,17 @@ class CertLifecycleManager:
                 certificate.serial_number,
                 effective_uuid,
             )
+        self._audit(
+            event,
+            {
+                **certificate_fields(certificate),
+                "cert_type": getattr(cert_type, "value", str(cert_type)),
+                "uuid": effective_uuid,
+                "replaced_serial": (
+                    str(replaced.serial_number) if replaced is not None else None
+                ),
+            },
+        )
         return paths, effective_uuid
 
     def _discard(
@@ -930,6 +1069,11 @@ class CertLifecycleManager:
         made safe by :func:`safe_file_name`.
         """
         return config.name or safe_file_name(config.common_name)
+
+    def _audit(self, event: str, data: dict[str, Any]) -> None:
+        """Append *event* to the audit log, if one is configured."""
+        if self._audit_log is not None:
+            self._audit_log.record(event, data)
 
     def _require_db(self) -> None:
         """Raise ``DBNotInitedError`` if no database handler is configured."""

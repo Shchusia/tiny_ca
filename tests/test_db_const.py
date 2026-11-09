@@ -15,7 +15,6 @@ import pytest
 
 from tiny_ca.db.const import CertificateStatus, RevokeStatus
 
-
 # ===========================================================================
 # RevokeStatus
 # ===========================================================================
@@ -43,7 +42,7 @@ class TestRevokeStatus:
 
     def test_members_are_distinct(self):
         statuses = list(RevokeStatus)
-        assert len(statuses) == len(set(s.value for s in statuses))
+        assert len(statuses) == len({s.value for s in statuses})
 
     def test_enum_lookup_by_value(self):
         assert RevokeStatus("success") == RevokeStatus.OK

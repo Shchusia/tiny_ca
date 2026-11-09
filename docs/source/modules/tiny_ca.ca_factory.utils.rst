@@ -15,4 +15,6 @@ Submodules
    tiny_ca.ca_factory.utils.afile_loader
    tiny_ca.ca_factory.utils.file_loader
    tiny_ca.ca_factory.utils.life_time
+   tiny_ca.ca_factory.utils.name_constraints
    tiny_ca.ca_factory.utils.serial
+   tiny_ca.ca_factory.utils.signer_loader

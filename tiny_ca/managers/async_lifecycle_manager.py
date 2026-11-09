@@ -15,18 +15,25 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from logging import Logger
 from pathlib import Path
+from typing import Any
 import warnings
 
 from cryptography import x509
 
 from tiny_ca import CertificateRecord
+from tiny_ca.audit import AuditLog, certificate_fields, crl_fields
 from tiny_ca.ca_factory import CertificateFactory
 from tiny_ca.ca_factory.utils.life_time import CertLifetime
-from tiny_ca.const import CertType, KeyAlgorithm
+from tiny_ca.const import DEFAULT_KEY_ALGORITHM, CertType, KeyAlgorithm
 from tiny_ca.db.async_db_manager import AsyncDBHandler
 from tiny_ca.db.const import CertificateStatus, RevokeStatus
-from tiny_ca.db.utils import certificate_common_name
+from tiny_ca.db.utils import (
+    certificate_common_name,
+    is_listed_in_crl,
+    is_revoked,
+)
 from tiny_ca.exc import (
+    CertificateRevokedError,
     CertNotFound,
     CertRevocationError,
     DBNotInitedError,
@@ -34,11 +41,16 @@ from tiny_ca.exc import (
     NotUniqueCertOwner,
     ValidationCertError,
 )
-from tiny_ca.models.certificate import CAConfig, CertificateDetails, ClientConfig
+from tiny_ca.models.certificate import (
+    CAConfig,
+    CertificateDetails,
+    ClientConfig,
+    NameConstraintsConfig,
+)
 from tiny_ca.settings import DEFAULT_LOGGER
 from tiny_ca.storage.async_local_storage import AsyncLocalStorage
 from tiny_ca.storage.const import CryptoObject
-from tiny_ca.utils.keys import PrivateKey
+from tiny_ca.utils.keys import PrivateKey, PublicKey
 from tiny_ca.utils.serial_generator import SerialWithEncoding
 
 from .sync_lifecycle_manager import cert_type_from_record, safe_file_name
@@ -58,6 +70,9 @@ class AsyncCertLifecycleManager:
         Async database adapter.
     logger : Logger | None
         Logger for operational messages.  Falls back to ``DEFAULT_LOGGER``.
+    audit_log : AuditLog | None
+        Tamper-evident audit log; see ``CertLifecycleManager``.  Entries are
+        written in a worker thread.
     """
 
     def __init__(
@@ -66,7 +81,13 @@ class AsyncCertLifecycleManager:
         factory: CertificateFactory | None = None,
         db_handler: AsyncDBHandler | None = None,
         logger: Logger | None = None,
+        audit_log: AuditLog | None = None,
     ) -> None:
+        if audit_log is not None and not isinstance(audit_log, AuditLog):
+            raise TypeError(
+                f"audit_log must be an AuditLog instance, got {type(audit_log)}"
+            )
+        self._audit_log = audit_log
         self._storage = storage or AsyncLocalStorage()
         self._db = db_handler
         self._factory = factory
@@ -111,6 +132,7 @@ class AsyncCertLifecycleManager:
             logger=self._logger,
         )
         paths, _ = await self._store_and_register(
+            event="ca.created",
             artefacts=[(certificate, "ca"), (private_key, "ca")],
             certificate=certificate,
             cert_type=CertType.CA,
@@ -142,6 +164,7 @@ class AsyncCertLifecycleManager:
         replaced = await self._find_conflict(config.common_name, is_overwrite)
         return await self._issue(
             config,
+            event="certificate.issued",
             file_name=file_name,
             cert_path=cert_path,
             uuid_str=uuid_str,
@@ -167,6 +190,14 @@ class AsyncCertLifecycleManager:
             )
         else:
             self._logger.info("Certificate serial=%d revoked successfully", serial)
+        await self._audit(
+            "certificate.revoked" if is_success else "certificate.revoke_failed",
+            {
+                "serial": str(serial),
+                "reason": reason.value,
+                "status": getattr(status, "value", str(status)),
+            },
+        )
         return bool(is_success)
 
     async def generate_crl(
@@ -202,6 +233,7 @@ class AsyncCertLifecycleManager:
             is_add_uuid=False,
         )
         self._logger.info("CRL saved to %s", path)
+        await self._audit("crl.generated", crl_fields(crl))
         return crl
 
     # ------------------------------------------------------------------
@@ -294,6 +326,7 @@ class AsyncCertLifecycleManager:
         )
         new_cert, new_key, new_csr = await self._issue(
             config,
+            event="certificate.rotated",
             file_name=await self._derive_file_name(config),
             cert_path=cert_path,
             uuid_str=None,
@@ -315,12 +348,18 @@ class AsyncCertLifecycleManager:
         valid_from: datetime | None = None,
         cert_path: str | None = None,
     ) -> x509.Certificate:
-        """Async version of ``CertLifecycleManager.renew_certificate``."""
+        """
+        Async version of ``CertLifecycleManager.renew_certificate``.
+
+        Raises ``CertificateRevokedError`` if the certificate has been revoked.
+        """
         self._require_db()
         self._require_factory()
         record = await self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
         if record is None:
             raise CertNotFound()
+        if is_revoked(record):
+            raise CertificateRevokedError(serial, "renew")
 
         cert_obj = x509.load_pem_x509_certificate(record.certificate_pem.encode())
         renewed = await asyncio.to_thread(
@@ -332,6 +371,7 @@ class AsyncCertLifecycleManager:
         common_name = certificate_common_name(renewed)
         await self._find_conflict(common_name, is_overwrite=False, exclude=serial)
         await self._store_and_register(
+            event="certificate.renewed",
             artefacts=[(renewed, safe_file_name(common_name, "renewed"))],
             certificate=renewed,
             cert_type=cert_type_from_record(record),
@@ -368,6 +408,10 @@ class AsyncCertLifecycleManager:
     ) -> x509.Certificate:
         """Async version of ``CertLifecycleManager.cosign_certificate``."""
         self._require_factory()
+        if self._db:
+            record = await self._db.get_by_serial(serial=cert.serial_number)
+            if record is not None and is_revoked(record):
+                raise CertificateRevokedError(cert.serial_number, "co-sign")
         cosigned = await asyncio.to_thread(
             self._factory.cosign_certificate,  # type: ignore[union-attr]
             cert=cert,
@@ -379,6 +423,7 @@ class AsyncCertLifecycleManager:
         replaced = await self._find_conflict(common_name, is_overwrite)
         cert_type = SerialWithEncoding.parse(cosigned.serial_number)[0]
         await self._store_and_register(
+            event="certificate.cosigned",
             artefacts=[(cosigned, safe_file_name(common_name, "cosigned"))],
             certificate=cosigned,
             cert_type=cert_type or CertType.SERVICE,
@@ -399,13 +444,18 @@ class AsyncCertLifecycleManager:
     ) -> bytes:
         """Pack cert + key into a PKCS#12 bundle."""
         self._require_factory()
-        return await asyncio.to_thread(
+        bundle = await asyncio.to_thread(
             self._factory.export_pkcs12,  # type: ignore[union-attr]
             cert=cert,
             private_key=private_key,
             password=password,
             name=name,
         )
+        await self._audit(
+            "pkcs12.exported",
+            {**certificate_fields(cert), "encrypted": password is not None},
+        )
+        return bundle
 
     async def get_cert_chain(self, cert: x509.Certificate) -> list[x509.Certificate]:
         """Return the ``[cert, ca_cert]`` chain."""
@@ -423,8 +473,9 @@ class AsyncCertLifecycleManager:
         country: str | None = None,
         cert_path: str | None = None,
         uuid_str: str | None = None,
-        key_algorithm: KeyAlgorithm = KeyAlgorithm.RSA,
+        key_algorithm: KeyAlgorithm = DEFAULT_KEY_ALGORITHM,
         is_overwrite: bool = False,
+        name_constraints: NameConstraintsConfig | None = None,
     ) -> tuple[x509.Certificate, PrivateKey]:
         """Async version of ``CertLifecycleManager.issue_intermediate_ca``."""
         self._require_factory()
@@ -439,8 +490,10 @@ class AsyncCertLifecycleManager:
             organization=organization,
             country=country,
             key_algorithm=key_algorithm,
+            name_constraints=name_constraints,
         )
         await self._store_and_register(
+            event="intermediate_ca.issued",
             artefacts=[(cert, "intermediate_ca"), (key, "intermediate_ca")],
             certificate=cert,
             cert_type=CertType.CA,
@@ -451,6 +504,47 @@ class AsyncCertLifecycleManager:
             delete_replaced_folder=True,
         )
         return cert, key
+
+    async def certify_intermediate_ca(
+        self,
+        subject_key: x509.CertificateSigningRequest | PublicKey,
+        common_name: str,
+        days_valid: int = 1825,
+        valid_from: datetime | None = None,
+        path_length: int | None = 0,
+        organization: str | None = None,
+        country: str | None = None,
+        cert_path: str | None = None,
+        uuid_str: str | None = None,
+        is_overwrite: bool = False,
+        name_constraints: NameConstraintsConfig | None = None,
+    ) -> x509.Certificate:
+        """Async version of ``CertLifecycleManager.certify_intermediate_ca``."""
+        self._require_factory()
+        replaced = await self._find_conflict(common_name, is_overwrite)
+        cert: x509.Certificate = await asyncio.to_thread(
+            self._factory.certify_intermediate_ca,  # type: ignore[union-attr]
+            subject_key=subject_key,
+            common_name=common_name,
+            days_valid=days_valid,
+            valid_from=valid_from,
+            path_length=path_length,
+            organization=organization,
+            country=country,
+            name_constraints=name_constraints,
+        )
+        await self._store_and_register(
+            event="intermediate_ca.certified",
+            artefacts=[(cert, "intermediate_ca")],
+            certificate=cert,
+            cert_type=CertType.CA,
+            cert_path=cert_path,
+            uuid_str=uuid_str,
+            is_overwrite=is_overwrite,
+            replaced=replaced,
+            delete_replaced_folder=True,
+        )
+        return cert
 
     async def list_certificates(
         self,
@@ -473,17 +567,28 @@ class AsyncCertLifecycleManager:
     async def delete_certificate(
         self, serial: int, cert_path: str | None = None
     ) -> bool:
-        """Hard-delete a certificate from the DB and its folder from storage."""
+        """
+        Hard-delete a certificate from the DB and its folder from storage.
+
+        Raises ``CertificateRevokedError`` for a revoked, unexpired certificate
+        (see ``CertLifecycleManager.delete_certificate``).
+        """
         self._require_db()
         record = await self._db.get_by_serial(serial=serial)  # type: ignore[union-attr]
         if record is None:
             return False
+        if is_listed_in_crl(record):
+            raise CertificateRevokedError(serial, "delete")
         uuid = record.uuid
         deleted = await self._db.delete_by_uuid(uuid=uuid)  # type: ignore[union-attr]
         if deleted and uuid:
             await self._storage.delete_certificate_folder(
                 uuid_str=uuid, cert_path=cert_path
             )
+        await self._audit(
+            "certificate.deleted",
+            {"serial": str(serial), "uuid": uuid, "deleted": bool(deleted)},
+        )
         return bool(deleted)
 
     async def refresh_expired_statuses(self) -> int:
@@ -510,12 +615,14 @@ class AsyncCertLifecycleManager:
         is_overwrite: bool,
         replaced: CertificateRecord | None,
         delete_replaced_folder: bool,
+        event: str,
     ) -> tuple[x509.Certificate, PrivateKey, x509.CertificateSigningRequest]:
         certificate, private_key, csr = await asyncio.to_thread(
             self._factory.issue_certificate,  # type: ignore[union-attr]
             **config.model_dump(exclude={"name"}),
         )
         paths, _ = await self._store_and_register(
+            event=event,
             artefacts=[
                 (certificate, file_name),
                 (private_key, file_name),
@@ -566,6 +673,7 @@ class AsyncCertLifecycleManager:
         is_overwrite: bool,
         replaced: CertificateRecord | None,
         delete_replaced_folder: bool,
+        event: str,
     ) -> tuple[list[Path], str | None]:
         """See ``CertLifecycleManager._store_and_register``."""
         paths: list[Path] = []
@@ -610,6 +718,17 @@ class AsyncCertLifecycleManager:
                 await self._storage.delete_certificate_folder(
                     uuid_str=str(replaced.uuid), cert_path=cert_path
                 )
+        await self._audit(
+            event,
+            {
+                **certificate_fields(certificate),
+                "cert_type": getattr(cert_type, "value", str(cert_type)),
+                "uuid": effective_uuid,
+                "replaced_serial": (
+                    str(replaced.serial_number) if replaced is not None else None
+                ),
+            },
+        )
         return paths, effective_uuid
 
     async def _discard(
@@ -639,6 +758,11 @@ class AsyncCertLifecycleManager:
     async def _derive_file_name(config: ClientConfig) -> str:
         """Storage basename: ``config.name`` or the CN made safe."""
         return config.name or safe_file_name(config.common_name)
+
+    async def _audit(self, event: str, data: dict[str, Any]) -> None:
+        """Append *event* to the audit log, if one is configured."""
+        if self._audit_log is not None:
+            await asyncio.to_thread(self._audit_log.record, event, data)
 
     def _require_db(self) -> None:
         if not self._db:

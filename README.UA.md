@@ -1,6 +1,8 @@
 # tiny_ca
 [![Python](https://img.shields.io/pypi/pyversions/tiny-ca)](https://pypi.org/project/tiny-ca/)
 [![PyPI](https://img.shields.io/pypi/v/tiny-ca?color=blue)](https://pypi.org/project/tiny-ca/)
+[![Downloads](https://static.pepy.tech/badge/tiny-ca)](https://pepy.tech/projects/tiny-ca)
+[![Downloads/month](https://static.pepy.tech/badge/tiny-ca/month)](https://pepy.tech/projects/tiny-ca)
 
 [![Coverage Status](https://coveralls.io/repos/github/Shchusia/tiny_ca/badge.svg?branch=feature/docs)](https://coveralls.io/github/Shchusia/tiny_ca?branch=feature/docs)
 [![Docs](https://img.shields.io/badge/Docs-passing-green)](https://shchusia.github.io/tiny_ca/)
@@ -55,6 +57,7 @@ app.include_router(router, prefix="/api/v1")
 - [Архітектура](#архітектура)
 - [Встановлення](#встановлення)
 - [Швидкий старт](#швидкий-старт)
+- [Розгортання з підвищеними вимогами безпеки](#розгортання-з-підвищеними-вимогами-безпеки)
 - [Повні приклади](#повні-приклади)
 - [Моделі конфігурації](#моделі-конфігурації)
 - [Сховища](#сховища)
@@ -65,6 +68,7 @@ app.include_router(router, prefix="/api/v1")
 - [Міграція з інших CA](#міграція-з-інших-ca)
 - [Результати бенчмарків](#результати-бенчмарків)
 - [Структура проєкту](#структура-проєкту)
+- [Модель безпеки](#модель-безпеки)
 - [Безпека](#безпека)
 - [Ліцензія](#ліцензія)
 
@@ -84,7 +88,10 @@ app.include_router(router, prefix="/api/v1")
 | **Ланцюжок** | Побудова `[leaf, ca]` `fullchain.pem` для nginx, Apache або Envoy |
 | **Моніторинг** | Список із фільтрами, сертифікати що спливають, масова позначка прострочених |
 | **Сховище** | `LocalStorage` (sync) і `AsyncLocalStorage` (async) з UUID-ізоляцією, приватними ключами `0600` і захистом від path traversal |
-| **Алгоритми ключів** | RSA (2048+), ECDSA P-256 / P-384, Ed25519 — для CA і для кінцевих сертифікатів |
+| **Алгоритми ключів** | ECDSA P-384 (за замовчуванням), P-256, RSA 2048–8192 (за замовчуванням 3072), Ed25519; підписи SHA-384 для P-384 / RSA ≥ 3072 |
+| **HSM / зовнішні підписувачі** | Ключ CA в HSM чи на смарт-картці через PKCS#11 (`SignerCALoader`, `Pkcs11Signer`) або будь-який `CASigner` (хмарний KMS); кореневі та підлеглі сертифікати CA для ключів, що не покидають токен |
+| **Політики та обмеження імен** | `CertificatePolicies` з посиланням на CPS у кожному сертифікаті; критичне `NameConstraints` (DNS / IP / email) на проміжних CA, перевіряється при видачі та при валідації ланцюжка |
+| **Журнал аудиту** | Підписаний append-only JSONL-журнал із хеш-ланцюжком для кожної операції CA, з офлайн-перевіркою |
 | **База даних** | `SyncDBHandler` (SQLAlchemy) і `AsyncDBHandler` (aiosqlite) — SQLite, PostgreSQL, MySQL |
 | **Паритет API** | `CertLifecycleManager` і `AsyncCertLifecycleManager` мають ідентичний набір методів |
 | **Серійні номери** | `SerialWithEncoding` — 160-бітні RFC 5280, з префіксом типу та фрагментом імені |
@@ -99,6 +106,7 @@ app.include_router(router, prefix="/api/v1")
 - **Async-extras:** `aiosqlite`
 - **PostgreSQL:** `psycopg2-binary` (sync) / `asyncpg` (async)
 - **MySQL:** `pymysql` (sync) / `aiomysql` (async)
+- **HSM:** `python-pkcs11` (`tiny-ca[hsm]`)
 
 ---
 
@@ -111,6 +119,9 @@ CertLifecycleManager / AsyncCertLifecycleManager   ← точка входу
         │       ├── ICALoader (Protocol)
         │       │       ├── CAFileLoader            ← sync PEM-завантажувач
         │       │       └── AsyncCAFileLoader       ← async PEM-завантажувач
+        │       ├── ISignerCALoader (Protocol)
+        │       │       └── SignerCALoader          ← сертифікат CA + CASigner (HSM / KMS)
+        │       ├── CASigner (Protocol)             ← KeySigner, Pkcs11Signer
         │       ├── CertLifetime                    ← утиліти вікна валідності
         │       ├── CertSerialParser                ← читання серійних номерів
         │       └── SerialWithEncoding              ← кодування/декодування серійних номерів
@@ -119,9 +130,11 @@ CertLifecycleManager / AsyncCertLifecycleManager   ← точка входу
         │       ├── LocalStorage                    ← sync файлова система (UUID-ізоляція)
         │       └── AsyncLocalStorage               ← async файлова система (робочі потоки)
         │
-        └── BaseDB (ABC)
-                ├── SyncDBHandler                   ← SQLAlchemy sync
-                └── AsyncDBHandler                  ← SQLAlchemy async (aiosqlite)
+        ├── BaseDB (ABC)
+        │       ├── SyncDBHandler                   ← SQLAlchemy sync
+        │       └── AsyncDBHandler                  ← SQLAlchemy async (aiosqlite)
+        │
+        └── AuditLog                                ← необов'язковий підписаний журнал з хеш-ланцюжком
 ```
 
 Кожен компонент інжектується при конструюванні — жодних глобальних синглтонів, легко тестується і мокується.
@@ -145,6 +158,9 @@ pip install tiny-ca[postgres-async]     # async (asyncpg)
 pip install tiny-ca[mysql]              # sync (pymysql)
 pip install tiny-ca[mysql-async]        # async (aiomysql)
 
+# HSM / смарт-картка (PKCS#11)
+pip install tiny-ca[hsm]
+
 # Все одразу
 pip install tiny-ca[all]
 ```
@@ -167,7 +183,7 @@ mgr = CertLifecycleManager(storage=storage, db_handler=db)
 
 cert_path, key_path = mgr.create_self_signed_ca(
     CAConfig(common_name="Мій кореневий CA", organization="ACME Corp",
-             country="UA", key_size=4096, days_valid=3650)
+             country="UA", days_valid=3650)          # ECDSA P-384 за замовчуванням
 )
 ```
 
@@ -181,6 +197,11 @@ loader = CAFileLoader(ca_cert_path=cert_path, ca_key_path=key_path)
 mgr.factory = CertificateFactory(loader)
 ```
 
+Ключі за замовчуванням — ECDSA P-384 (підписи SHA-384).  `CAConfig` /
+`ClientConfig` приймають `key_algorithm=KeyAlgorithm.RSA` (3072 біти за
+замовчуванням), `EC_P256` або `ED25519`.  Як тримати ключ CA в HSM, див.
+[Розгортання з підвищеними вимогами безпеки](#розгортання-з-підвищеними-вимогами-безпеки).
+
 ### 2. Видача листового сертифіката
 
 ```python
@@ -191,7 +212,6 @@ cert, key, csr = mgr.issue_certificate(
     ClientConfig(
         common_name="nginx.internal",
         serial_type=CertType.SERVICE,
-        key_size=2048,
         days_valid=365,
         is_server_cert=True,
         san_dns=["nginx.internal", "www.nginx.internal"],
@@ -247,6 +267,10 @@ sub_ca_cert, sub_ca_key = mgr.issue_intermediate_ca(
 )
 ```
 
+Передайте `name_constraints=NameConstraintsConfig(...)`, щоб обмежити імена,
+які може сертифікувати проміжний CA.  Якщо його ключ генерується деінде
+(напр. у власному HSM), використовуйте `certify_intermediate_ca(csr, ...)`.
+
 ### 8. Експорт PKCS#12
 
 ```python
@@ -282,7 +306,7 @@ fullchain_pem = b"".join(c.public_bytes(Encoding.PEM) for c in chain)
 records  = mgr.list_certificates(status="valid", key_type="service", limit=50)
 expiring = mgr.get_expiring_soon(within_days=30)
 updated  = mgr.refresh_expired_statuses()   # запускати по розкладу
-mgr.delete_certificate(serial=cert.serial_number)
+mgr.delete_certificate(serial=cert.serial_number)  # відкликаний і не прострочений → CertificateRevokedError (запис лишається в CRL)
 ```
 
 ### 12. Асинхронне використання
@@ -321,6 +345,156 @@ async def main():
 asyncio.run(main())
 ```
 
+## Розгортання з підвищеними вимогами безпеки
+
+Можливості для PKI, що працює за формальною політикою безпеки.  Що вони
+гарантують, а що ні, див. у розділі [Модель безпеки](#модель-безпеки).
+
+### Ключ CA в HSM
+
+Ключ CA може зберігатися в HSM або на смарт-картці й ніколи не
+завантажуватися в процес.  Встановіть extra:
+`pip install 'tiny-ca[hsm]'`.
+
+```python
+import os
+from tiny_ca import CertificateFactory, SignerCALoader
+
+loader = SignerCALoader.from_pkcs11(
+    ca_cert="pki/ca.pem",                         # лише сертифікат, без файлу ключа
+    module_path="/usr/lib/softhsm/libsofthsm2.so",
+    token_label="ca-token",
+    pin=os.environ["CA_TOKEN_PIN"],
+    key_label="root-ca",                          # або key_id=b"\x01"
+)
+mgr.factory = CertificateFactory(loader)
+# ... видача, поновлення, відкликання, CRL — кожен підпис робить токен
+loader.ca_signer.close()                          # завершити сесію PKCS#11
+```
+
+Під час запуску `SignerCALoader` перевіряє три речі:
+- сертифікат є сертифікатом CA;
+- ключ на токені відповідає сертифікату;
+- токен підписує випадковий виклик.
+
+Кожен підпис від токена перевіряється сертифікатом CA, перш ніж сертифікат
+або CRL покине factory.  Будь-який інший бекенд (хмарний KMS, віддалений
+сервіс підпису) підключається через протокол `CASigner`:
+
+```python
+from tiny_ca import CASigner, SignerCALoader
+
+class KmsSigner:                                   # реалізує CASigner
+    def public_key(self):
+        return ca_cert.public_key()
+
+    def sign(self, data: bytes, algorithm) -> bytes:
+        # algorithm: hashes.SHA384() / SHA256(), або None для Ed25519.
+        # Повертає PKCS#1 v1.5 (RSA), DER ECDSA-Sig-Value (EC) або сирий Ed25519.
+        return kms_client.sign(data, algorithm)
+
+loader = SignerCALoader(ca_cert, KmsSigner())
+```
+
+**Ключі, згенеровані на токені.**  Створіть пару ключів засобами токена,
+наприклад `pkcs11-tool --keypairgen --key-type EC:secp384r1 --label root-ca`.
+Потім сертифікуйте її так, щоб ключ ніколи не покидав токен:
+
+```python
+from tiny_ca import Pkcs11Signer
+
+# Кореневий CA: публічний ключ береться з токена (або з CSR, створеного ним).
+signer = Pkcs11Signer.open(module_path, "ca-token", pin,
+                           public_key=token_public_key, key_label="root-ca")
+root_cert = CertificateFactory.build_self_signed_ca_with_signer(
+    signer, common_name="ACME Root CA", organization="ACME", country="UA")
+
+# Підлеглий CA, ключ якого в іншому HSM: сертифікуємо його CSR.
+sub_cert = mgr.certify_intermediate_ca(sub_ca_csr, common_name="ACME Issuing CA")
+```
+
+`certify_intermediate_ca` перевіряє підпис CSR як доказ володіння ключем.
+Subject бере з власних аргументів, ніколи не з CSR.  Зберігає й реєструє
+лише сертифікат.
+
+### Політики сертифікатів і обмеження імен
+
+```python
+from tiny_ca import CertificateFactory, NameConstraintsConfig
+
+mgr.factory = CertificateFactory(
+    loader,
+    certificate_policies=["1.3.6.1.4.1.55555.1.1"],   # OID вашої CP
+    cps_uri="https://pki.example.com/cps",
+)
+
+sub_cert, sub_key = mgr.issue_intermediate_ca(
+    "Issuing CA - example.com",
+    name_constraints=NameConstraintsConfig(
+        permitted_dns=["example.com"],        # example.com і піддомени
+        excluded_dns=["secret.example.com"],
+        permitted_ip=["10.0.0.0/8"],
+        permitted_email=["example.com"],       # скриньки @example.com
+    ),
+)
+```
+
+- `CertificatePolicies` (з необов'язковим посиланням на CPS) додається до
+  кожного сертифіката, який factory видає, поновлює, співпідписує або
+  сертифікує.
+- `NameConstraints` — критичне розширення проміжного CA.  Воно
+  застосовується у двох місцях:
+  - `validate_chain` / `verify_certificate` перевіряють кожен сертифікат
+    під обмеженим CA;
+  - factory, що працює *на* обмеженому CA, відмовляється видавати,
+    поновлювати чи співпідписувати сертифікат із забороненим DNS / IP /
+    email-ім'ям і кидає `NameConstraintViolation`.
+- Wildcard обробляється консервативно: `*.com` відхиляється, якщо
+  `evil.com` виключено.
+- Обмеження для типів імен, які tiny-ca не вміє оцінити (directoryName,
+  URI, otherName, registeredID), спрацьовують як відмова.
+
+### Захищений від підробки журнал аудиту
+
+```python
+from tiny_ca import AuditLog, CertLifecycleManager
+
+audit = AuditLog("/var/log/pki/audit.jsonl",
+                 signer=audit_key,            # окремий ключ або CASigner (HSM)
+                 actor="pki-operator-1")
+mgr = CertLifecycleManager(storage=storage, db_handler=db, factory=factory,
+                           audit_log=audit)
+
+# ... пізніше, напр. щоденною задачею, з head-хешем, збереженим деінде:
+count = AuditLog.verify("/var/log/pki/audit.jsonl",
+                        public_key=audit_key.public_key(),
+                        expected_head=last_published_head)
+```
+
+Кожна операція, що змінює стан, додає один JSON-рядок.  Це створення CA,
+видача, ротація, поновлення, співпідписання, видача або сертифікація
+проміжного CA, відкликання (включно з невдалими спробами), видалення,
+генерація CRL та експорт PKCS#12.  Кожен рядок містить:
+- порядковий номер, час UTC, актора й подію;
+- серійний номер сертифіката, subject, issuer і відбиток SHA-256;
+- хеш попереднього рядка і власний хеш рядка;
+- підпис, якщо налаштовано ключ підпису.
+
+`AuditLog.verify` виявляє змінені, вставлені, переставлені й видалені
+записи.  Щоб виявити видалення *останніх* записів, регулярно публікуйте
+`audit.head` туди, де хост CA не може його переписати (SIEM, тікет, інший
+хост), і передавайте як `expected_head`.
+
+### Значення за замовчуванням
+
+| Параметр | За замовчуванням у 1.0 | Як змінити |
+|---|---|---|
+| Алгоритм ключа | ECDSA P-384 | `key_algorithm=KeyAlgorithm.RSA / EC_P256 / ED25519` |
+| Розмір RSA-ключа | 3072 біти (допустимо 2048–8192, попередження нижче 3072) | `key_size=` |
+| Дайджест підпису | SHA-384 для P-384 і RSA ≥ 3072, SHA-256 для P-256 / RSA-2048 | визначається ключем CA |
+| Строк дії листового сертифіката | 365 днів (допустимо 1–36500) | `days_valid=` |
+| Строк дії CA | 3650 днів; видані сертифікати не переживають CA | `days_valid=` |
+
 ---
 
 ## Повні приклади
@@ -329,10 +503,12 @@ asyncio.run(main())
 |---|---|
 | `examples/complete_example.py` | Sync API — повний lifecycle |
 | `examples/acomplete_example.py` | Async API — повний lifecycle |
+| `examples/high_assurance_example.py` | Підписувач у стилі HSM, політики сертифікатів, підлеглий CA з обмеженнями імен, підписаний журнал аудиту |
 
 ```bash
 python examples/complete_example.py
 python examples/acomplete_example.py
+python examples/high_assurance_example.py
 ```
 
 ---
@@ -346,8 +522,9 @@ python examples/acomplete_example.py
 | `common_name` | `str` | `"Internal CA"` | CN кореневого CA |
 | `organization` | `str` | `"My Company"` | Організація (O) |
 | `country` | `str` | `"UA"` | Двобуквений код країни ISO 3166-1 |
-| `key_size` | `int` | `2048` | Довжина RSA-ключа в бітах |
-| `days_valid` | `int` | `3650` | Термін дії в днях |
+| `key_size` | `int` | `3072` | Довжина RSA-ключа в бітах (2048–8192; ігнорується для EC / Ed25519) |
+| `key_algorithm` | `KeyAlgorithm` | `EC_P384` | `EC_P384`, `EC_P256`, `RSA` або `ED25519` |
+| `days_valid` | `int` | `3650` | Термін дії в днях (1–36500) |
 | `valid_from` | `datetime \| None` | `None` | Явний початок (UTC); `None` = зараз |
 
 ### `ClientConfig`
@@ -356,8 +533,9 @@ python examples/acomplete_example.py
 |---|---|---|---|
 | `common_name` | `str` | — | CN сертифіката |
 | `serial_type` | `CertType` | `SERVICE` | Категорія сертифіката |
-| `key_size` | `int` | `2048` | Довжина RSA-ключа |
-| `days_valid` | `int` | `3650` | Термін дії |
+| `key_size` | `int` | `3072` | Довжина RSA-ключа (2048–8192; ігнорується для EC / Ed25519) |
+| `key_algorithm` | `KeyAlgorithm` | `EC_P384` | `EC_P384`, `EC_P256`, `RSA` або `ED25519` |
+| `days_valid` | `int` | `365` | Термін дії (1–36500; обрізається до строку дії CA) |
 | `email` | `EmailStr \| None` | `None` | Атрибут `emailAddress` у Subject |
 | `is_server_cert` | `bool` | `True` | Додає ServerAuth EKU + CN як DNS SAN |
 | `is_client_cert` | `bool` | `False` | Додає ClientAuth EKU |
@@ -471,6 +649,13 @@ cert_type, name = SerialWithEncoding.parse(serial)
 | `IsNotFile` | Шлях до PEM — директорія | Вкажіть файл, а не директорію |
 | `WrongType` | Непідтримуване розширення | Використайте `.pem`, `.key`, `.csr` |
 | `ErrorLoadCert` | Десеріалізація PEM не вдалась | Перевірте формат та цілісність файлу |
+| `DBOperationError` | Реєстр не вдалося прочитати / записати | Перевірте БД; нічого не було довірено чи опубліковано |
+| `CertRevocationError` | Ротація/поновлення не змогли відкликати старий сертифікат | Повторіть; заміну відкочено |
+| `InvalidPathError` | Шлях сховища виходить за `base_folder` | Використовуйте прості імена / відносні підшляхи |
+| `CertificateRevokedError` | Поновлення / співпідписання відкликаного, видалення відкликаного й ще чинного | Видайте новий сертифікат; зберігайте відкликані записи до їх закінчення |
+| `NameConstraintViolation` | Ім'я поза `NameConstraints` емітента | Використайте дозволене ім'я або інший видавальний CA |
+| `SignerError` | Зовнішній підписувач (HSM / KMS) збій або повернув невірний підпис | Перевірте токен, PIN, мітку ключа та відповідність ключа сертифікату CA |
+| `AuditLogError` | Запис аудиту не вдалося записати або перевірка не пройшла | Розглядайте як інцидент безпеки: операція відбулася, але не записана |
 
 ---
 
@@ -481,6 +666,13 @@ cert_type, name = SerialWithEncoding.parse(serial)
 
 **В чому різниця між `renew` і `rotate`?**
 `renew` зберігає пару ключів і продовжує валідність. `rotate` генерує новий ключ і відкликає старий сертифікат.
+
+**Чому після оновлення до 1.0 нові ключі EC, а не RSA?**
+1.0 за замовчуванням використовує ECDSA P-384 із SHA-384.  Передайте
+`key_algorithm=KeyAlgorithm.RSA` (і `key_size=`), де потрібен RSA.  Наявні CA
+зберігають свій алгоритм; дайджест підпису тепер залежить від розміру ключа
+(SHA-384 для RSA ≥ 3072).  Див. «Breaking changes» 1.0.0 у
+[CHANGELOG.md](CHANGELOG.md).
 
 **Як запланувати регенерацію CRL?**
 ```python
@@ -539,7 +731,9 @@ mgr.factory = CertificateFactory(loader)
 
 ```
 tiny_ca/
-├── const.py                        # CertType, ALLOWED_CERT_EXTENSIONS
+├── const.py                        # CertType, KeyAlgorithm, безпечні значення / межі
+├── signing.py                      # CASigner, KeySigner, Pkcs11Signer, sign_builder
+├── audit.py                        # AuditLog — підписаний журнал з хеш-ланцюжком
 ├── exc.py                          # всі власні винятки
 ├── settings.py                     # DEFAULT_LOGGER
 ├── ca_factory/
@@ -547,6 +741,8 @@ tiny_ca/
 │   └── utils/
 │       ├── file_loader.py          # CAFileLoader + ICALoader Protocol
 │       ├── afile_loader.py         # AsyncCAFileLoader
+│       ├── signer_loader.py        # SignerCALoader + ISignerCALoader Protocol
+│       ├── name_constraints.py     # побудова / перевірка NameConstraints
 │       ├── life_time.py            # CertLifetime
 │       └── serial.py               # CertSerialParser
 ├── db/
@@ -559,7 +755,7 @@ tiny_ca/
 │   ├── sync_lifecycle_manager.py   # CertLifecycleManager (20+ операцій)
 │   └── async_lifecycle_manager.py  # AsyncCertLifecycleManager
 ├── models/
-│   └── certificate.py              # CAConfig, ClientConfig, CertificateDetails
+│   └── certificate.py              # CAConfig, ClientConfig, NameConstraintsConfig, CertificateDetails
 ├── storage/
 │   ├── base_storage.py             # BaseStorage ABC
 │   ├── const.py                    # Псевдонім типу CryptoObject
@@ -570,6 +766,35 @@ tiny_ca/
 ```
 
 ---
+
+## Модель безпеки
+
+tiny-ca дає будівельні блоки PKI з підвищеними вимогами безпеки:
+- ключ CA в HSM;
+- надійні значення за замовчуванням;
+- політики сертифікатів і обмеження імен;
+- fail-closed перевірки відкликання;
+- підписаний журнал аудиту.
+
+Сама бібліотека **не** сертифікована за жодною національною схемою, схемою
+NATO чи Common Criteria.  Вона спирається на пакет `cryptography`
+(OpenSSL), який не є валідованим модулем FIPS 140-3, якщо його не зібрано
+з таким модулем.  Акредитація охоплює й те, що лежить поза бібліотекою:
+операційне середовище, розділення ролей і подвійний контроль операцій CA,
+ключові церемонії, фізичну безпеку та опубліковані CP/CPS.  Плануйте їх
+окремо.
+
+Відомі обмеження:
+- OCSP-респондера немає.  Публікуйте CRL (`generate_crl`) і вказуйте їх
+  через `crl_distribution_points`.
+- Обмеження імен охоплюють DNS, IP та email.  Інші типи спрацьовують як
+  відмова.
+- Журнал аудиту пишеться після завершення операції.  Його хвіст захищений
+  лише публікацією head-хешу деінде.  На Windows немає міжпроцесного
+  блокування.
+- Без HSM ключ CA — це файл.  Тримайте його зашифрованим
+  (`base_encryption_algorithm`) на офлайн-хості або хості під суворим
+  контролем.
 
 ## Безпека
 
@@ -587,3 +812,4 @@ tiny_ca/
 | SQLAlchemy | MIT |
 | Pydantic | MIT |
 | aiosqlite | MIT |
+| python-pkcs11 (необов'язково, `hsm`) | MIT |

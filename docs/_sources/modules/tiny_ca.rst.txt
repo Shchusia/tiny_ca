@@ -25,6 +25,8 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   tiny_ca.audit
    tiny_ca.const
    tiny_ca.exc
    tiny_ca.settings
+   tiny_ca.signing

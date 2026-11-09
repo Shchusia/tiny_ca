@@ -9,40 +9,23 @@ Run with:
 
 from __future__ import annotations
 
-
-import datetime
-from unittest.mock import MagicMock
-
-import pytest
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives.asymmetric import ec
-from tiny_ca.exc import InvalidRangeTimeCertificate
-from tiny_ca import CertificateFactory
-from tiny_ca.const import CertType
-from tiny_ca.exc import InvalidRangeTimeCertificate, ValidationCertError
-from tiny_ca.models.certificate import CertificateInfo
-
-
 import asyncio
-import datetime
 from collections.abc import AsyncGenerator, Generator
+import datetime
 from typing import Any
 from unittest.mock import MagicMock, PropertyMock, patch
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import NameOID
+import pytest
 
 from tiny_ca import CertificateFactory, ICALoader
-from tiny_ca.const import CertType
-from tiny_ca.exc import ValidationCertError
+from tiny_ca.const import CertType, KeyAlgorithm
+from tiny_ca.exc import InvalidRangeTimeCertificate, ValidationCertError
 from tiny_ca.models.certificate import CertificateInfo
 
 
@@ -263,7 +246,10 @@ class TestBuildSelfSignedCA:
     def test_returns_cert_and_key(self):
         cert, key = CertificateFactory.build_self_signed_ca()
         assert isinstance(cert, x509.Certificate)
-        assert isinstance(key, rsa.RSAPrivateKey)
+        assert (
+            isinstance(key, ec.EllipticCurvePrivateKey)
+            and key.curve.name == "secp384r1"
+        )
 
     def test_is_ca_cert(self):
         cert, _ = CertificateFactory.build_self_signed_ca()
@@ -280,7 +266,9 @@ class TestBuildSelfSignedCA:
         assert org == "Acme"
 
     def test_custom_key_size(self):
-        _, key = CertificateFactory.build_self_signed_ca(key_size=2048)
+        _, key = CertificateFactory.build_self_signed_ca(
+            key_algorithm=KeyAlgorithm.RSA, key_size=2048
+        )
         assert key.key_size == 2048
 
     def test_custom_days_valid(self):
@@ -322,7 +310,10 @@ class TestIssueCertificate:
     def test_returns_cert_key_csr(self, factory):
         cert, key, csr = factory.issue_certificate("test.example.com")
         assert isinstance(cert, x509.Certificate)
-        assert isinstance(key, rsa.RSAPrivateKey)
+        assert (
+            isinstance(key, ec.EllipticCurvePrivateKey)
+            and key.curve.name == "secp384r1"
+        )
         assert isinstance(csr, x509.CertificateSigningRequest)
 
     def test_cn_in_subject(self, factory):
@@ -513,8 +504,11 @@ class TestBuildCRL:
         before = datetime.datetime.now(datetime.UTC)
         crl = factory.build_crl(gen(), days_valid=7)
         after = datetime.datetime.now(datetime.UTC)
-        expected_next = before + datetime.timedelta(days=7)
-        assert crl.next_update_utc >= expected_next - datetime.timedelta(seconds=2)
+        assert (
+            before + datetime.timedelta(days=7) - datetime.timedelta(seconds=2)
+            <= crl.next_update_utc
+            <= after + datetime.timedelta(days=7)
+        )
 
 
 # ===========================================================================
@@ -761,11 +755,14 @@ class TestExportPKCS12:
         assert isinstance(p12_bytes, bytes)
         assert len(p12_bytes) > 0
 
-    @pytest.mark.skip(reason="PKCS#12 password encryption needs API fix")
     def test_export_pkcs12_with_password(self, factory):
         cert, key, _ = factory.issue_certificate("pkcs12-pwd.test")
         p12_bytes = factory.export_pkcs12(cert, key, password=b"secret")
-        assert isinstance(p12_bytes, bytes)
+        loaded = pkcs12.load_pkcs12(p12_bytes, b"secret")
+        assert loaded.cert.certificate == cert
+        assert loaded.key.private_numbers() == key.private_numbers()
+        with pytest.raises(ValueError):
+            pkcs12.load_pkcs12(p12_bytes, None)
 
     def test_export_pkcs12_with_name(self, factory):
         cert, key, _ = factory.issue_certificate("pkcs12-name.test")
@@ -827,7 +824,7 @@ class TestIssueIntermediateCA:
     def test_issue_intermediate_ca_basic(self, factory):
         inter_cert, inter_key = factory.issue_intermediate_ca("Intermediate CA")
         assert isinstance(inter_cert, x509.Certificate)
-        assert isinstance(inter_key, rsa.RSAPrivateKey)
+        assert isinstance(inter_key, ec.EllipticCurvePrivateKey)
 
         # Check CA constraints
         bc = inter_cert.extensions.get_extension_for_class(x509.BasicConstraints)
